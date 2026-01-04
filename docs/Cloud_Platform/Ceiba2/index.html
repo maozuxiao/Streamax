@@ -138,8 +138,12 @@
                     return { name: fileName, type: fileExtension };
                 });
                 
-                // 过滤文件，只显示支持的格式
-                const filteredFiles = processedFiles.filter(file => supportedFormats.includes(file.type));
+                // 过滤文件，只显示支持的格式，并排除特定文件
+                const excludedFiles = ['index.html', 'readme.md', 'markdown-viewer.html'];
+                const filteredFiles = processedFiles.filter(file => 
+                    supportedFormats.includes(file.type) && 
+                    !excludedFiles.includes(file.name.toLowerCase())
+                );
                 
                 // 按文件名排序
                 filteredFiles.sort((a, b) => a.name.localeCompare(b.name));
@@ -175,33 +179,8 @@
                             }
                             window.location.href = `../markdown-viewer.html?file=${encodeURIComponent(relativePath)}`;
                         } else if (file.type === '.html') {
-                            // 检查是否存在同名的md文件
-                            const hasSameNameMd = filteredFiles.some(f => 
-                                f.name.replace(f.type, '') === file.name.replace(file.type, '') && 
-                                (f.type === '.md' || f.type === '.markdown')
-                            );
-                            
-                            if (hasSameNameMd) {
-                                // 如果存在同名md文件，优先显示md文件
-                                const mdFileName = file.name.replace('.html', '.md');
-                                // 构造相对路径
-                                let relativePath = '';
-                                if (currentPath.includes('/docs/') && currentPath !== '/docs/' && currentPath !== '/docs/index.html') {
-                                    const pathParts = currentPath.split('/docs/')[1];
-                                    const dirPath = pathParts.split('/').slice(0, -1).join('/');
-                                    if (dirPath) {
-                                        relativePath = `${dirPath}/${mdFileName}`;
-                                    } else {
-                                        relativePath = mdFileName;
-                                    }
-                                } else {
-                                    relativePath = mdFileName;
-                                }
-                                window.location.href = `../markdown-viewer.html?file=${encodeURIComponent(relativePath)}`;
-                            } else {
-                                // 否则直接打开html文件
-                                window.location.href = file.name;
-                            }
+                            // 对于html文件，直接打开，不管是否有同名的md文件
+                            window.location.href = file.name;
                         } else {
                             // 对于pdf文件，直接打开
                             window.location.href = file.name;
