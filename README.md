@@ -1,2 +1,0 @@
-# Streamax
-Work documents
