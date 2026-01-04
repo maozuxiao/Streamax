@@ -120,8 +120,18 @@
         if (docsIndex !== -1) {
             // 提取/docs/后的路径部分
             const docsPathPart = currentPath.slice(docsIndex + 6); // +6 是因为 '/docs/' 有6个字符
-            // 移除文件名，只保留目录部分
-            const dirPath = docsPathPart.split('/').slice(0, -1).join('/');
+            
+            // 处理路径部分，移除可能的文件名
+            let pathParts = docsPathPart.split('/');
+            
+            // 如果最后一部分包含文件扩展名，或者是常见的文件名（如index.html），则移除它
+            const lastPart = pathParts[pathParts.length - 1];
+            if (lastPart && (lastPart.includes('.') || lastPart.toLowerCase() === 'index.html')) {
+                pathParts = pathParts.slice(0, -1);
+            }
+            
+            // 构建目录路径
+            const dirPath = pathParts.join('/');
             if (dirPath) {
                 apiPath = `${docsPath}/${dirPath}`;
             }

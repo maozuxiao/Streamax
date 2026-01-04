@@ -8,43 +8,47 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- 引入marked.js用于解析markdown -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- 引入softgreen.css样式 -->
+    <!-- 使用purple-blue-light.css样式 -->
     <style>
-        /* softgreen.css样式 - 来自Streamax/softgreen.css */
+        /* purple-blue-light.css样式 */
         :root {
-            --bg-color: #fffbe8;
-            --text-color: #499504ff;
-            /*change color of meta characetrs like `*` in markdown */
-            --md-char-color: #577909;
-            /*change color of meta contents like image text or link address in markdown */
-            --meta-content-color: #0d1171ff;
-            --table-border-color: #ddd6c1;
-
-            /* color of primary buttons */
-            --primary-color: #b58900;
-            --primary-btn-border-color: #cc9a00;
-            --primary-btn-text-color: #fff;
-
-            /*border for sidebar, etc*/
-            --window-border: 1px solid #eee8d5;
-
-            /*background color if list item in file tree or file list*/
-            --active-file-bg-color: #dfca8844;
+            /* 基础颜色 */
+            --bg-color: #f0f4ff;
+            --text-color: #4b5563;
+            --title-color: #4b5563;
+            --link-color: #6366f1;
+            
+            /* Markdown 特性颜色 */
+            --md-char-color: #8b5cf6;
+            --meta-content-color: #3b82f6;
+            --table-border-color: #e5e7eb;
+            
+            /* 按钮颜色 */
+            --primary-color: #6366f1;
+            --primary-btn-border-color: #4f46e5;
+            --primary-btn-text-color: #ffffff;
+            
+            /* 边框和背景色 */
+            --window-border: 1px solid #e5e7eb;
+            --side-bar-bg-color: #eef2ff;
+            --active-file-bg-color: #e0e7ff;
             --active-file-text-color: inherit;
-            --active-file-border-color: #cc9a00;
-
-            /*change background of sidebar*/
-            --side-bar-bg-color: #eee8d5;
-            /*background of control items when hover, like menu in sidebar*/
-            --item-hover-bg-color: #dfca8844;
+            --active-file-border-color: #6366f1;
+            --item-hover-bg-color: #dbeafe;
             --item-hover-text-color: inherit;
-            /*monospace font for codes, fences*/
+            
+            /* 代码样式 */
+            --code-color: #0072be;
             --monospace: "Monaco", "Consolas", monospace;
-
-            --rawblock-edit-panel-bd: #eee8d5;
-
-            --search-select-bg-color: #b58900;
-            --active-search-item-bg-color: #dfca88;
+            --rawblock-edit-panel-bd: #e5e7eb;
+            
+            /* 搜索相关 */
+            --search-select-bg-color: #6366f1;
+            --active-search-item-bg-color: #e0e7ff;
+            
+            /* 引用样式 */
+            --border-quote: #e5e7eb;
+            --header-weight: bold;
         }
 
         body {
@@ -62,11 +66,12 @@
         .md-fences,
         tt {
             font-size: 1rem;
-            border: 1px solid #ddd6c1;
+            border: 1px solid #e5e7eb;
             border-radius: 0.25rem;
             padding: 0 0.125rem;
             background: transparent;
             font-family: var(--monospace);
+            color: var(--code-color);
         }
 
         blockquote {
@@ -75,36 +80,28 @@
             margin: 1rem 0rem 1.25rem 0rem;
             padding-left: 0.75rem;
             font-family: var(--monospace);
-        }
-
-        blockquote::before {
-            content: "";
-            position: absolute;
-            left: 0rem;
-            height: 100%;
-            width: .25rem;
-            background: var(--primary-color);
+            border-left: 0.25rem solid var(--primary-color);
         }
 
         table {
-            border: 1px solid #ddd6c1;
+            border: 1px solid var(--table-border-color);
             margin: 1rem 0;
             width: 100%;
             border-collapse: collapse;
         }
 
         thead {
-            background: #e8dfc4;
+            background: var(--side-bar-bg-color);
         }
 
         table tr:nth-child(2n) {
-            background: #eee8d5;
+            background: var(--active-file-bg-color);
         }
 
         td,
         th {
             padding: 0.35rem 0.7rem;
-            border: 1px solid #ddd6c1;
+            border: 1px solid var(--table-border-color);
         }
 
         hr {
@@ -113,7 +110,8 @@
 
         mark {
             padding: 2px 1px;
-            color: darkred;
+            color: #dc2626;
+            background-color: #fee2e2;
         }
 
         #write {
@@ -128,8 +126,8 @@
 
         /* YAML block on the top */
         #write .md-meta-block {
-            background-color: #eee8d5b0;
-            border-bottom: 2px solid #ddd6c1;
+            background-color: var(--side-bar-bg-color);
+            border-bottom: 2px solid var(--table-border-color);
             padding: 0.5rem 0.75rem 0.5rem 0.75rem;
         }
 
@@ -137,7 +135,7 @@
             -webkit-appearance: initial;
             display: block;
             position: absolute;
-            border: 1px solid #ddd6c1;
+            border: 1px solid var(--table-border-color);
             border-radius: 0.25rem;
             margin-top: 0.1rem;
             margin-left: -1.8rem;
@@ -147,7 +145,7 @@
         }
 
         #write .md-task-list-item>input:hover {
-            background: #d47405;
+            background: var(--item-hover-bg-color);
         }
 
         #write .md-task-list-item>input[checked]::before {
@@ -181,15 +179,13 @@
             text-decoration: line-through;
         }
 
-        .on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container),
-        .on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container) *,
-        .on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container) ol,
-        .on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container) ul {
-            color: #499504ff !important;
+        #write h1, #write h2, #write h3, #write h4, #write h5, #write h6 {
+            font-weight: var(--header-weight);
+            color: var(--title-color);
         }
 
         #write .md-toc-item {
-            color: var(--primary-btn-border-color);
+            color: var(--link-color);
         }
 
         #write .md-toc-h1 {
@@ -200,67 +196,25 @@
             font-size: 1.2rem;
         }
 
-        #write h1::before,
-        #write h2::before,
-        #write h3::before,
-        #write h4::before,
-        #write h5::before,
-        #write h6::before {
-            position: absolute;
-            right: calc(100% + 10px);
-            bottom: 0;
-            color: #ddd6c1;
-            font-size: 1rem;
-            font-weight: bold;
-            font-variant: "small-caps";
-            border: 0;
-            border-radius: 0;
-            left: auto;
-            float: none;
-            padding: 0;
-            vertical-align: baseline;
-            line-height: 20px;
-        }
-
         #write h1 {
             font-size: 1.8rem;
             margin: 1rem 0;
         }
-
-        /* #write h1::before {
-            content: "H1";
-            bottom: 0.45rem;
-        } */
 
         #write h2 {
             font-size: 1.4rem;
             margin: 0.7rem 0;
         }
 
-        /* #write h2::before {
-            content: "H2";
-            bottom: 0.2rem;
-        } */
-
         #write h3 {
             font-size: 1.2rem;
             margin: 0.5rem 0;
         }
 
-        /* #write h3::before {
-            content: "H3";
-            bottom: 0.18rem;
-        } */
-
         #write h4 {
             font-size: 1.1rem;
             margin: 0.2rem 0;
         }
-
-        /* #write h4::before {
-            content: "H4";
-            bottom: 0.15rem;
-        } */
 
         #write h5,
         #write h6 {
@@ -268,151 +222,9 @@
             margin: 0;
         }
 
-        /* #write h5::before,
-        #write h6::before {
-            bottom: 0.1rem;
-        } */
-
-        /* #write h5::before {
-            content: "H5";
-        } */
-
-        /* #write h6::before {
-            content: "H6";
-        } */
-
-        #outline-content li .outline-item-open>.outline-children {
-            border-left: var(--primary-btn-border-color) 1px dashed;
-        }
-
-        /* diagrams like mermaid, sequence, gantt, flow etc */
-        #write .md-focus .md-diagram-panel {
-            border-color: var(--table-border-color);
-        }
-
-        /* hover tooltip for formula etc */
-        .code-tooltip.md-hover-tip {
-            color: var(--text-color);
-            background-color: #e8dfc4ff;
-        }
-
-        .md-hover-tip .md-arrow:after {
-            background: #e8dfc4ff;
-        }
-
-        /* for ``` code block */
-        .md-fences.md-focus .cm-s-inner .CodeMirror-activeline-background {
-            background: #e8dfc470;
-        }
-
-        .cm-s-inner .cm-number {
-            color: #9b3aff;
-        }
-
-        .cm-s-inner .cm-keyword {
-            color: #577909;
-            font-weight: bold;
-        }
-
-        .cm-s-inner .cm-def {
-            color: #499504;
-        }
-
-        .cm-s-inner .cm-variable {
-            color: #499504;
-        }
-
-        .cm-s-inner .cm-variable-2 {
-            color: #05a;
-        }
-
-        .cm-s-inner .cm-variable-3 {
-            color: #085;
-        }
-
-        .cm-s-inner .cm-property {
-            color: #934b3cff;
-        }
-
-        .cm-s-inner .cm-operator {
-            color: #577909;
-            font-weight: bold;
-        }
-
-        .cm-s-inner .cm-comment,
-        .cm-s-inner.cm-comment {
-            color: #95a3abff;
-        }
-
-        .cm-s-inner .cm-string {
-            color: #2aa198;
-        }
-
-        .cm-s-inner .cm-string-2 {
-            color: #f50;
-        }
-
-        .cm-s-inner .cm-meta {
-            color: #577909;
-            font-weight: bold;
-        }
-
-        .cm-s-inner .cm-builtin {
-            color: #9b3affff;
-        }
-
-        .cm-s-inner .cm-tag {
-            color: #2369b6ff;
-        }
-
-        .cm-s-inner .cm-attribute {
-            color: #cb2d01ff;
-        }
-
-        .cm-s-inner .cm-quote,
-        .cm-s-inner.cm-quote {
-            color: #0b6125ff;
-            background-color: #bbbbbb30;
-        }
-
-        /* for win10 unibody, which lacks the sense of beauty, but tested */
-        #megamenu-menu-sidebar {
-            color: #586e75;
-            background-color: var(--side-bar-bg-color);
-        }
-
-        #megamenu-menu-sidebar .megamenu-menu-header {
-            background-color: var(--primary-color);
-        }
-
-        #megamenu-back-btn {
-            color: var(--primary-btn-text-color);
-        }
-
-        #megamenu-menu-header-title {
-            color: var(--primary-color);
-        }
-
-        #megamenu-menu-list .li :hover {
-            background-color: var(--item-hover-bg-color) !important;
-        }
-
-        #megamenu-menu-list .li>.active {
-            color: var(--primary-color);
-        }
-
-        #megamenu-content {
-            background-color: var(--bg-color);
-        }
-
-        /* source mode, for WIDE screen */
-        #typora-source .CodeMirror-lines {
-            max-width: 128rem;
-        }
-        
-        /* 自定义样式 - 用于markdown-viewer.html */
+        /* 链接样式 */
         a {
-            color: var(--primary-btn-border-color);
+            color: var(--link-color);
             text-decoration: none;
         }
 
@@ -420,15 +232,88 @@
             text-decoration: underline;
         }
 
+        /* 代码块样式 */
         pre {
-            background-color: #f8f9fa;
+            background-color: var(--active-file-bg-color);
             padding: 1rem;
             border-radius: 0.5rem;
             overflow-x: auto;
+            border: 1px solid var(--table-border-color);
         }
 
         .back-btn {
             margin-bottom: 1rem;
+        }
+
+        /* 代码编辑器样式 */
+        .cm-s-inner .cm-number {
+            color: #9333ea;
+        }
+
+        .cm-s-inner .cm-keyword {
+            color: #7c3aed;
+            font-weight: bold;
+        }
+
+        .cm-s-inner .cm-def {
+            color: #6366f1;
+        }
+
+        .cm-s-inner .cm-variable {
+            color: #4b5563;
+        }
+
+        .cm-s-inner .cm-variable-2 {
+            color: #3b82f6;
+        }
+
+        .cm-s-inner .cm-variable-3 {
+            color: #2563eb;
+        }
+
+        .cm-s-inner .cm-property {
+            color: #1d4ed8;
+        }
+
+        .cm-s-inner .cm-operator {
+            color: #7c3aed;
+            font-weight: bold;
+        }
+
+        .cm-s-inner .cm-comment,
+        .cm-s-inner.cm-comment {
+            color: #9ca3af;
+        }
+
+        .cm-s-inner .cm-string {
+            color: #10b981;
+        }
+
+        .cm-s-inner .cm-string-2 {
+            color: #f59e0b;
+        }
+
+        .cm-s-inner .cm-meta {
+            color: #7c3aed;
+            font-weight: bold;
+        }
+
+        .cm-s-inner .cm-builtin {
+            color: #9333ea;
+        }
+
+        .cm-s-inner .cm-tag {
+            color: #3b82f6;
+        }
+
+        .cm-s-inner .cm-attribute {
+            color: #1d4ed8;
+        }
+
+        .cm-s-inner .cm-quote,
+        .cm-s-inner.cm-quote {
+            color: #059669;
+            background-color: #d1fae5;
         }
     </style>
 </head>

@@ -114,8 +114,18 @@
         if (docsIndex !== -1) {
             // 提取/docs/后的路径部分
             const docsPathPart = currentPath.slice(docsIndex + 6); // +6 是因为 '/docs/' 有6个字符
-            // 移除文件名，只保留目录部分
-            const dirPath = docsPathPart.split('/').slice(0, -1).join('/');
+            
+            // 处理路径部分，移除可能的文件名
+            let pathParts = docsPathPart.split('/');
+            
+            // 如果最后一部分包含文件扩展名，或者是常见的文件名（如index.html），则移除它
+            const lastPart = pathParts[pathParts.length - 1];
+            if (lastPart && (lastPart.includes('.') || lastPart.toLowerCase() === 'index.html')) {
+                pathParts = pathParts.slice(0, -1);
+            }
+            
+            // 构建目录路径
+            const dirPath = pathParts.join('/');
             if (dirPath) {
                 apiPath = `${docsPath}/${dirPath}`;
             }
@@ -124,17 +134,27 @@
         // 获取文件列表容器
         const fileList = document.getElementById('file-list');
         
+        // 构建完整的API请求URL
+        const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${apiPath}?ref=${branch}`;
+        console.log('构建的API请求URL:', apiUrl);
+        console.log('当前窗口URL:', window.location.href);
+        console.log('当前计算的apiPath:', apiPath);
+        
         // 使用GitHub API获取文件列表
-        fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${apiPath}?ref=${branch}`)
+        fetch(apiUrl)
             .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response URL:', response.url);
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`HTTP错误 ${response.status}: ${response.statusText}`);
                 }
                 return response.json();
             })
             .then(data => {
+                console.log('GitHub API返回的数据:', data);
                 // 过滤出文件，排除目录
                 const files = data.filter(item => item.type === 'file');
+                console.log('过滤后的文件列表:', files);
                 
                 // 处理文件列表
                 const processedFiles = files.map(file => {
@@ -142,6 +162,7 @@
                     const fileExtension = '.' + fileName.split('.').pop().toLowerCase();
                     return { name: fileName, type: fileExtension };
                 });
+                console.log('处理后的文件列表:', processedFiles);
                 
                 // 过滤文件，只显示支持的格式，并排除特定文件
                 const excludedFiles = ['index.html', 'readme.md', 'markdown-viewer.html'];
@@ -149,6 +170,7 @@
                     supportedFormats.includes(file.type) && 
                     !excludedFiles.includes(file.name.toLowerCase())
                 );
+                console.log('最终过滤后的文件列表:', filteredFiles);
                 
                 // 按文件名排序
                 filteredFiles.sort((a, b) => a.name.localeCompare(b.name));
