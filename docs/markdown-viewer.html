@@ -349,8 +349,25 @@
         // 设置页面标题
         document.getElementById('file-title').textContent = fileName;
         
+        // 构建完整的文件URL
+        let fileUrl;
+        if (file.startsWith('http://') || file.startsWith('https://')) {
+            // 如果是完整URL，直接使用
+            fileUrl = file;
+        } else {
+            // 如果是相对路径，构建正确的URL
+            // 检查file是否已经包含docs/前缀
+            if (file.startsWith('docs/')) {
+                // 直接使用GitHub Pages的相对路径
+                fileUrl = file;
+            } else {
+                // 否则，添加docs/前缀
+                fileUrl = `docs/${file}`;
+            }
+        }
+        
         // 使用fetch API获取实际的md文件内容
-        fetch(file)
+        fetch(fileUrl)
             .then(response => {
                 console.log('Response status:', response.status);
                 console.log('Response URL:', response.url);
