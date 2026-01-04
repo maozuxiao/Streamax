@@ -1,0 +1,620 @@
+<!doctype html>
+<html>
+<head>
+<meta charset='UTF-8'><meta name='viewport' content='width=device-width initial-scale=1'><style type='text/css'>html {overflow-x: initial !important;}</style>
+<style type='text/css'  id="style-base">:root { --bg-color: #ffffff; --text-color: #333333; --select-text-bg-color: #B5D6FC; --select-text-font-color: auto; --monospace: "Lucida Console",Consolas,"Courier",monospace; --title-bar-height: 20px; }
+.mac-os-11 { --title-bar-height: 28px; }
+html { font-size: 14px; background-color: var(--bg-color); color: var(--text-color); font-family: "Helvetica Neue", Helvetica, Arial, "Segoe UI Emoji", "SF Pro", sans-serif; -webkit-font-smoothing: antialiased; }
+h1, h2, h3, h4, h5 { white-space: pre-wrap; }
+body { margin: 0px; padding: 0px; height: auto; inset: 0px; font-size: 1rem; line-height: 1.42857; overflow-x: hidden; background: inherit; }
+iframe { margin: auto; }
+a.url { word-break: break-all; }
+a:active, a:hover { outline: 0px; }
+.in-text-selection, ::selection { text-shadow: none; background: var(--select-text-bg-color); color: var(--select-text-font-color); }
+#write { margin: 0px auto; height: auto; width: inherit; word-break: normal; overflow-wrap: break-word; position: relative; white-space: normal; overflow-x: visible; padding-top: 36px; }
+#write.first-line-indent p { text-indent: 2em; }
+#write.first-line-indent li p, #write.first-line-indent p *, #write.first-line-indent svg * { text-indent: 0px; }
+#write.first-line-indent li { margin-left: 2em; }
+.for-image #write { padding-left: 8px; padding-right: 8px; }
+body.typora-export { padding-left: 30px; padding-right: 30px; }
+.typora-export .footnote-line, .typora-export li, .typora-export p { white-space: pre-wrap; }
+.typora-export .task-list-item input { pointer-events: none; }
+@media screen and (max-width: 500px) {
+  body.typora-export { padding-left: 0px; padding-right: 0px; }
+  #write { padding-left: 20px; padding-right: 20px; }
+}
+#write li > figure:last-child { margin-bottom: 0.5rem; }
+#write ol, #write ul { position: relative; }
+img { max-width: 100%; vertical-align: middle; image-orientation: from-image; }
+button, input, select, textarea { color: inherit; font: inherit; }
+input[type="checkbox"], input[type="radio"] { line-height: normal; padding: 0px; }
+*, ::after, ::before { box-sizing: border-box; }
+#write h1, #write h2, #write h3, #write h4, #write h5, #write h6, #write p, #write pre { width: inherit; position: relative; }
+#write svg h1, #write svg h2, #write svg h3, #write svg h4, #write svg h5, #write svg h6, #write svg p { position: static; }
+.nodeLabel p { padding-right: 2px; padding-left: 2px; }
+.typora-export .nodeLabel p { padding-right: 0px; padding-left: 0px; }
+foreignobject { overflow: visible; }
+p { line-height: inherit; }
+h1, h2, h3, h4, h5, h6 { break-after: avoid-page; break-inside: avoid; orphans: 4; }
+p { orphans: 4; }
+li p { orphans: 1; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.8rem; }
+h3 { font-size: 1.6rem; }
+h4 { font-size: 1.4rem; }
+h5 { font-size: 1.2rem; }
+h6 { font-size: 1rem; }
+.md-math-block, .md-rawblock, h1, h2, h3, h4, h5, h6, p { margin-top: 1rem; margin-bottom: 1rem; }
+.hidden { display: none; }
+.md-blockmeta { color: rgb(204, 204, 204); font-weight: 700; font-style: italic; }
+a { cursor: pointer; }
+sup.md-footnote { padding: 2px 4px; background-color: rgba(238, 238, 238, 0.7); color: rgb(85, 85, 85); border-radius: 4px; cursor: pointer; }
+sup.md-footnote a, sup.md-footnote a:hover { color: inherit; text-transform: inherit; text-decoration: inherit; }
+#write input[type="checkbox"] { cursor: pointer; width: inherit; height: inherit; }
+figure { overflow-x: auto; margin: 1.2em 0px; max-width: calc(100% + 16px); padding: 0px; }
+figure > table { margin: 0px; }
+thead, tr { break-inside: avoid; break-after: auto; }
+thead { display: table-header-group; }
+table { border-collapse: collapse; border-spacing: 0px; width: 100%; overflow: auto; break-inside: auto; text-align: left; }
+table.md-table td { min-width: 32px; }
+.CodeMirror-gutters { border-right: 0px; background-color: inherit; }
+.CodeMirror-linenumber { user-select: none; }
+.CodeMirror { text-align: left; }
+.CodeMirror-placeholder { opacity: 0.3; }
+.CodeMirror pre { padding: 0px 4px; }
+.CodeMirror-lines { padding: 0px; }
+div.hr:focus { cursor: none; }
+#write pre { white-space: pre-wrap; }
+#write.fences-no-line-wrapping pre { white-space: pre; }
+#write pre.ty-contain-cm { white-space: normal; }
+.CodeMirror-gutters { margin-right: 4px; }
+.md-fences { font-size: 0.9rem; display: block; break-inside: avoid; text-align: left; overflow: visible; white-space: pre; background: inherit; position: relative !important; }
+.md-fences-adv-panel { width: 100%; margin-top: 10px; text-align: center; padding-top: 0px; padding-bottom: 8px; overflow-x: auto; }
+#write .md-fences.mock-cm { white-space: pre-wrap; }
+.md-fences.md-fences-with-lineno { padding-left: 0px; }
+#write.fences-no-line-wrapping .md-fences.mock-cm { white-space: pre; overflow-x: auto; }
+.md-fences.mock-cm.md-fences-with-lineno { padding-left: 8px; }
+.CodeMirror-line, twitterwidget { break-inside: avoid; }
+svg { break-inside: avoid; }
+.footnotes { opacity: 0.8; font-size: 0.9rem; margin-top: 1em; margin-bottom: 1em; }
+.footnotes + .footnotes { margin-top: 0px; }
+.md-reset { margin: 0px; padding: 0px; border: 0px; outline: 0px; vertical-align: top; background: 0px 0px; text-decoration: none; text-shadow: none; float: none; position: static; width: auto; height: auto; white-space: nowrap; cursor: inherit; -webkit-tap-highlight-color: transparent; line-height: normal; font-weight: 400; text-align: left; box-sizing: content-box; direction: ltr; }
+li div { padding-top: 0px; }
+blockquote { margin: 1rem 0px; }
+li .mathjax-block, li p { margin: 0.5rem 0px; }
+li blockquote { margin: 1rem 0px; }
+li { margin: 0px; position: relative; }
+blockquote > :last-child { margin-bottom: 0px; }
+blockquote > :first-child, li > :first-child { margin-top: 0px; }
+.footnotes-area { color: rgb(136, 136, 136); margin-top: 0.714rem; padding-bottom: 0.143rem; white-space: normal; }
+#write .footnote-line { white-space: pre-wrap; }
+@media print {
+  body, html { border: 1px solid transparent; height: 99%; break-after: avoid; break-before: avoid; font-variant-ligatures: no-common-ligatures; }
+  #write { margin-top: 0px; border-color: transparent !important; padding-top: 0px !important; padding-bottom: 0px !important; }
+  .typora-export * { -webkit-print-color-adjust: exact; }
+  .typora-export #write { break-after: avoid; }
+  .typora-export #write::after { height: 0px; }
+  .is-mac table { break-inside: avoid; }
+  #write > p:nth-child(1) { margin-top: 0px; }
+  .typora-export-show-outline .typora-export-sidebar { display: none; }
+  figure { overflow-x: visible; }
+}
+.footnote-line { margin-top: 0.714em; font-size: 0.7em; }
+a img, img a { cursor: pointer; }
+pre.md-meta-block { font-size: 0.8rem; min-height: 0.8rem; white-space: pre-wrap; background: rgb(204, 204, 204); display: block; overflow-x: hidden; }
+p > .md-image:only-child:not(.md-img-error) img, p > img:only-child { display: block; margin: auto; }
+#write.first-line-indent p > .md-image:only-child:not(.md-img-error) img { left: -2em; position: relative; }
+p > .md-image:only-child { display: inline-block; width: 100%; }
+#write .MathJax_Display { margin: 0.8em 0px 0px; }
+.md-math-block { width: 100%; }
+.md-math-block:not(:empty)::after { display: none; }
+.MathJax_ref { fill: currentcolor; }
+[contenteditable="true"]:active, [contenteditable="true"]:focus, [contenteditable="false"]:active, [contenteditable="false"]:focus { outline: 0px; box-shadow: none; }
+.md-task-list-item { position: relative; list-style-type: none; }
+.task-list-item.md-task-list-item { padding-left: 0px; }
+.md-task-list-item > input { position: absolute; top: 0px; left: 0px; margin-left: -1.2em; margin-top: calc(1em - 10px); border: none; }
+.math { font-size: 1rem; }
+.md-toc { min-height: 3.58rem; position: relative; font-size: 0.9rem; border-radius: 10px; }
+.md-toc-content { position: relative; margin-left: 0px; }
+.md-toc-content::after, .md-toc::after { display: none; }
+.md-toc-item { display: block; color: rgb(65, 131, 196); }
+.md-toc-item a { text-decoration: none; }
+.md-toc-inner:hover { text-decoration: underline; }
+.md-toc-inner { display: inline-block; cursor: pointer; }
+.md-toc-h1 .md-toc-inner { margin-left: 0px; font-weight: 700; }
+.md-toc-h2 .md-toc-inner { margin-left: 2em; }
+.md-toc-h3 .md-toc-inner { margin-left: 4em; }
+.md-toc-h4 .md-toc-inner { margin-left: 6em; }
+.md-toc-h5 .md-toc-inner { margin-left: 8em; }
+.md-toc-h6 .md-toc-inner { margin-left: 10em; }
+@media screen and (max-width: 48em) {
+  .md-toc-h3 .md-toc-inner { margin-left: 3.5em; }
+  .md-toc-h4 .md-toc-inner { margin-left: 5em; }
+  .md-toc-h5 .md-toc-inner { margin-left: 6.5em; }
+  .md-toc-h6 .md-toc-inner { margin-left: 8em; }
+}
+a.md-toc-inner { font-size: inherit; font-style: inherit; font-weight: inherit; line-height: inherit; }
+.footnote-line a:not(.reversefootnote) { color: inherit; }
+.reversefootnote { font-family: ui-monospace, sans-serif; }
+.md-attr { display: none; }
+.md-fn-count::after { content: "."; }
+code, pre, samp, tt { font-family: var(--monospace); }
+kbd { margin: 0px 0.1em; padding: 0.1em 0.6em; font-size: 0.8em; color: rgb(36, 39, 41); background: rgb(255, 255, 255); border: 1px solid rgb(173, 179, 185); border-radius: 3px; box-shadow: rgba(12, 13, 14, 0.2) 0px 1px 0px, rgb(255, 255, 255) 0px 0px 0px 2px inset; white-space: nowrap; vertical-align: middle; }
+.md-comment { color: rgb(162, 127, 3); opacity: 0.6; font-family: var(--monospace); }
+code { text-align: left; vertical-align: initial; }
+a.md-print-anchor { white-space: pre !important; border-width: initial !important; border-style: none !important; border-color: initial !important; display: inline-block !important; position: absolute !important; width: 1px !important; right: 0px !important; outline: 0px !important; background: 0px 0px !important; text-decoration: initial !important; text-shadow: initial !important; }
+.os-windows.monocolor-emoji .md-emoji { font-family: "Segoe UI Symbol", sans-serif; }
+.md-diagram-panel > svg { max-width: 100%; }
+[lang="flow"] svg, [lang="mermaid"] svg { max-width: 100%; height: auto; }
+[lang="mermaid"] .node text { font-size: 1rem; }
+table tr th { border-bottom: 0px; }
+video { max-width: 100%; display: block; margin: 0px auto; }
+iframe { max-width: 100%; width: 100%; border: none; }
+.highlight td, .highlight tr { border: 0px; }
+mark { background: rgb(255, 255, 0); color: rgb(0, 0, 0); }
+.md-html-inline .md-plain, .md-html-inline strong, mark .md-inline-math, mark strong { color: inherit; }
+.md-expand mark .md-meta { opacity: 0.3 !important; }
+mark .md-meta { color: rgb(0, 0, 0); }
+@media print {
+  .typora-export h1, .typora-export h2, .typora-export h3, .typora-export h4, .typora-export h5, .typora-export h6 { break-inside: avoid; }
+}
+.md-diagram-panel .messageText { stroke: none !important; }
+.md-diagram-panel .start-state { fill: var(--node-fill); }
+.md-diagram-panel .edgeLabel rect { opacity: 1 !important; }
+.md-fences.md-fences-math { font-size: 1em; }
+.md-fences-advanced:not(.md-focus) { padding: 0px; white-space: nowrap; border: 0px; }
+.md-fences-advanced:not(.md-focus) { background: inherit; }
+.mermaid-svg { margin: auto; }
+.typora-export-show-outline .typora-export-content { max-width: 1440px; margin: auto; display: flex; flex-direction: row; }
+.typora-export-sidebar { width: 300px; font-size: 0.8rem; margin-top: 80px; margin-right: 18px; }
+.typora-export-show-outline #write { --webkit-flex: 2; flex: 2 1 0%; }
+.typora-export-sidebar .outline-content { position: fixed; top: 0px; max-height: 100%; overflow: hidden auto; padding-bottom: 30px; padding-top: 60px; width: 300px; }
+@media screen and (max-width: 1024px) {
+  .typora-export-sidebar, .typora-export-sidebar .outline-content { width: 240px; }
+}
+@media screen and (max-width: 800px) {
+  .typora-export-sidebar { display: none; }
+}
+.outline-content li, .outline-content ul { margin-left: 0px; margin-right: 0px; padding-left: 0px; padding-right: 0px; list-style: none; overflow-wrap: anywhere; }
+.outline-content ul { margin-top: 0px; margin-bottom: 0px; }
+.outline-content strong { font-weight: 400; }
+.outline-expander { width: 1rem; height: 1.42857rem; position: relative; display: table-cell; vertical-align: middle; cursor: pointer; padding-left: 4px; }
+.outline-expander::before { content: ""; position: relative; font-family: Ionicons; display: inline-block; font-size: 8px; vertical-align: middle; }
+.outline-item { padding-top: 3px; padding-bottom: 3px; cursor: pointer; }
+.outline-expander:hover::before { content: ""; }
+.outline-h1 > .outline-item { padding-left: 0px; }
+.outline-h2 > .outline-item { padding-left: 1em; }
+.outline-h3 > .outline-item { padding-left: 2em; }
+.outline-h4 > .outline-item { padding-left: 3em; }
+.outline-h5 > .outline-item { padding-left: 4em; }
+.outline-h6 > .outline-item { padding-left: 5em; }
+.outline-label { cursor: pointer; display: table-cell; vertical-align: middle; text-decoration: none; color: inherit; }
+.outline-label:hover { text-decoration: underline; }
+.outline-item:hover { border-color: rgb(245, 245, 245); background-color: var(--item-hover-bg-color); }
+.outline-item:hover { margin-left: -28px; margin-right: -28px; border-left: 28px solid transparent; border-right: 28px solid transparent; }
+.outline-item-single .outline-expander::before, .outline-item-single .outline-expander:hover::before { display: none; }
+.outline-item-open > .outline-item > .outline-expander::before { content: ""; }
+.outline-children { display: none; }
+.info-panel-tab-wrapper { display: none; }
+.outline-item-open > .outline-children { display: block; }
+.typora-export .outline-item { padding-top: 1px; padding-bottom: 1px; }
+.typora-export .outline-item:hover { margin-right: -8px; border-right: 8px solid transparent; }
+.typora-export .outline-expander::before { content: "+"; font-family: inherit; top: -1px; }
+.typora-export .outline-expander:hover::before, .typora-export .outline-item-open > .outline-item > .outline-expander::before { content: "−"; }
+.typora-export-collapse-outline .outline-children { display: none; }
+.typora-export-collapse-outline .outline-item-open > .outline-children, .typora-export-no-collapse-outline .outline-children { display: block; }
+.typora-export-no-collapse-outline .outline-expander::before { content: "" !important; }
+.typora-export-show-outline .outline-item-active > .outline-item .outline-label { font-weight: 700; }
+.md-inline-math-container mjx-container { zoom: 0.95; }
+mjx-container { break-inside: avoid; }
+.md-alert.md-alert-note { border-left-color: rgb(9, 105, 218); }
+.md-alert.md-alert-important { border-left-color: rgb(130, 80, 223); }
+.md-alert.md-alert-warning { border-left-color: rgb(154, 103, 0); }
+.md-alert.md-alert-tip { border-left-color: rgb(31, 136, 61); }
+.md-alert.md-alert-caution { border-left-color: rgb(207, 34, 46); }
+.md-alert { padding: 0px 1em; margin-bottom: 16px; color: inherit; border-left: 0.25em solid rgb(0, 0, 0); }
+.md-alert-text-note { color: rgb(9, 105, 218); }
+.md-alert-text-important { color: rgb(130, 80, 223); }
+.md-alert-text-warning { color: rgb(154, 103, 0); }
+.md-alert-text-tip { color: rgb(31, 136, 61); }
+.md-alert-text-caution { color: rgb(207, 34, 46); }
+.md-alert-text { font-size: 0.9rem; font-weight: 700; }
+.md-alert-text svg { fill: currentcolor; position: relative; top: 0.125em; margin-right: 1ch; overflow: visible; }
+.md-alert-text-container::after { content: attr(data-text); text-transform: capitalize; pointer-events: none; margin-right: 1ch; }
+
+</style>
+<style type='text/css'  id="style-theme_css">:root {
+    --bg-color: #fffbe8;
+    --text-color: #499504ff;
+    /*change color of meta characetrs like `*` in markdown */
+    --md-char-color: #577909;
+    /*change color of meta contents like image text or link address in markdown */
+    --meta-content-color: #0d1171ff;
+    --table-border-color: #ddd6c1;
+
+    /* color of primary buttons */
+    --primary-color: #b58900;
+    --primary-btn-border-color: #cc9a00;
+    --primary-btn-text-color: #fff;
+
+    /*border for sidebar, etc*/
+    --window-border: 1px solid #eee8d5;
+
+    /*background color if list item in file tree or file list*/
+    --active-file-bg-color: #dfca8844;
+    --active-file-text-color: inherit;
+    --active-file-border-color: #cc9a00;
+
+    /*change background of sidebar*/
+    --side-bar-bg-color: #eee8d5;
+    /*background of control items when hover, like menu in sidebar*/
+    --item-hover-bg-color: #dfca8844;
+    --item-hover-text-color: inherit;
+    /*monospace font for codes, fences*/
+    --monospace: "Monaco", "Consolas", monospace;
+
+    --rawblock-edit-panel-bd: #eee8d5;
+
+    --search-select-bg-color: #b58900;
+    --active-search-item-bg-color: #dfca88;
+}
+
+p {
+    margin: 0.5rem 0;
+}
+
+code,
+.md-fences,
+tt {
+    font-size: 1rem;
+    border: 1px solid #ddd6c1;
+    border-radius: 0.25rem;
+    padding: 0 0.125rem;
+    background: transparent;
+    /* font-family: var(--monospace); */
+}
+
+blockquote {
+    background-color: var(--side-bar-bg-color);
+    position: relative;
+    margin: 1rem 0rem 1.25rem 0rem;
+    padding-left: 0.75rem;
+    font-family: var(--monospace);
+}
+
+blockquote::before {
+    content: "";
+    position: absolute;
+    left: 0rem;
+    height: 100%;
+    width: .25rem;
+    background: var(--primary-color);
+}
+
+table {
+    border: 1px solid #ddd6c1;
+    margin: 1rem 0;
+}
+
+thead {
+    background: #e8dfc4;
+}
+
+table tr:nth-child(2n) {
+    background: #eee8d5;
+}
+
+td,
+th {
+    padding: 0.35rem 0.7rem;
+    border: 1px solid #ddd6c1;
+}
+
+hr {
+    border-color: var(--table-border-color);
+}
+
+mark {
+    padding: 2px 1px;
+    color: darkred;
+}
+
+#write {
+    position: static;
+    padding-left: 10ch;
+    padding-right: 10ch;
+    line-height: 1.6;
+    transform: none;
+}
+
+/* YAML block on the top */
+#write .md-meta-block {
+    background-color: #eee8d5b0;
+    border-bottom: 2px solid #ddd6c1;
+    padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+}
+
+#write .md-task-list-item>input {
+    -webkit-appearance: initial;
+    display: block;
+    position: absolute;
+    border: 1px solid #ddd6c1;
+    border-radius: 0.25rem;
+    margin-top: 0.1rem;
+    margin-left: -1.8rem;
+    height: 1.2rem;
+    width: 1.2rem;
+    transition: background 0.3s;
+}
+
+#write .md-task-list-item>input:hover {
+    background: #d47405;
+}
+
+#write .md-task-list-item>input[checked]::before {
+    content: "";
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    height: 60%;
+    width: 2px;
+    transform: rotate(40deg);
+    background: var(--primary-color);
+}
+
+#write .md-task-list-item>input[checked]::after {
+    content: "";
+    position: absolute;
+    top: 46%;
+    left: 25%;
+    height: 30%;
+    width: 2px;
+    transform: rotate(-40deg);
+    background: var(--primary-color);
+}
+
+#write .md-task-list-item>p {
+    transition: color 0.3s;
+}
+
+#write .md-task-list-item.task-list-done>p {
+    color: var(--primary-color);
+    text-decoration: line-through;
+}
+
+.on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container),
+.on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container) *,
+.on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container) ol,
+.on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container) ul {
+    color: #499504ff !important;
+}
+
+#write .md-toc-item {
+    color: var(--primary-btn-border-color);
+}
+
+#write .md-toc-h1 {
+    font-size: 1.3rem;
+}
+
+#write .md-toc-h2 {
+    font-size: 1.2rem;
+}
+
+#write h1::before,
+#write h2::before,
+#write h3::before,
+#write h4::before,
+#write h5::before,
+#write h6::before {
+    position: absolute;
+    right: calc(100% + 10px);
+    bottom: 0;
+    color: #ddd6c1;
+    font-size: 1rem;
+    font-weight: bold;
+    font-variant: "small-caps";
+    border: 0;
+    border-radius: 0;
+    left: auto;
+    float: none;
+    padding: 0;
+    vertical-align: baseline;
+    line-height: 20px;
+}
+
+#write h1 {
+    font-size: 1.8rem;
+    margin: 1rem 0;
+}
+
+/* #write h1::before {
+    content: "H1";
+    bottom: 0.45rem;
+} */
+
+#write h2 {
+    font-size: 1.4rem;
+    margin: 0.7rem 0;
+}
+
+/* #write h2::before {
+    content: "H2";
+    bottom: 0.2rem;
+} */
+
+#write h3 {
+    font-size: 1.2rem;
+    margin: 0.5rem 0;
+}
+
+/* #write h3::before {
+    content: "H3";
+    bottom: 0.18rem;
+} */
+
+#write h4 {
+    font-size: 1.1rem;
+    margin: 0.2rem 0;
+}
+
+/* #write h4::before {
+    content: "H4";
+    bottom: 0.15rem;
+} */
+
+#write h5,
+#write h6 {
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* #write h5::before,
+#write h6::before {
+    bottom: 0.1rem;
+} */
+
+/* #write h5::before {
+    content: "H5";
+} */
+
+/* #write h6::before {
+    content: "H6";
+} */
+
+#outline-content li .outline-item-open>.outline-children {
+    border-left: var(--primary-btn-border-color) 1px dashed;
+}
+
+/* diagrams like mermaid, sequence, gantt, flow etc */
+#write .md-focus .md-diagram-panel {
+    border-color: var(--table-border-color);
+}
+
+/* hover tooltip for formula etc */
+.code-tooltip.md-hover-tip {
+    color: var(--text-color);
+    background-color: #e8dfc4ff;
+}
+
+.md-hover-tip .md-arrow:after {
+    background: #e8dfc4ff;
+}
+
+/* for ``` code block */
+.md-fences.md-focus .cm-s-inner .CodeMirror-activeline-background {
+    background: #e8dfc470;
+}
+
+.cm-s-inner .cm-number {
+    color: #9b3aff;
+}
+
+.cm-s-inner .cm-keyword {
+    color: #577909;
+    font-weight: bold;
+}
+
+.cm-s-inner .cm-def {
+    color: #499504;
+}
+
+.cm-s-inner .cm-variable {
+    color: #499504;
+}
+
+.cm-s-inner .cm-variable-2 {
+    color: #05a;
+}
+
+.cm-s-inner .cm-variable-3 {
+    color: #085;
+}
+
+.cm-s-inner .cm-property {
+    color: #934b3cff;
+}
+
+.cm-s-inner .cm-operator {
+    color: #577909;
+    font-weight: bold;
+}
+
+.cm-s-inner .cm-comment,
+.cm-s-inner.cm-comment {
+    color: #95a3abff;
+}
+
+.cm-s-inner .cm-string {
+    color: #2aa198;
+}
+
+.cm-s-inner .cm-string-2 {
+    color: #f50;
+}
+
+.cm-s-inner .cm-meta {
+    color: #577909;
+    font-weight: bold;
+}
+
+.cm-s-inner .cm-builtin {
+    color: #9b3affff;
+}
+
+.cm-s-inner .cm-tag {
+    color: #2369b6ff;
+}
+
+.cm-s-inner .cm-attribute {
+    color: #cb2d01ff;
+}
+
+.cm-s-inner .cm-quote,
+.cm-s-inner.cm-quote {
+    color: #0b6125ff;
+    background-color: #bbbbbb30;
+}
+
+/* for win10 unibody, which lacks the sense of beauty, but tested */
+#megamenu-menu-sidebar {
+    color: #586e75;
+    background-color: var(--side-bar-bg-color);
+}
+
+#megamenu-menu-sidebar .megamenu-menu-header {
+    background-color: var(--primary-color);
+}
+
+#megamenu-back-btn {
+    color: var(--primary-btn-text-color);
+}
+
+#megamenu-menu-header-title {
+    color: var(--primary-color);
+}
+
+#megamenu-menu-list .li :hover {
+    background-color: var(--item-hover-bg-color) !important;
+}
+
+#megamenu-menu-list .li>.active {
+    color: var(--primary-color);
+}
+
+#megamenu-content {
+    background-color: var(--bg-color);
+}
+
+/* source mode, for WIDE screen */
+#typora-source .CodeMirror-lines {
+    max-width: 128rem;
+}</style>
+<style type='text/css'  id="style-lp">ol, ul {padding-left: 40px}</style>
+
+<title>camera-guide</title>
+</head>
+<body class='typora-export os-windows'><div class='typora-export-content'>
+<div id='write'  class=''><h1 id='公司常用料号整理表'><span>公司常用料号整理表</span></h1><h2 id='维护记录'><span>维护记录</span></h2><figure class='table-figure'><table><thead><tr><th style='text-align:left;' ><span>版本号</span></th><th style='text-align:left;' ><span>更新日期</span></th><th style='text-align:left;' ><span>更新人</span></th><th style='text-align:left;' ><span>更新内容</span></th></tr></thead><tbody><tr><td style='text-align:left;' ><span>V1.0</span></td><td style='text-align:left;' ><span>2025-8-23</span></td><td style='text-align:left;' ><span>Sean</span></td><td style='text-align:left;' >&nbsp;</td></tr></tbody></table></figure><h2 id='可用料号基础信息表'><span>可用料号基础信息表</span></h2><figure class='table-figure'><table><thead><tr><th style='text-align:center;' ><span>规格型号</span></th><th style='text-align:center;' ><span>料号编码</span></th><th style='text-align:center;' ><span>物料名称</span></th><th style='text-align:left;' ><span>备注</span></th></tr></thead><tbody><tr><td style='text-align:center;' ><span>X1N-N0400(Type-C)</span></td><td style='text-align:center;' ><span>5120144100005</span></td><td style='text-align:center;' ><span>X1N-GMN0400/V4.1/1602122422/E3914/硬盘主机/4*IPC/带外置GPS/带4G(EC25-EC)/不带WIFI/带硬盘盒/不带硬盘/锐明英文LOGO/客户定制包装/USB TYPE-C接口/客户定制/非虚拟格式</span></td><td style='text-align:left;' >&nbsp;</td></tr><tr><td style='text-align:center;' ><span>X1N-N0400(通用)</span></td><td style='text-align:center;' ><span>5194004100017</span></td><td style='text-align:center;' ><span>X1N-GMN0400/X1N-N0400/N4.10/1602122422/E3914/4*IPC/带外置GPS/带4G(EC25-EC)/无WIFI/带加热/带硬盘盒/不带硬盘/带定制前面板/锐明英文LOGO/客户定制包装/非虚拟格式/客户定制</span></td><td style='text-align:left;' >&nbsp;</td></tr><tr><td style='text-align:center;' ><span>X1N-N0400 RWATCH&amp;VGA cable</span></td><td style='text-align:center;' ><span>1261050100363</span></td><td style='text-align:center;' ><span>24PIN信号输入线-X1N-3914/一端PUDP-24V-S,另一端吊线</span><em><span>6+小5557-2P</span></em><span>2++YL16-8航空公头+小5559-6P/200mm/中性英文标贴/X1N前装线缆/客户定制/3914ML</span></td><td style='text-align:left;' ><span>3914定制线材</span></td></tr><tr><td style='text-align:center;' ><span>A16Max</span></td><td style='text-align:center;' ><span>5120124100008</span></td><td style='text-align:center;' ><span>A16Max/V1.1/PTH1212/E0001/12路AHD+12路IPC/带外置GPS（GRM-5853F1DRW-AGGB064）/带4G(EC25-EC)/带WIFI6/带硬盘盒/带加热/不带硬盘/不带SD卡/锐明英文LOGO/带独立包装/通用/虚拟格式</span></td><td style='text-align:left;' >&nbsp;</td></tr><tr><td style='text-align:center;' ><span>M1N 2.0 H0402</span></td><td style='text-align:center;' ><span>5110038100183</span></td><td style='text-align:center;' ><span>M1N 2.0/V1.0/H0402/E0001/带外置GPS/4G(EC25-EC)/带WIFI/带加热/带M.2 SSD硬盘盒/1TB固态硬盘/不带Micro SD卡/支持两路Micro SD/锐明英文LOGO/带独立包装/通用/非虚拟格式/单4G天线</span></td><td style='text-align:left;' ><span>2025-12-11 确认可用，更换硬盘1610004100003为1610004100013</span></td></tr><tr><td style='text-align:center;' ><span>M1N 2.0 H0402</span></td><td style='text-align:center;' ><span>5110038100008</span></td><td style='text-align:center;' ><span>M1N 2.0/V1.0/H0402/E0001/亚欧版本/6CH*1080P/带外置GPS/4G(EC25-EC)/带WIFI/支持Micro SD/锐明英文LOGO/带独立包装/通用/非虚拟格式/不带Micro SD卡/带M.2 SSD硬盘盒/不带硬盘/单4G天线</span></td><td style='text-align:left;' ><span>不带硬盘</span></td></tr><tr><td style='text-align:center;' ><span>DP7S &amp; MDVR 转接线</span></td><td style='text-align:center;' ><span>1260011100133</span></td><td style='text-align:center;' ><span>(K)4PIN航空母头转接线-300mm-6526/一端RS765-4航空母头,一端RS765-4航空母头,不带电源/300mm/客户定制英文标贴/无/客户定制/6526ML</span></td><td style='text-align:left;' ><span>由于DP7S的标准版本接口和主机的AV out接口皆为公头，需要该线材进行转接</span></td></tr><tr><td style='text-align:center;' ><span>X3N-GMH0208(PON RJ45)</span></td><td style='text-align:center;' ><span>5120151100015</span></td><td style='text-align:center;' ><span>X3N-GMH0208/V1.0/1614021412/E3914/2</span><em><span>AHD+8</span></em><span>IPC(PON)/带外置GPS+GLONASS/带4G(EC25-EC)/带WIFI/支持双SSD硬盘盒/带加热/不带硬盘/1个SD卡座/不带Micro SD卡/锐明英文LOGO/带独立包装/带客户定制线材/客户定制/虚拟格式</span></td><td style='text-align:left;' ><span>3914出过货，RJ45</span><br /><span>USB A</span></td></tr><tr><td style='text-align:center;' ><span>X3N-GMH0208(PON RJ45) Type C</span></td><td style='text-align:center;' ><span>5120151100026</span></td><td style='text-align:center;' ><span>X3N-GMH0208/V1.0/1614021412/E3914/2</span><em><span>AHD+8</span></em><span>IPC(PON)/带TYPE-C接口/带外置GPS+GLONASS/带4G(EC25-EC)/带WIFI/支持双SSD硬盘盒/带加热/不带硬盘/1个SD卡座/不带Micro SD卡/锐明英文LOGO/带独立包装/带客户定制线材/客户定制/虚拟格式</span></td><td style='text-align:left;' ><span>Type-c</span></td></tr><tr><td style='text-align:center;' ><span>X3N-GMH0208(PON 航空6 PIN)</span></td><td style='text-align:center;' ><span>5196014100008</span></td><td style='text-align:center;' ><span>X3N-GMH0208/1.0/1614021412/E0001/2</span><em><span>AHD+8</span></em><span>IPC(PON)/带外置GPS+GLONASS/带4G(EC25-EC)/带WIFI/带加热/不带硬盘/带1个Micro SD卡座/不带Micro SD/带双SSD硬盘盒/6PIN航空头/锐明英文LOGO/带独立包装/虚拟格式/通用</span></td><td style='text-align:left;' ><span>PON 6 PIN</span><br /><span>USB A</span></td></tr><tr><td style='text-align:center;' ><span>X3N-GMH0208(PON 航空6 PIN) Type C</span></td><td style='text-align:center;' ><span>5120151100027</span></td><td style='text-align:center;' ><span>X3N-GMH0208/V1.0/1612021412/E3914/2</span><em><span>AHD+8</span></em><span>IPC(PON)/带TYPE-C接口/带外置GPS+GLONASS/带4G(EC25-EC)/带WIFI/带双SSD硬盘盒/带加热/不带硬盘/6PIN航空头/1个SD卡座/不带Micro SD卡/锐明英文LOGO/带独立包装/通用/虚拟格式</span></td><td style='text-align:left;' ><span>Type-c</span></td></tr><tr><td style='text-align:center;' ><span>X3N-GMH0208(POE RJ45)</span></td><td style='text-align:center;' ><span>5120151100001</span></td><td style='text-align:center;' ><span>X3N-GMH0208/V1.0/1612021412/E0001/2</span><em><span>AHD+8</span></em><span>IPC(POE)/带外置GPS+GLONASS/带4G(EC25-EC)/带WIFI/带蓝牙/带加热/带双2.5寸SSD硬盘盒/不带硬盘/1个SD卡座/不带Micro SD卡/锐明英文LOGO/带独立包装/RJ45接口/通用/虚拟格式</span></td><td style='text-align:left;' ><span>POE RJ45，谨慎选择</span></td></tr><tr><td style='text-align:center;' ><span>X3N-GMH0208(PON M12)</span></td><td style='text-align:center;' ><span>5120151100018</span></td><td style='text-align:center;' ><span>X3N-GMH0208/V1.0/1612021412/E0001/2</span><em><span>AHD+8</span></em><span>IPC(POE)/带外置GPS+GLONASS/带4G(EC25-EC)/带WIFI/带加热/支持双SSD硬盘盒/不带硬盘/1个SD卡座/不带Micro SD卡/锐明英文LOGO/带独立包装/M12接口/通用/虚拟格式</span></td><td style='text-align:left;' ><span>POE M12，谨慎选择</span></td></tr><tr><td style='text-align:center;' ><span>X3N-GMH0404</span></td><td style='text-align:center;' ><span>5196009100133</span></td><td style='text-align:center;' ><span>X3N-GMH0404/X3N-H0404/N2.1/1612121621/E0001/4</span><em><span>AHD+4</span></em><span>IPC/带外置GPS/带4G(EC25-EC)/带WIFI（WG217）/带加热/带硬盘盒/不带硬盘/1个SD卡座/不带SD卡/锐明英文LOGO/带独立包装/非虚拟格式/通用</span></td><td style='text-align:left;' ><a href='http://oa.streamax.com:8080/km/review/km_review_main/kmReviewMain.do?method=view&amp;fdId=19909a35eb7bc49e0a44c0446d1bf5b5'><span>O250814051 X3N-GMH0404整机料号申请</span></a><br /><span>原料号5196009100105的GPS 5190076100017 已经停产，替换为新高频GPS模块3130000100094</span></td></tr><tr><td style='text-align:center;' ><span>X7NPRO-GMH1608</span></td><td style='text-align:center;' ><span>5198014100003</span></td><td style='text-align:center;' ><span>X7NPRO-GMH1608/X7NPRO-H1608/E1.0/1C12112P22/E0001/16</span><em><span>AHD+8</span></em><span>IPC/带外置GPS/带4G(EC25-EC)/带WIFI（WG217）/带加热/带硬盘盒/3.5寸/1个SD卡座/不带SD卡/锐明英文LOGO/带独立包装/虚拟格式/通用/CPU-NT98316</span></td><td style='text-align:left;' ><span>已停产</span></td></tr><tr><td style='text-align:center;' ><span>X7NPRO-GMH0416</span></td><td style='text-align:center;' ><span>5198012100004</span></td><td style='text-align:center;' ><span>X7NPRO-GMH0416/X7NPRO-H0416/V1.0/1612112422/E0001/4</span><em><span>AHD+16</span></em><span>IPC/带外置GPS/带4G(EC25-EC)/带WIFI（WG217）/带加热/带硬盘盒/3.5寸/1个SD卡座/不带SD卡/不带硬盘/锐明英文LOGO/带独立包装/虚拟格式/通用</span></td><td style='text-align:left;' ><span>已停产</span></td></tr><tr><td style='text-align:center;' ><span>A8Pro-H0412( 3.5&quot;) USB-A</span></td><td style='text-align:center;' ><span>5120105100050</span></td><td style='text-align:center;' ><span>A8Pro-H0412/V2.0/1612122822/E0001/4路AHD+12路IPC/带外置GPS(GRM-5550F1DR-AGGB197)/带4G(EC25-EC)/WIFI/BT SKI.WB8000DU2.7/带硬盘盒/带加热/不带硬盘/不带SD卡/锐明英文LOGO/带独立包装/通用/虚拟格式</span></td><td style='text-align:left;' ><span>USB-A</span><br /><span>3.5``硬盘盒</span><br /><span>高频GPS</span></td></tr><tr><td style='text-align:center;' ><span>A8Pro-H0412( 3.5&quot;) Type-C</span></td><td style='text-align:center;' ><span>5120105100072</span></td><td style='text-align:center;' ><span>A8Pro-H0412/V2.0/1612122822/E0001/4路AHD+12路IPC/支持TYPE-C接口/带外置GPS(GRM-5853F1DRW-AGGB327)/带4G(EC25-EC)/WIFI/BT SKI.WB8000DU2.7/带硬盘盒/带加热/不带硬盘/1个SD卡座/不带SD卡/锐明英文LOGO/带独立包装/通用/虚拟格式</span></td><td style='text-align:left;' ><span>Type-C</span><br /><span>3.5``硬盘盒</span><br /><span>高频GPS</span></td></tr><tr><td style='text-align:center;' ><span>A8Pro-H0412( 2.5&quot;) USB-A</span></td><td style='text-align:center;' ><span>5120105100060</span></td><td style='text-align:center;' ><span>A8Pro-H0412/V2.0/1612122822/E0001/4路AHD+12路IPC/带外置GPS/带4G(EC25-EC)/WIFI/BT SKI.WB8000DU2.7/只支持双固态2.5寸硬盘/带加热/不带硬盘/不带SD卡/锐明英文LOGO/带独立包装/通用/虚拟格式</span></td><td style='text-align:left;' ><span>USB-A</span><br /><span>2.5``硬盘盒</span></td></tr><tr><td style='text-align:center;' ><span>A8Pro-H0412( 2.5&quot;) Type-C</span></td><td style='text-align:center;' ><span>5120105100071</span></td><td style='text-align:center;' ><span>A8Pro-H0412/V2.0/1612122822/E0001/4路AHD+12路IPC/支持TYPE-C接口/带外置GPS/带4G(EC25-EC)/WIFI/BT SKI.WB8000DU2.7/只支持双固态2.5寸硬盘/带加热/不带硬盘/1个SD卡座/不带SD卡/锐明英文LOGO/带独立包装/通用/虚拟格式</span></td><td style='text-align:left;' ><span>Type-C</span><br /><span>2.5``硬盘盒</span></td></tr><tr><td style='text-align:center;' ><span>A8Pro-H0808( 3.5&quot;) USB-A</span></td><td style='text-align:center;' ><span>5120104100095</span></td><td style='text-align:center;' ><span>A8Pro-H0808/2.0/1614122822/E0001/8路AHD+8路IPC/带外置GPS/带4G(EC25-EC)/WIFI/BT SKI.WB8000DU2.7/带硬盘盒/带加热/</span><strong><span>带3.5寸2TB硬盘</span></strong><span>/不带SD卡/锐明英文LOGO/带独立包装/通用/虚拟格式</span></td><td style='text-align:left;' ><span>3.5``硬盘盒，带3.5寸2TB硬盘</span></td></tr><tr><td style='text-align:center;' ><span>A8Pro-H0808( 3.5&quot;) USB-A</span></td><td style='text-align:center;' ><span>5120104100090</span></td><td style='text-align:center;' ><span>A8Pro-H0808/2.0/1612122822/E0001/8路AHD+8路IPC/带外置GPS/带4G(EC25-EC)/WIFI/BT SKI.WB8000DU2.7/带硬盘盒/带加热/不带硬盘/不带SD卡/锐明英文LOGO/带独立包装/通用/虚拟格式</span></td><td style='text-align:left;' ><span>3.5``硬盘盒，不带硬盘</span></td></tr><tr><td style='text-align:center;' ><span>A8Pro-H0808( 3.5&quot;) Type-C</span></td><td style='text-align:center;' ><span>5120104100155</span></td><td style='text-align:center;' ><span>A8Pro-H0808/V2.0/1612122822/E0001/8路AHD+8路IPC/支持TYPE-C接口/带外置GPS/带4G(EC25-EC)/WIFI/BT SKI.WB8000DU2.7/带硬盘盒/带加热/不带硬盘/1个SD卡座/不带SD卡/锐明英文LOGO/带独立包装/通用/虚拟格式</span></td><td style='text-align:left;' ><span>Type-C</span><br /><span>3.5``硬盘盒</span></td></tr><tr><td style='text-align:center;' ><span>A8Pro-H1204( 3.5&quot;) USB-A</span></td><td style='text-align:center;' ><span>5120106100059</span></td><td style='text-align:center;' ><span>A8Pro-H1204/2.0/1612122822/E0001/12路AHD+4路IPC/带外置GPS/带4G(EC25-EC)/WIFI/BT SKI.WB8000DU2.7/带硬盘盒/带加热/不带硬盘/不带SD卡/锐明英文LOGO/带独立包装/通用/虚拟格式</span></td><td style='text-align:left;' ><span>USB-A</span><br /><span>3.5``硬盘盒</span></td></tr><tr><td style='text-align:center;' ><span>A8Pro-H1204( 3.5&quot;) Type-C</span></td><td style='text-align:center;' ><span>5120106100146</span></td><td style='text-align:center;' ><span>A8Pro-H1204/V2.0/1612122822/E0001/12路AHD+4路IPC/支持TYPE-C接口/带外置GPS/带4G(EC25-EC)/WIFI/BT SKI.WB8000DU2.7/带硬盘盒/带加热/不带硬盘/1个SD卡座/不带SD卡/锐明英文LOGO/带独立包装/通用/虚拟格式</span></td><td style='text-align:left;' ><span>Type-C</span><br /><span>3.5``硬盘盒</span></td></tr><tr><td style='text-align:center;' ><span>A8Pro-H1204( 3.5&quot;) USB-A</span></td><td style='text-align:center;' ><span>5120106100074</span></td><td style='text-align:center;' ><span>A8Pro-H1204/V2.0/1612122822/E0001/12路AHD+4路IPC/带外置GPS(GRM-5853F1DRW-AGGB327)/带4G(EC25-EC)/WIFI/BT SKI.WB8000DU2.7/带硬盘盒/带加热/不带硬盘/1个SD卡座/不带SD卡/锐明英文LOGO/带独立包装/通用/虚拟格式</span></td><td style='text-align:left;' ><span>USB-A</span><br /><span>3.5``硬盘盒</span><br /><span>高频GPS：GRM-5853F1DRW-AGGB327，料号3130000100094</span></td></tr><tr><td style='text-align:center;' ><span>A8Pro-H1204( 3.5&quot;) Type-C</span></td><td style='text-align:center;' >&nbsp;</td><td style='text-align:center;' >&nbsp;</td><td style='text-align:left;' ><span>Type-C</span><br /><span>3.5``硬盘盒</span><br /><span>高频GPS：GRM-5853F1DRW-AGGB327，料号3130000100094</span></td></tr><tr><td style='text-align:center;' ><span>A8Pro-H1204( 2.5&quot;) USB-A</span></td><td style='text-align:center;' ><span>5120106100148</span></td><td style='text-align:center;' ><span>A8Pro-H1204/2.0/1612122822/E0001/12路AHD+4路IPC/带外置GPS/带4G(EC25-EC)/WIFI/BT SKI.WB8000DU2.7/带2.5寸双固态硬盘盒/带加热/不带硬盘/不带SD卡/锐明英文LOGO/带独立包装/通用/虚拟格式</span></td><td style='text-align:left;' ><span>USB-A</span><br /><span>2.5``硬盘盒</span></td></tr><tr><td style='text-align:center;' ><span>A8Pro-H1204( 2.5&quot;) Type-C</span></td><td style='text-align:center;' >&nbsp;</td><td style='text-align:center;' >&nbsp;</td><td style='text-align:left;' ><span>Type-C</span><br /><span>2.5``硬盘盒</span></td></tr><tr><td style='text-align:center;' ><span>A8Pro-H1204( 2.5&quot;) USB-A</span></td><td style='text-align:center;' ><span>5120106100149</span></td><td style='text-align:center;' ><span>A8Pro-H1204/V2.0/1612122822/E0001/12路AHD+4路IPC/带外置GPS(GRM-5853F1DRW-AGGB327)/带4G(EC25-EC)/WIFI/BT SKI.WB8000DU2.7/支持双固态2.5寸硬盘盒/带加热/不带硬盘/1个SD卡座/不带SD卡/锐明英文LOGO/带独立包装/通用/虚拟格式</span></td><td style='text-align:left;' ><span>USB-A</span><br /><span>2.5``硬盘盒</span><br /><span>高频GPS：GRM-5853F1DRW-AGGB327，料号3130000100094</span></td></tr><tr><td style='text-align:center;' ><span>A8Pro-H1204( 2.5&quot;) Type-C</span></td><td style='text-align:center;' >&nbsp;</td><td style='text-align:center;' >&nbsp;</td><td style='text-align:left;' ><span>高频GPS：GRM-5853F1DRW-AGGB327，料号3130000100094</span><br /><span>Type-C</span><br /><span>2.5``硬盘盒</span></td></tr><tr><td style='text-align:center;' ><span>C6D(5.0)套装</span></td><td style='text-align:center;' ><span>5130026100002</span></td><td style='text-align:center;' ><span>C6D(5.0)套装/7.0/32442002224122321501004/E0001/网约分体/可扩展一路网络接口/外置GPS（GRM-5550DR）/带WIFI/无蓝牙/带六轴/带4G(EC25-EC)/对内AHD/CA26/720P/2.6MM/带红外/带音频/对外MIPI/1080P/4mm/支持2路 Micro SD卡/锐明英文LOGO/通用/无/带散线/GD单片机/非虚拟格式</span></td><td style='text-align:left;' >&nbsp;</td></tr><tr><td style='text-align:center;' ><span>Z5套装</span></td><td style='text-align:center;' ><span>5210056100002</span></td><td style='text-align:center;' ><span>Z5套装/V1.2/一体/无/E0000/双路/内置GPS模块（惯导）/带4G(EC25-EC)/带WIFI/带蓝牙/带六轴/对内IPC/无/4K/3.7mm/不带红外/不带音频/对外IPC/1080P/2.19mm/支持1路TF卡/无SD卡/不带LOGO/通用/GD单片机/带独立包装/非虚拟格式/带独立包装/通用</span></td><td style='text-align:left;' ><span>不带logo</span></td></tr><tr><td style='text-align:center;' ><span>Z5套装</span></td><td style='text-align:center;' ><span>5210056100009</span></td><td style='text-align:center;' ><span>Z5套装/V1.2/一体/E0001/双路/内置GPS模块（惯导）/带4G(EC25-EC)/带WIFI/带蓝牙/带六轴/对内IPC/无/4K/3.7mm/不带红外/不带音频/对外IPC/1080P/2.19mm/支持1路TF卡/无SD卡/锐明英文LOGO/GD单片机/带独立包装/非虚拟格式/带独立包装/通用</span></td><td style='text-align:left;' ><span>锐明英文LOGO</span></td></tr><tr><td style='text-align:center;' ><span>CP16MAX-116 MONITOR</span></td><td style='text-align:center;' ><span>5190122100005</span></td><td style='text-align:center;' ><span>人机交互屏/CP16MAX-116/V1.2/E0001/不带键盘/带锐明英文LOGO/不带延长线/带独立包装/非虚拟格式/通用</span></td><td style='text-align:left;' >&nbsp;</td></tr><tr><td style='text-align:center;' ><span>AHD CA20D (TRIPLE LENES) 1080P</span></td><td style='text-align:center;' ><span>5151081100004</span></td><td style='text-align:center;' ><span>SVT-A6320MDP-1BA1N-UUL16R8M2.7mm-A/CA20D/1080P/P制/锐明英文LOGO/黑色/ATOM车载视频连接母/0.5米/不带音频/不带红外/16mm/2.7mm/8mm三镜头/无说明书/带独立包装/IMX307方案/无/通用/下出线</span></td><td style='text-align:left;' >&nbsp;</td></tr><tr><td style='text-align:center;' ><span>P3D APC</span></td><td style='text-align:center;' ><span>5152118100005</span></td><td style='text-align:center;' ><span>P3D/V3.0/V3.0/I0M2.7P2T23C0B1/C0001/NT98528+IMX327/1080P/无红外/不带音频/无SD卡/2.7mm/PON供电/RS765-6航空母头+小5557-4P+USB-A母头+小5559-6P/白色/吊装/中英文LOGO/带独立包装/通用/中英文提示标贴</span></td><td style='text-align:left;' >&nbsp;</td></tr><tr><td style='text-align:center;' ><span>AHD M12 Male 4PIN</span></td><td style='text-align:center;' ><span>1260011100201</span></td><td style='text-align:center;' ><span>4PIN车载视频头A转接线-13M-EN/一端M12-4公头(A型),另一端车载视频连接器4PIN母头-A TYPE,线径6.5mm,带R118阻燃和印字/13M/中性英文标贴/无/通用/ML/MICHINA/MIVIETNAM</span></td><td style='text-align:left;' ><mark><span>新版CA24S &amp; AVM需要使用该线材</span></mark><br /><span>0.35米 1241040100073</span><br/><span>1.524米 1241040100059</span><br/><span>3米 1241040100065</span><br/><span>5米 1241040100066</span><br/><span>7米 1241040100064</span><br/><span>9米 1241040100033</span><br/><span>11米 1260011100200</span><br/><span>13米 1260011100201</span><br/><span>15米 1260011100202</span><br/><span>17米 1241040100045</span><br/><span>19米 1241040100048</span><br/><span>23米 1260011100203</span><br/><span>30米 1241040100070</span></td></tr><tr><td style='text-align:center;' ><span>AD PLUS V2.0 1.1</span></td><td style='text-align:center;' ><span>5154021100055</span></td><td style='text-align:center;' ><span>AD Plus2.0/V1.1/232424021225361321521002/E0001/双路/外扩两路/内置GPS模块（惯导）/带4G(EC25-EC)/带WIFI/带蓝牙/带六轴/对内IPC/N/1080P/2.2mm/带红外/带音频/对外IPC/500W/2.8mm/支持2路 Micro SD卡/无SD卡/锐明英文LOGO/通用/GD单片机/带电源模块盒(支持IBUTTON)/带独立包装/非虚拟格式</span></td><td style='text-align:left;' ><a href='https://wj.streamax.com:9443/preview.html?fileid=b196e517-bc7a-46a5-ae1c-e487a7efe0f1'><span>V2.0 1.1 vs V2.0 1.0对比表格</span></a><br /><span>注意事项：v1.1的软件可以升v1.0和v1.1的硬件，v1.0的软件不能升v1.1的硬件，即：统一使用最新 V2.0 1.1 的最新软件</span></td></tr><tr><td style='text-align:center;' ><span>AD PLUS V2.0 1.0</span></td><td style='text-align:center;' ><span>5130023100107</span></td><td style='text-align:center;' ><span>AD Plus2.0/1.0/232424021225361321521002/E0001/双路/外扩两路/内置GPS模块（惯导）/带WIFI/带蓝牙/带六轴/带4G(EC25-EC)/对内IPC/N/1080P/2.2mm/带红外/带音频/对外IPC/500W/2.8mm/支持2路 Micro SD卡/锐明英文LOG</span></td><td style='text-align:left;' ><span>已切AD PLUS V2.0 </span><code>1.1</code></td></tr><tr><td style='text-align:center;' ><span>CA20S 3M双面胶</span></td><td style='text-align:center;' ><span>9760040100028</span></td><td style='text-align:center;' ><span>3M双面胶-CA20SV1.0/3M-VHB5962黑色L45.3</span><em><span>W49.6</span></em><span>T1.6mm</span></td><td style='text-align:left;' ><span>适配于相机CA20S 料号：5151019100080</span></td></tr><tr><td style='text-align:center;' ><span>C46+B3A</span></td><td style='text-align:center;' ><span>5152178100001</span></td><td style='text-align:center;' ><span>装/V1.0/I0A0S0M17P23T1C1/E0000/AX620U+SC200AI/1080P/无红外/不带音频/无SD卡/1.9mm/PON供电/12芯-M12头/黑色/无/不带LOGO/带独立包装/通用/带B3A报警器/带4M延长线/带转接线</span></td><td style='text-align:left;' >&nbsp;</td></tr><tr><td style='text-align:center;' ><span>C46</span></td><td style='text-align:center;' ><span>5210047100001</span></td><td style='text-align:center;' ><span>C46套装/V1.0/I0A0S0M17P23T1C1/E0000/AX620U+SC200AI/1080P/无红外/不带音频/无SD卡/1.9mm/PON供电/12芯-M12头/黑色/无/不带LOGO/带转接线/带独立包装/带独立包装/通用</span></td><td style='text-align:left;' ><span>该相机尾线为12pin，需要配合转接线使用，该料号包含转接线1261010100061</span></td></tr><tr><td style='text-align:center;' ><span>C46转接线</span></td><td style='text-align:center;' ><span>1261010100061</span></td><td style='text-align:center;' ><span>M12-12芯公头转接线-C46-C/一端M12-12公头(A型)带屏蔽壳,另一端RS765-6航空母头+RS765-4航空母头+小5559-6P+小5559-4P/300mm/中性英文标贴/C46/通用/HL</span></td><td style='text-align:left;' >&nbsp;</td></tr><tr><td style='text-align:center;' ><span>C46 8米延长线</span></td><td style='text-align:center;' ><span>1260040100291</span></td><td style='text-align:center;' ><span>M12-12芯公头转接线-C46-8M/一端M12-12公头(A型)带屏蔽壳,另一端M12-12母头(A型)带屏蔽壳/8M/中性英文标贴/C46/通用/HL/MICHINA/MIVIETNAM</span></td><td style='text-align:left;' >&nbsp;</td></tr><tr><td style='text-align:center;' ><span>C24磨砂黑色壳(Ral9005）</span></td><td style='text-align:center;' ><span>5152092100051</span></td><td style='text-align:center;' ><span>IP946C24/V1.0/I1A0S0M2.8P2T19C0/E3914/S3L22+IMX307/1080P/有红外/不带音频/无SD卡/2.8mm/PON供电/外露0.35米10芯宝马母头尾线/转RJ45母头连接线/磨砂黑色壳(Ral9005)/无/锐明英文LOGO/带独立包装/客户定制</span></td><td style='text-align:left;' ><span>黑色</span></td></tr><tr><td style='text-align:center;' ><span>C24白色</span></td><td style='text-align:center;' ><span>5152092100038</span></td><td style='text-align:center;' ><span>IP946C24/V1.0/I1A0S0M2.8P2T19C0/E0001/S3L22+IMX307/1080P/有红外/不带音频/无SD卡/2.8mm/PON供电/外露0.35米10芯宝马母头尾线/转RJ45母头连接线/白色壳/无/锐明英文LOGO/带独立包装/通用</span></td><td style='text-align:left;' ><span>白色</span></td></tr><tr><td style='text-align:center;' ><span>C25 PON RJ45</span></td><td style='text-align:center;' >&nbsp;</td><td style='text-align:center;' >&nbsp;</td><td style='text-align:left;' >&nbsp;</td></tr><tr><td style='text-align:center;' ><span>C25 POE RJ45</span></td><td style='text-align:center;' ><span>5152071100002</span></td><td style='text-align:center;' ><span>SVT/IP946C25/I1A1S0M2.8P2T3C0-E0001/车载专用高清摄像机/S3L22+IMX307/1080P/红外/带音频/无SD卡/2.8mm镜头/POE供电/0.35米圆形RJ45接头尾线/白色壳/锐明英文LOGO/车载专用高清摄像机软件V1.0</span></td><td style='text-align:left;' >&nbsp;</td></tr><tr><td style='text-align:center;' ><span>C25G(Global Shuttle) PON RJ45</span></td><td style='text-align:center;' ><span>5152200100001</span></td><td style='text-align:center;' ><span>IP973C25G/V1.0/I1A1S0M3.0P2T1C0/E0001/AX620Q+SC233HGS/1080P/有红外/带音频/无SD卡/3mm/PON供电/RJ45母头/0.5M/白色壳/无/锐明英文LOGO/带独立包装/通用</span></td><td style='text-align:left;' ><span>PON RJ45</span></td></tr><tr><td style='text-align:center;' ><span>C25G(Global Shuttle) PON 航空6 PIN</span></td><td style='text-align:center;' ><span>5152200100003</span></td><td style='text-align:center;' ><span>IP973C25G/V1.0/I1A1S0M3.0P2T1C0/E0001/AX620Q+SC233HGS/1080P/有红外/带音频/无SD卡/3mm/PON供电/另一端RS765-6航空母头/0.5M/白色壳/无/锐明英文LOGO/带独立包装/通用</span></td><td style='text-align:left;' ><span>PON 航空6 PIN</span></td></tr><tr><td style='text-align:center;' ><span>C11(白色)</span></td><td style='text-align:center;' >&nbsp;</td><td style='text-align:center;' >&nbsp;</td><td style='text-align:left;' ><del><span>5152037100080</span></del><span>已禁购</span></td></tr><tr><td style='text-align:center;' ><span>运维宝(V2.0) EasyCheck</span></td><td style='text-align:center;' ><span>5190001000009</span></td><td style='text-align:center;' ><span>SVT-P运维宝(V2.0)-ME/运维宝(V2.0)/带WIFI/带SD卡座不带SD卡/无LOGO/带包材/配英文说明书</span></td><td style='text-align:left;' >&nbsp;</td></tr><tr><td style='text-align:center;' ><span>迷你海螺 CA11 700线（MINI DOME 2.8MM 700TVL）</span></td><td style='text-align:center;' ><span>5150002100025</span></td><td style='text-align:center;' ><span>SVT/M5270HP/1G1E-AIR2.8mm-G/迷你海螺/CA11/700线/P制/锐明英文LOGO/灰绿色/4芯航空头/0.5米/带音频/带红外/2.8mm镜头/配英文说明书/H68方案/空/带独立包装/通用</span></td><td style='text-align:left;' ><span>原料号</span><del><span>5150002000072</span></del><span>已禁购</span></td></tr><tr><td style='text-align:center;' ><span>迷你海螺 CA11 AHD（MINI DOME 2.8MM AHD 1080P）</span></td><td style='text-align:center;' ><span>5151071100074</span></td><td style='text-align:center;' ><span>SVT-A6220HP-1G1E-AIR2.8mm-A/CA11/V1.0/1080P/P制/锐明英文LOGO/灰绿色/标准4芯航空头/0.5米/带音频/带红外/2.8mm镜头/带独立包装/IMX307方案/无/通用</span></td><td style='text-align:left;' >&nbsp;</td></tr><tr><td style='text-align:center;' ><span>POE转PON盒</span></td><td style='text-align:center;' ><span>5190034100006</span></td><td style='text-align:center;' ><span>POE转PON盒/V1.0/E227967/配RJ45公头信号输入线/配RJ45母头信号输入线/不带LOGO/带工业包装/非虚拟格式</span></td><td style='text-align:left;' ><span>RJ45公头接MDVR，RJ45母头通过网线接IPC</span></td></tr><tr><td style='text-align:center;' ><span>POE转PON盒</span></td><td style='text-align:center;' ><span>5190034100001</span></td><td style='text-align:center;' ><span>POE转PON盒/不带LOGO/POE转PON盒-E0000/一端为RJ45公头线/通用/一端为6芯航空公头线/零散包装/非虚拟格式</span></td><td style='text-align:left;' ><span>RJ45公头接MDVR，6pin航空公头接6pin航空母头IPC</span></td></tr></tbody></table></figure><p>&nbsp;</p><h2 id='gps模块'><span>GPS模块</span></h2><figure class='table-figure'><table><thead><tr><th><span>模块类型</span></th><th><span>描述</span></th><th><span>编号</span></th><th><span>备注</span></th></tr></thead><tbody><tr><td><span>Normal GPS module</span></td><td><span>GPS模块/4Pin小557-5V+RS232/SKYLAB-SKM51BLC/GPS单模AXN_2.32_3337_150108/3000mm/中性英文标贴/无/通用</span></td><td><span>1210060000001</span></td><td>&nbsp;</td></tr><tr><td><span>Normal GPS module</span></td><td><span>GPS模块/4Pin小557-5V+RS232/线长5000mm/通用/SKM51BLC (0911342)/GPS单模AXN_2.32_3337_150108/5M/中性英文标贴/无/通用</span></td><td><span>1210060000004</span></td><td>&nbsp;</td></tr><tr><td><span>Normal GPS module</span></td><td><span>GPS模块/4Pin小557-5V+RS232/线长7000mm/通用/SKM51BLC (0911342)/GPS单模AXN_2.32_3337_150108</span></td><td><span>1210060000005</span></td><td>&nbsp;</td></tr><tr><td><span>High frequency GPS module</span></td><td><span>GPS/GRM-5550DR-UB8XT5M/V2.02/不带LOGO/线长5M /通用 /SW:20190821</span></td><td><span>5190076100004</span></td><td><span>Murat常用，但是逐步淘汰</span></td></tr><tr><td><span>High frequency GPS module</span></td><td><span>定位模块组件/XPAD/X1/GRM-5853F1DRW-AGGB327（5550主板+5853防水外壳）/5米/通用/不带包装/FW:20240513/IP67/-40</span><sub><span>80°C（-40</span></sub><span>105°C）</span></td><td><span>3130000100094</span></td><td><span>黎工推荐</span></td></tr></tbody></table></figure><h2 id='退市禁购料号基础信息表'><span>退市/禁购料号基础信息表</span></h2><figure class='table-figure'><table><thead><tr><th style='text-align:center;' ><span>规格型号</span></th><th style='text-align:center;' ><span>料号编码</span></th><th style='text-align:center;' ><span>物料名称</span></th><th style='text-align:left;' ><span>备注</span></th></tr></thead><tbody><tr><td style='text-align:center;' ><span>M1N 2.0 H0402</span></td><td style='text-align:center;' ><span>5110038100033</span></td><td style='text-align:center;' ><span>M1N 2.0/V1.0/H0402/E0000/亚欧版本/6CH*1080P/带外置GPS/4G(EC25-EC)/带WIFI/支持Micro SD/不带LOGO/带独立包装/通用/非虚拟格式/带M.2 SSD硬盘盒/带1TB固态硬盘/单4G天线/不带 Micro SD卡</span></td><td style='text-align:left;' ><span>不带logo</span><br /><span>5110038100033的硬盘5190003100090停产，替换硬盘为1610004100003，因此后续申请新料号编码</span><mark><span>5110038100134</span></mark></td></tr><tr><td style='text-align:center;' ><span>M1N 2.0 H0402</span></td><td style='text-align:center;' ><span>5110038100023</span></td><td style='text-align:center;' ><span>M1N 2.0/V1.0/H0402/E0001/亚欧版本/6CH*1080P/带外置GPS/4G(EC25-EC)/带WIFI/支持Micro SD/锐明英文LOGO/带独立包装/通用/非虚拟格式/带M.2 SSD硬盘盒/1TB固态硬盘/单4G天线/不带Micro SD卡</span></td><td style='text-align:left;' ><span>锐明英文LOGO</span><br /><span>5110038100023的硬盘5190003100090停产，替换硬盘为1610004100003，因此后续申请新料号编码</span><mark><span>5110038100107</span></mark></td></tr><tr><td style='text-align:center;' ><span>AD Lite</span></td><td style='text-align:center;' ><span>5130024100002</span></td><td style='text-align:center;' ><span>AD Lite/1.0/232424021225361321521003/E0000/双路/外扩一路ipc/内置GPS模块（惯导）/带WIFI/带蓝牙/带六轴/带4G(EC25-EC)/对内IPC/无分体/1080P/2.2mm/带红外/带音频/对外IPC/1080P/4mm/支持2路 Micro SD卡/不带LOGO/通用/不带SD卡/带散线/GD单片机/带独立包装/非虚拟格式</span></td><td style='text-align:left;' ><span>202509后停产</span></td></tr><tr><td style='text-align:center;' ><span>X3N-GMH0404</span></td><td style='text-align:center;' ><span>5196009100105</span></td><td style='text-align:center;' ><span>X3N-GMH0404/X3N-H0404/N2.1/1612121621/E0001/4</span><em><span>AHD+4</span></em><span>IPC/带外置GPS(GRM-5550DR-UB8XT5M)/带4G(EC25-EC)/带WIFI（WG217）/带加热/带硬盘盒/不带硬盘/1个SD卡座/不带SD卡/锐明英文LOGO/带独立包装/非虚拟格式/通用</span></td><td style='text-align:left;' ><span>整机物料中的GPS </span><code>5190076100017</code><span> 已经停产，需要找替换GPS天线的整机物料，且要求是高频的GPS模块</span></td></tr><tr><td style='text-align:center;' ><span>迷你海螺 CA11 700线（MINI DOME 2.8MM 700TVL）</span></td><td style='text-align:center;' ><span>5150002000072</span></td><td style='text-align:center;' ><span>SVT/M5270HP/1G1E-AIR2.8mm-CM/模拟/700线/迷你海螺/P制/带锐明英文LOGO/灰绿色壳/标准4芯航空线/配英文说明书/带音频/带红外/2.8mm镜头/IMX225方案</span></td><td style='text-align:left;' ><span>禁购</span></td></tr><tr><td style='text-align:center;' ><span>M1N 2.0 H0402</span></td><td style='text-align:center;' ><span>5110038100107</span></td><td style='text-align:center;' ><span>M1N 2.0/V1.0/H0402/E0001/亚欧版本/6CH*1080P/带外置GPS/4G(EC25-EC)/带WIFI/带加热/带M.2 SSD硬盘盒/1TB固态硬盘/不带Micro SD卡/支持两路Micro SD/锐明英文LOGO/带独立包装/通用/非虚拟格式</span></td><td style='text-align:left;' ><span>锐明英文LOGO</span><br /><span>原料号5110038100023的硬盘5190003100090停产，替换硬盘为1610004100003，因此后续申请新料号编码</span><mark><span>5110038100107</span></mark></td></tr><tr><td style='text-align:center;' >&nbsp;</td><td style='text-align:center;' >&nbsp;</td><td style='text-align:center;' >&nbsp;</td><td style='text-align:left;' >&nbsp;</td></tr></tbody></table></figure></div></div>
+</body>
+</html>

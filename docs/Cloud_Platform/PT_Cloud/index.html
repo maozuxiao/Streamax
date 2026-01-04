@@ -75,6 +75,18 @@
             </div>
         </div>
         
+        <!-- 文件列表模块 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">文件列表</h5>
+            </div>
+            <div class="card-body">
+                <ul id="file-list" class="list-group list-group-flush">
+                    <!-- 文件列表将通过JavaScript动态生成 -->
+                </ul>
+            </div>
+        </div>
+        
         <footer class="mt-5 pt-4 border-top">
             <p class="text-muted">© 2026 Streamax知识库</p>
         </footer>
@@ -82,5 +94,142 @@
     
     <!-- 引入Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // 支持的文件格式
+        const supportedFormats = ['.pdf', '.md', '.markdown', '.html'];
+        
+        // GitHub API 配置
+        const repoOwner = 'maozuxiao';
+        const repoName = 'Streamax';
+        const branch = 'main';
+        const docsPath = 'docs';
+        
+        // 获取当前目录路径
+        const currentPath = window.location.pathname;
+        let apiPath = docsPath;
+        
+        // 如果不是根目录，解析当前路径
+        if (currentPath.includes('/docs/') && currentPath !== '/docs/' && currentPath !== '/docs/index.html') {
+            const pathParts = currentPath.split('/docs/')[1];
+            const dirPath = pathParts.split('/').slice(0, -1).join('/');
+            if (dirPath) {
+                apiPath = `${docsPath}/${dirPath}`;
+            }
+        }
+        
+        // 获取文件列表容器
+        const fileList = document.getElementById('file-list');
+        
+        // 使用GitHub API获取文件列表
+        fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${apiPath}?ref=${branch}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 过滤出文件，排除目录
+                const files = data.filter(item => item.type === 'file');
+                
+                // 处理文件列表
+                const processedFiles = files.map(file => {
+                    const fileName = file.name;
+                    const fileExtension = '.' + fileName.split('.').pop().toLowerCase();
+                    return { name: fileName, type: fileExtension };
+                });
+                
+                // 过滤文件，只显示支持的格式
+                const filteredFiles = processedFiles.filter(file => supportedFormats.includes(file.type));
+                
+                // 按文件名排序
+                filteredFiles.sort((a, b) => a.name.localeCompare(b.name));
+                
+                // 生成文件列表
+                filteredFiles.forEach(file => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item';
+                    
+                    const link = document.createElement('a');
+                    link.href = '#';
+                    link.textContent = file.name;
+                    link.className = 'text-decoration-none';
+                    
+                    // 根据文件类型设置不同的处理逻辑
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        
+                        if (file.type === '.md' || file.type === '.markdown') {
+                            // 对于md文件，跳转到markdown渲染器页面
+                            // 构造相对路径
+                            let relativePath = '';
+                            if (currentPath.includes('/docs/') && currentPath !== '/docs/' && currentPath !== '/docs/index.html') {
+                                const pathParts = currentPath.split('/docs/')[1];
+                                const dirPath = pathParts.split('/').slice(0, -1).join('/');
+                                if (dirPath) {
+                                    relativePath = `${dirPath}/${file.name}`;
+                                } else {
+                                    relativePath = file.name;
+                                }
+                            } else {
+                                relativePath = file.name;
+                            }
+                            window.location.href = `../markdown-viewer.html?file=${encodeURIComponent(relativePath)}`;
+                        } else if (file.type === '.html') {
+                            // 检查是否存在同名的md文件
+                            const hasSameNameMd = filteredFiles.some(f => 
+                                f.name.replace(f.type, '') === file.name.replace(file.type, '') && 
+                                (f.type === '.md' || f.type === '.markdown')
+                            );
+                            
+                            if (hasSameNameMd) {
+                                // 如果存在同名md文件，优先显示md文件
+                                const mdFileName = file.name.replace('.html', '.md');
+                                // 构造相对路径
+                                let relativePath = '';
+                                if (currentPath.includes('/docs/') && currentPath !== '/docs/' && currentPath !== '/docs/index.html') {
+                                    const pathParts = currentPath.split('/docs/')[1];
+                                    const dirPath = pathParts.split('/').slice(0, -1).join('/');
+                                    if (dirPath) {
+                                        relativePath = `${dirPath}/${mdFileName}`;
+                                    } else {
+                                        relativePath = mdFileName;
+                                    }
+                                } else {
+                                    relativePath = mdFileName;
+                                }
+                                window.location.href = `../markdown-viewer.html?file=${encodeURIComponent(relativePath)}`;
+                            } else {
+                                // 否则直接打开html文件
+                                window.location.href = file.name;
+                            }
+                        } else {
+                            // 对于pdf文件，直接打开
+                            window.location.href = file.name;
+                        }
+                    });
+                    
+                    listItem.appendChild(link);
+                    fileList.appendChild(listItem);
+                });
+                
+                // 如果没有文件，显示提示信息
+                if (filteredFiles.length === 0) {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item text-muted';
+                    listItem.textContent = '当前目录下没有支持的文件';
+                    fileList.appendChild(listItem);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching files:', error);
+                // 如果API调用失败，显示错误信息
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item text-danger';
+                listItem.textContent = '无法获取文件列表，请稍后重试';
+                fileList.appendChild(listItem);
+            });
+    </script>
 </body>
 </html>
