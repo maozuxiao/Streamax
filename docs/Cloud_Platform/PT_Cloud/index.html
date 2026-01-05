@@ -96,26 +96,38 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // 支持的文件格式
-        const supportedFormats = ['.pdf', '.md', '.markdown', '.html'];
-        
         // GitHub API 配置
         const repoOwner = 'maozuxiao';
         const repoName = 'Streamax';
         const branch = 'main';
-        const docsPath = 'docs';
         
-        // 获取当前目录路径
+        // 获取当前目录路径，确定API请求路径
         const currentPath = window.location.pathname;
-        let apiPath = docsPath;
         
-        // 如果不是根目录，解析当前路径
-        if (currentPath.includes('/docs/') && currentPath !== '/docs/' && currentPath !== '/docs/index.html') {
-            const pathParts = currentPath.split('/docs/')[1];
-            const dirPath = pathParts.split('/').slice(0, -1).join('/');
-            if (dirPath) {
-                apiPath = `${docsPath}/${dirPath}`;
-            }
+        // GitHub Pages URL结构：https://username.github.io/repoName/directory/file.html
+        // 提取目录路径，考虑到GitHub Pages将docs目录作为根目录
+        let apiPath = 'docs';
+        
+        // 分割路径
+        const parts = currentPath.split('/');
+        const repoIndex = parts.indexOf(repoName);
+        
+        // 确定是否为根目录
+        let isRoot = true;
+        let currentDir = '';
+        
+        if (repoIndex !== -1 && parts.length > repoIndex + 2) {
+            // 提取repoName后的目录路径
+            // parts = ['', 'repoName', 'directory', 'file.html']
+            const subPath = parts.slice(repoIndex + 1, -1).join('/'); // 移除文件名，保留目录路径
+            apiPath = `docs/${subPath}`;
+            isRoot = false;
+            currentDir = subPath + '/';
+        } else if (repoIndex !== -1 && parts.length === repoIndex + 2) {
+            // 根目录情况：https://username.github.io/repoName/
+            apiPath = 'docs';
+            isRoot = true;
+            currentDir = '';
         }
         
         // 获取文件列表容器
@@ -125,76 +137,70 @@
         fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${apiPath}?ref=${branch}`)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`GitHub API 请求失败: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
-                // 过滤出文件，排除目录
-                const files = data.filter(item => item.type === 'file');
+                // 清空文件列表
+                fileList.innerHTML = '';
                 
-                // 处理文件列表
-                const processedFiles = files.map(file => {
-                    const fileName = file.name;
-                    const fileExtension = '.' + fileName.split('.').pop().toLowerCase();
-                    return { name: fileName, type: fileExtension };
-                });
+                // 支持的文件格式
+                const supportedFormats = ['.pdf', '.md', '.markdown', '.html'];
                 
-                // 过滤文件，只显示支持的格式，并排除特定文件
+                // 要排除的文件
                 const excludedFiles = ['index.html', 'readme.md', 'markdown-viewer.html'];
-                const filteredFiles = processedFiles.filter(file => 
-                    supportedFormats.includes(file.type) && 
-                    !excludedFiles.includes(file.name.toLowerCase())
+                
+                // 分离目录和文件
+                const folders = data.filter(item => item.type === 'dir');
+                const files = data.filter(item => 
+                    item.type === 'file' && 
+                    supportedFormats.includes('.' + item.name.split('.').pop().toLowerCase()) && 
+                    !excludedFiles.includes(item.name.toLowerCase())
                 );
                 
-                // 按文件名排序
-                filteredFiles.sort((a, b) => a.name.localeCompare(b.name));
-                
-                // 生成文件列表
-                filteredFiles.forEach(file => {
+                // 先添加目录，再添加文件
+                folders.forEach(folder => {
                     const listItem = document.createElement('li');
                     listItem.className = 'list-group-item';
                     
                     const link = document.createElement('a');
-                    link.href = '#';
-                    link.textContent = file.name;
+                    link.href = `${folder.name}/index.html`;
+                    link.textContent = folder.name;
+                    link.className = 'text-decoration-none';
+                    link.target = '_self';
+                    
+                    listItem.appendChild(link);
+                    fileList.appendChild(listItem);
+                });
+                
+                // 添加文件
+                files.forEach(file => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item';
+                    
+                    const link = document.createElement('a');
                     link.className = 'text-decoration-none';
                     
-                    // 根据文件类型设置不同的处理逻辑
-                    link.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        
-                        if (file.type === '.md' || file.type === '.markdown') {
-                            // 对于md文件，跳转到markdown渲染器页面
-                            // 构造相对路径
-                            let relativePath = '';
-                            if (currentPath.includes('/docs/') && currentPath !== '/docs/' && currentPath !== '/docs/index.html') {
-                                const pathParts = currentPath.split('/docs/')[1];
-                                const dirPath = pathParts.split('/').slice(0, -1).join('/');
-                                if (dirPath) {
-                                    relativePath = `${dirPath}/${file.name}`;
-                                } else {
-                                    relativePath = file.name;
-                                }
-                            } else {
-                                relativePath = file.name;
-                            }
-                            window.location.href = `../markdown-viewer.html?file=${encodeURIComponent(relativePath)}`;
-                        } else if (file.type === '.html') {
-                            // 对于html文件，直接打开，不管是否有同名的md文件
-                            window.location.href = file.name;
-                        } else {
-                            // 对于pdf文件，直接打开
-                            window.location.href = file.name;
-                        }
-                    });
+                    // 构建文件链接
+                    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+                    if (fileExtension === '.md' || fileExtension === '.markdown') {
+                        // MD文件使用markdown-viewer.html
+                        const relativePath = `${currentDir}${file.name}`;
+                        link.href = `../../markdown-viewer.html?file=${encodeURIComponent(relativePath)}`;
+                    } else {
+                        // HTML和PDF文件直接打开
+                        link.href = file.name;
+                    }
+                    
+                    link.textContent = file.name;
                     
                     listItem.appendChild(link);
                     fileList.appendChild(listItem);
                 });
                 
                 // 如果没有文件，显示提示信息
-                if (filteredFiles.length === 0) {
+                if (folders.length === 0 && files.length === 0) {
                     const listItem = document.createElement('li');
                     listItem.className = 'list-group-item text-muted';
                     listItem.textContent = '当前目录下没有支持的文件';
@@ -206,7 +212,7 @@
                 // 如果API调用失败，显示错误信息
                 const listItem = document.createElement('li');
                 listItem.className = 'list-group-item text-danger';
-                listItem.textContent = '无法获取文件列表，请稍后重试';
+                listItem.textContent = `无法获取文件列表: ${error.message}`;
                 fileList.appendChild(listItem);
             });
     </script>
