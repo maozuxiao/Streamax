@@ -364,10 +364,10 @@
             // 如果是完整URL，直接使用
             fileUrl = file;
         } else {
-            // 获取当前页面的URL
-            const currentUrl = window.location.origin + window.location.pathname;
-            // 构建绝对URL，确保file参数被正确编码
-            fileUrl = new URL(file, currentUrl).href;
+            // 对于GitHub Pages和本地服务器，docs目录是根目录
+            // 因此file参数已经是相对于根目录的路径
+            // 直接添加origin和/即可
+            fileUrl = window.location.origin + '/' + file;
         }
         
         // 使用fetch API获取实际的md文件内容
