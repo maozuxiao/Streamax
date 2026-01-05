@@ -364,9 +364,10 @@
             // 如果是完整URL，直接使用
             fileUrl = file;
         } else {
-            // 直接使用file参数作为路径，因为fileUrl已经是相对于docs目录的完整路径
-            // 当从子目录访问时，这个路径是相对于docs目录的
-            fileUrl = file;
+            // 获取当前页面的URL
+            const currentUrl = window.location.origin + window.location.pathname;
+            // 构建绝对URL，确保file参数被正确编码
+            fileUrl = new URL(file, currentUrl).href;
         }
         
         // 使用fetch API获取实际的md文件内容
