@@ -358,9 +358,9 @@
             // 如果是完整URL，直接使用
             fileUrl = file;
         } else {
-            // 如果是相对路径，直接使用GitHub Pages的相对路径
-            // 因为在GitHub Pages中，docs目录已经是根目录
-            fileUrl = file;
+            // 确保从根目录开始请求文件，而不是相对于当前页面
+            // 因为file参数已经是相对于docs目录的完整路径
+            fileUrl = '/' + file;
         }
         
         // 使用fetch API获取实际的md文件内容
