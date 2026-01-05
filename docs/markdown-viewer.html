@@ -126,6 +126,25 @@
             background-color: var(--bg-color);
             min-height: calc(100vh - 100px);
         }
+
+        /* 响应式设计优化 */
+        @media (max-width: 768px) {
+            #write {
+                padding-left: 2ch;
+                padding-right: 2ch;
+            }
+            
+            body {
+                padding-top: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #write {
+                padding-left: 1ch;
+                padding-right: 1ch;
+            }
+        }
         
         /* 确保图片不会超出容器 */
         #write img {
@@ -256,6 +275,29 @@
             margin-bottom: 1rem;
         }
 
+        /* 优化移动端标题和按钮间距 */
+        @media (max-width: 768px) {
+            .back-btn {
+                margin-bottom: 0.5rem;
+            }
+            
+            h1#file-title {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            /* 确保卡片在移动端有合适的内边距 */
+            .card-body {
+                padding: 1rem;
+            }
+            
+            /* 调整底部页脚间距 */
+            footer {
+                margin-top: 2rem;
+                padding: 1rem 0;
+            }
+        }
+
         /* 代码编辑器样式 */
         .cm-s-inner .cm-number {
             color: #9333ea;
@@ -332,6 +374,7 @@
     <div class="container">
         <div class="back-btn">
             <a href="index.html" class="btn btn-primary">返回首页</a>
+            <a id="direct-render-btn" href="#" class="btn btn-secondary ms-2">直接渲染</a>
         </div>
         
         <h1 id="file-title">Markdown 查看器</h1>
@@ -355,6 +398,8 @@
         // 检查file参数是否存在
         if (!file) {
             document.getElementById('write').innerHTML = `<div class="alert alert-danger">请提供file参数</div>`;
+            // 隐藏直接渲染按钮
+            document.getElementById('direct-render-btn').style.display = 'none';
         } else {
             // 提取文件名（不包含路径）
             const fullFileName = file.split('/').pop();
@@ -363,6 +408,13 @@
             
             // 设置页面标题
             document.getElementById('file-title').textContent = fileName;
+            
+            // 构建直接渲染链接
+            const directRenderBtn = document.getElementById('direct-render-btn');
+            // 构建直接渲染URL，去除.md或.markdown后缀
+            const directRenderFile = file.replace(/\.(md|markdown)$/i, '');
+            const directRenderUrl = `${window.location.origin}${window.location.pathname.replace('markdown-viewer.html', '')}${directRenderFile}`;
+            directRenderBtn.href = directRenderUrl;
             
             // 构建完整的文件URL
             let fileUrl;
