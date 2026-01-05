@@ -344,6 +344,12 @@
         const urlParams = new URLSearchParams(window.location.search);
         const file = urlParams.get('file');
         
+        // 检查file参数是否存在
+        if (!file) {
+            document.getElementById('write').innerHTML = `<div class="alert alert-danger">请提供file参数</div>`;
+            return;
+        }
+        
         // 提取文件名（不包含路径）
         const fullFileName = file.split('/').pop();
         // 移除文件扩展名
@@ -358,9 +364,9 @@
             // 如果是完整URL，直接使用
             fileUrl = file;
         } else {
-            // 确保fileUrl是绝对路径，从服务器根目录开始
-            // 这样无论从哪个目录访问markdown-viewer.html，都能正确请求文件
-            fileUrl = '/' + file;
+            // 直接使用file参数作为路径，因为fileUrl已经是相对于docs目录的完整路径
+            // 当从子目录访问时，这个路径是相对于docs目录的
+            fileUrl = file;
         }
         
         // 使用fetch API获取实际的md文件内容
