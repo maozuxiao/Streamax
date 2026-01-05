@@ -364,11 +364,23 @@
             // 如果是完整URL，直接使用
             fileUrl = file;
         } else {
-            // 对于GitHub Pages和本地服务器，docs目录是根目录
-            // 因此file参数已经是相对于根目录的路径
-            // 直接添加origin和/即可
-            fileUrl = window.location.origin + '/' + file;
+            // 对于GitHub Pages，URL结构是 https://username.github.io/repoName/
+            // 所以需要确保fileUrl包含repoName
+            // 获取当前页面的URL路径，提取repoName
+            const pathParts = window.location.pathname.split('/');
+            let repoName = '';
+            // 查找repoName，通常是路径中的第二个部分
+            if (pathParts.length > 1 && pathParts[1]) {
+                repoName = pathParts[1] + '/';
+            }
+            
+            // 构建完整的fileUrl，包含origin、repoName和file路径
+            fileUrl = window.location.origin + '/' + repoName + file;
         }
+        
+        // 调试信息
+        console.log('Original file parameter:', file);
+        console.log('Constructed fileUrl:', fileUrl);
         
         // 使用fetch API获取实际的md文件内容
         fetch(fileUrl)
