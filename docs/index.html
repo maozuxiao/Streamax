@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Streamax知识库</title>
+    <link rel="icon" href="https://www.streamax.com/static/en/img/favicon.ico" type="image/x-icon">
     <!-- 引入Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -98,6 +99,9 @@
         
         <div class="mt-5">
             <h2>文件列表</h2>
+            <div class="mb-3">
+                <input type="text" id="search-box" class="form-control" placeholder="搜索文件...">
+            </div>
             <div class="card">
                 <div class="card-body">
                     <ul id="file-list" class="list-group list-group-flush">
@@ -108,7 +112,7 @@
         </div>
         
         <footer class="mt-5 pt-4 border-top">
-            <p class="text-muted">© 2026 Streamax知识库</p>
+            <p class="text-muted">© Sean | Streamax Knowledge Base</p>
         </footer>
     </div>
     
@@ -182,7 +186,8 @@
                 // 先添加文件，再添加目录，这样文件会显示在前面
                 files.forEach(file => {
                     const listItem = document.createElement('li');
-                    listItem.className = 'list-group-item';
+                    listItem.className = 'list-group-item file-item';
+                    listItem.setAttribute('data-file-name', file.name.toLowerCase());
                     
                     const link = document.createElement('a');
                     link.className = 'text-decoration-none';
@@ -207,7 +212,8 @@
                 // 添加目录
                 folders.forEach(folder => {
                     const listItem = document.createElement('li');
-                    listItem.className = 'list-group-item';
+                    listItem.className = 'list-group-item file-item';
+                    listItem.setAttribute('data-file-name', folder.name.toLowerCase());
                     
                     const link = document.createElement('a');
                     link.href = `${folder.name}/index.html`;
@@ -235,6 +241,23 @@
                 listItem.textContent = `无法获取文件列表: ${error.message}`;
                 fileList.appendChild(listItem);
             });
+
+            // 添加搜索功能
+            function filterFiles() {
+                const searchInput = document.getElementById("search-box").value.toLowerCase();
+                const fileItems = document.querySelectorAll(".file-item");
+
+                fileItems.forEach(item => {
+                    const fileName = item.getAttribute("data-file-name");
+                    if (fileName && fileName.includes(searchInput)) {
+                        item.style.display = "flex";
+                    } else {
+                        item.style.display = "none";
+                    }
+                });
+            }
+
+            document.getElementById("search-box").addEventListener("input", filterFiles);
     </script>
 </body>
 </html>
