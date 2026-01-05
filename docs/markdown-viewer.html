@@ -358,8 +358,8 @@
             // 如果是完整URL，直接使用
             fileUrl = file;
         } else {
-            // 确保从根目录开始请求文件，而不是相对于当前页面
-            // 因为file参数已经是相对于docs目录的完整路径
+            // 确保fileUrl是绝对路径，从服务器根目录开始
+            // 这样无论从哪个目录访问markdown-viewer.html，都能正确请求文件
             fileUrl = '/' + file;
         }
         
