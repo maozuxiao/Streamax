@@ -169,12 +169,17 @@
                     listItem.className = 'list-group-item file-item';
                     listItem.setAttribute('data-file-name', folder.name.toLowerCase());
                     
+                    const icon = document.createElement('span');
+                    icon.className = 'icon me-2';
+                    icon.textContent = '📁';
+                    
                     const link = document.createElement('a');
                     link.href = `${folder.name}/index.html`;
                     link.textContent = folder.name;
                     link.className = 'text-decoration-none';
                     link.target = '_self';
                     
+                    listItem.appendChild(icon);
                     listItem.appendChild(link);
                     fileList.appendChild(listItem);
                 });
@@ -184,6 +189,18 @@
                     const listItem = document.createElement('li');
                     listItem.className = 'list-group-item file-item';
                     listItem.setAttribute('data-file-name', file.name.toLowerCase());
+                    
+                    const icon = document.createElement('span');
+                    icon.className = 'icon me-2';
+                    
+                    // 根据文件类型设置不同图标
+                    if (file.name.endsWith('.html')) {
+                        icon.textContent = '🌐';
+                    } else if (file.name.endsWith('.pdf')) {
+                        icon.textContent = '📄';
+                    } else if (file.name.endsWith('.md') || file.name.endsWith('.markdown')) {
+                        icon.textContent = '📝';
+                    }
                     
                     const link = document.createElement('a');
                     link.className = 'text-decoration-none';
@@ -207,6 +224,7 @@
                     
                     link.textContent = file.name;
                     
+                    listItem.appendChild(icon);
                     listItem.appendChild(link);
                     fileList.appendChild(listItem);
                 });
