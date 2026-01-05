@@ -347,58 +347,101 @@
         // 检查file参数是否存在
         if (!file) {
             document.getElementById('write').innerHTML = `<div class="alert alert-danger">请提供file参数</div>`;
-            return;
-        }
-        
-        // 提取文件名（不包含路径）
-        const fullFileName = file.split('/').pop();
-        // 移除文件扩展名
-        const fileName = fullFileName.replace(/\.(md|markdown)$/i, '');
-        
-        // 设置页面标题
-        document.getElementById('file-title').textContent = fileName;
-        
-        // 构建完整的文件URL
-        let fileUrl;
-        if (file.startsWith('http://') || file.startsWith('https://')) {
-            // 如果是完整URL，直接使用
-            fileUrl = file;
         } else {
-            // 对于GitHub仓库中的文件，使用GitHub Raw URL来获取内容
-            // Raw URL格式：https://raw.githubusercontent.com/{owner}/{repo}/{branch}/docs/{file}
-            const repoOwner = 'maozuxiao';
-            const repoName = 'Streamax';
-            const branch = 'main';
+            // 提取文件名（不包含路径）
+            const fullFileName = file.split('/').pop();
+            // 移除文件扩展名
+            const fileName = fullFileName.replace(/\.(md|markdown)$/i, '');
             
-            // 构建GitHub Raw URL
-            fileUrl = `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${branch}/docs/${file}`;
-        }
-        
-        // 调试信息
-        console.log('Original file parameter:', file);
-        console.log('Constructed fileUrl:', fileUrl);
-        
-        // 使用fetch API获取实际的md文件内容
-        fetch(fileUrl)
-            .then(response => {
-                console.log('Response status:', response.status);
-                console.log('Response URL:', response.url);
-                if (!response.ok) {
-                    throw new Error(`HTTP错误 ${response.status}: ${response.statusText}`);
-                }
-                return response.text();
-            })
-            .then(mdContent => {
-                // 使用marked.js解析markdown内容
-                const htmlContent = marked.parse(mdContent);
+            // 设置页面标题
+            document.getElementById('file-title').textContent = fileName;
+            
+            // 构建完整的文件URL
+            let fileUrl;
+            if (file.startsWith('http://') || file.startsWith('https://')) {
+                // 如果是完整URL，直接使用
+                fileUrl = file;
+            } else {
+                // 检查当前环境是否为GitHub Pages
+                const isGitHubPages = window.location.hostname.endsWith('github.io');
                 
-                // 将解析后的HTML内容插入到页面中
-                document.getElementById('write').innerHTML = htmlContent;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('write').innerHTML = `<div class="alert alert-danger">无法加载文件：${error.message}</div>`;
-            });
+                if (isGitHubPages) {
+                    // 对于GitHub Pages环境，使用GitHub Raw URL来获取内容（解决CORS问题）
+                    // Raw URL格式：https://raw.githubusercontent.com/{owner}/{repo}/{branch}/docs/{file}
+                    const repoOwner = 'maozuxiao';
+                    const repoName = 'Streamax';
+                    const branch = 'main';
+                    
+                    // 构建GitHub Raw URL，确保路径正确
+                    let rawPath = file;
+                    // 移除可能的起始斜杠
+                    if (rawPath.startsWith('/')) {
+                        rawPath = rawPath.slice(1);
+                    }
+                    // 确保路径以docs/开头
+                    if (!rawPath.startsWith('docs/')) {
+                        rawPath = `docs/${rawPath}`;
+                    }
+                    
+                    fileUrl = `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${branch}/${rawPath}`;
+                } else {
+                    // 对于本地环境，直接使用相对路径
+                    // 确保路径正确，移除可能的起始斜杠
+                    let relativePath = file;
+                    if (relativePath.startsWith('/')) {
+                        relativePath = relativePath.slice(1);
+                    }
+                    
+                    // 直接使用当前页面的base URL构建文件URL
+                    // 这确保在本地环境下能正确访问文件
+                    const baseUrl = window.location.origin + window.location.pathname.replace('markdown-viewer.html', '');
+                    fileUrl = `${baseUrl}${relativePath}`;
+                }
+            }
+            
+            // 调试信息
+            console.log('=== Markdown Viewer Debug Info ===');
+            console.log('Window location:', window.location.href);
+            console.log('Original file parameter:', file);
+            console.log('Current hostname:', window.location.hostname);
+            console.log('Constructed fileUrl:', fileUrl);
+            
+            // 检查GitHub Pages环境
+            const isGitHubPages = window.location.hostname.endsWith('github.io');
+            console.log('Is GitHub Pages:', isGitHubPages);
+            
+            // 使用fetch API获取实际的md文件内容
+            console.log('Starting fetch request...');
+            fetch(fileUrl)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    console.log('Response URL:', response.url);
+                    console.log('Response headers:', response.headers);
+                    if (!response.ok) {
+                        throw new Error(`HTTP错误 ${response.status}: ${response.statusText}`);
+                    }
+                    return response.text();
+                })
+                .then(mdContent => {
+                    console.log('Fetched MD content (first 100 chars):', mdContent.substring(0, 100) + '...');
+                    // 使用marked.js解析markdown内容
+                    try {
+                        const htmlContent = marked.parse(mdContent);
+                        console.log('Parsed HTML content (first 100 chars):', htmlContent.substring(0, 100) + '...');
+                        // 将解析后的HTML内容插入到页面中
+                        document.getElementById('write').innerHTML = htmlContent;
+                        console.log('Content inserted successfully!');
+                    } catch (parseError) {
+                        console.error('Error parsing markdown:', parseError);
+                        document.getElementById('write').innerHTML = `<div class="alert alert-danger">解析Markdown文件时出错：${parseError.message}</div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    console.error('Error stack:', error.stack);
+                    document.getElementById('write').innerHTML = `<div class="alert alert-danger">无法加载文件：${error.message}</div>`;
+                });
+        }
     </script>
 </body>
 </html>

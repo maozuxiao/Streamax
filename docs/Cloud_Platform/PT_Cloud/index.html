@@ -192,8 +192,14 @@
                     const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
                     if (fileExtension === '.md' || fileExtension === '.markdown') {
                         // MD文件使用markdown-viewer.html
-                        const relativePath = `${currentDir}${file.name}`;
-                        link.href = `../../markdown-viewer.html?file=${encodeURIComponent(relativePath)}`;
+                        // 确保生成的路径正确，不包含多余的docs/前缀
+                        let filePath = file.path;
+                        // 从file.path中提取docs/后面的路径
+                        // file.path格式：docs/filename.md 或 docs/subdir/filename.md
+                        if (filePath.startsWith('docs/')) {
+                            filePath = filePath.slice(5); // 移除docs/前缀
+                        }
+                        link.href = `../../markdown-viewer.html?file=${encodeURIComponent(filePath)}`;
                     } else {
                         // HTML和PDF文件直接打开
                         link.href = file.name;
