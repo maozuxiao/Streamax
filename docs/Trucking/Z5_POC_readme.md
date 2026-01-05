@@ -26,4 +26,10 @@
 
 ## 服务器信息
 
-待更新……
+- **Access URL**: https://eur-ftcloud.ifleetvision.com
+- **Subscriber Name: evologdemo**
+- **Username**: TurkeyDemo01
+- **Password**: `Please contact Sean`
+- **Expiration Date**: 2026-04
+- **Port**: 21083
+- **Domain name**: eur-ftcloud.ifleetvision.com
