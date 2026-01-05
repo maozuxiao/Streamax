@@ -340,61 +340,64 @@
     </div>
     
     <script>
-        // 1. 优先判断file参数是否存在，避免null.split()报错
+        // 获取URL参数中的文件名
         const urlParams = new URLSearchParams(window.location.search);
         const file = urlParams.get('file');
+        
+        // 检查file参数是否存在
         if (!file) {
-            document.getElementById('file-title').textContent = '未指定MD文件';
-            document.getElementById('write').innerHTML = `<div class="alert alert-danger">请在URL后添加?file=你的MD文件路径（如?file=test.md）</div>`;
-            // 终止脚本执行
+            document.getElementById('write').innerHTML = `<div class="alert alert-danger">请提供file参数</div>`;
             return;
         }
-
-        // 2. 安全提取文件名（先判断file存在，再拆分）
-        const fullFileName = file.split('/').pop() || '未知文件';
-        // 移除.md/.markdown后缀（不区分大小写，容错无后缀场景）
-        const fileName = fullFileName.replace(/\.(md|markdown)$/i, '') || fullFileName;
-
-        // 3. 设置页面标题
+        
+        // 提取文件名（不包含路径）
+        const fullFileName = file.split('/').pop();
+        // 移除文件扩展名
+        const fileName = fullFileName.replace(/\.(md|markdown)$/i, '');
+        
+        // 设置页面标题
         document.getElementById('file-title').textContent = fileName;
-        document.title = fileName + ' - Markdown查看器';
-
-        // 4. 优化文件URL构建（处理完整URL和相对路径）
+        
+        // 构建完整的文件URL
         let fileUrl;
         if (file.startsWith('http://') || file.startsWith('https://')) {
+            // 如果是完整URL，直接使用
             fileUrl = file;
-            // 特殊处理：若为GitHub raw地址，提示跨域风险
-            if (file.includes('raw.githubusercontent.com')) {
-                console.warn('注意：raw.githubusercontent.com可能存在跨域拦截，建议将MD文件随GitHub Pages部署');
-            }
         } else {
-            // 相对路径：确保基于GitHub Pages根目录（docs目录已作为根目录，直接使用相对路径）
-            fileUrl = file;
+            // 对于GitHub仓库中的文件，使用GitHub Raw URL来获取内容
+            // Raw URL格式：https://raw.githubusercontent.com/{owner}/{repo}/{branch}/docs/{file}
+            const repoOwner = 'maozuxiao';
+            const repoName = 'Streamax';
+            const branch = 'main';
+            
+            // 构建GitHub Raw URL
+            fileUrl = `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${branch}/docs/${file}`;
         }
-
-        // 5. 使用fetch获取MD文件，完善错误处理
+        
+        // 调试信息
+        console.log('Original file parameter:', file);
+        console.log('Constructed fileUrl:', fileUrl);
+        
+        // 使用fetch API获取实际的md文件内容
         fetch(fileUrl)
             .then(response => {
                 console.log('Response status:', response.status);
                 console.log('Response URL:', response.url);
                 if (!response.ok) {
-                    // 明确404等错误信息
-                    const errorMsg = response.status === 404 ? '文件不存在' : `HTTP错误 ${response.status}: ${response.statusText}`;
-                    throw new Error(errorMsg);
+                    throw new Error(`HTTP错误 ${response.status}: ${response.statusText}`);
                 }
                 return response.text();
             })
             .then(mdContent => {
-                // 解析MD内容并插入页面
+                // 使用marked.js解析markdown内容
                 const htmlContent = marked.parse(mdContent);
+                
+                // 将解析后的HTML内容插入到页面中
                 document.getElementById('write').innerHTML = htmlContent;
             })
             .catch(error => {
-                console.error('加载失败：', error);
-                document.getElementById('write').innerHTML = `<div class="alert alert-danger" style="color: red; padding: 16px; border: 1px solid #ffcccc; border-radius: 4px;">
-                    无法加载文件：${error.message}<br>
-                    请检查：1. file参数是否正确 2. MD文件是否已部署 3. 路径是否存在
-                </div>`;
+                console.error('Error:', error);
+                document.getElementById('write').innerHTML = `<div class="alert alert-danger">无法加载文件：${error.message}</div>`;
             });
     </script>
 </body>
