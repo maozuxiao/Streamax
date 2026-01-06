@@ -28,7 +28,7 @@
 
 - **Access URL**: https://eur-ftcloud.ifleetvision.com
 - **Subscriber Name: evologdemo**
-- **Username**: TurkeyDemo01
+- **Username**: evologdemo
 - **Password**: `Please contact Sean`
 - **Expiration Date**: 2026-04
 - **Port**: 21083
