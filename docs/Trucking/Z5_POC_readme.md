@@ -39,10 +39,10 @@
 >
 > 11. Please select the package for which you need authorization:*
 >
-> - [ ] Essential
-> - [x] Pro （ Recommended for demo account use）
-> - [ ] Enterprise
-> - [x] Z5
+> - [ ]  Essential
+> - [x]  Pro(Recommended for demo account use)
+> - [ ]  Enterprise
+> - [x]  Z5
 
 ## Tips
 
