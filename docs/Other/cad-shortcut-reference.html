@@ -1,0 +1,1969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAD快捷键速查</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36BFFA',
+                        dark: '#1D2939',
+                        light: '#F9FAFB',
+                        accent: '#FF7D00',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .key-shadow {
+                box-shadow: 0 2px 4px rgba(0,0,0,0.15), inset 0 -2px 0 rgba(0,0,0,0.1);
+            }
+            .card-hover {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .search-focus {
+                transition: all 0.3s ease;
+            }
+            .search-focus:focus-within {
+                box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.3);
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .gradient-bg {
+                background: linear-gradient(135deg, #f5f7fa 0%, #e4eaf5 100%);
+            }
+        }
+
+    body {
+        line-height: 1.6;
+        display: flex;
+        flex-direction: column;
+    }
+
+    main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #no-results {
+        margin-top: auto;
+    }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+    <!-- 顶部导航 -->
+    <header class="bg-gradient-to-r from-primary to-secondary text-white shadow-md sticky top-0 z-50 transition-all duration-300">
+    <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
+        <div class="flex items-center mb-4 md:mb-0">
+            <i class="fa fa-keyboard-o text-3xl mr-3 animate-pulse"></i>
+            <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold tracking-tight">CAD快捷键速查</h1>
+        </div>
+        <div class="w-full md:w-auto">
+            <div class="relative search-focus rounded-lg overflow-hidden shadow-lg">
+                <input type="text" id="search-input"
+                       placeholder="搜索快捷键或功能..."
+                       class="w-full md:w-80 px-4 py-3 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50 transition-all bg-white/95 backdrop-blur-sm text-gray-800">
+                <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-primary"></i>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 搜索结果提示 -->
+        <div id="search-results" class="mb-8 hidden">
+            <p class="text-gray-600"><span id="result-count" class="font-semibold text-primary"></span> 个匹配结果</p>
+        </div>
+
+        <!-- 分类标签 -->
+        <div class="flex flex-wrap gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+            <button class="category-btn active px-4 py-2 bg-primary text-white rounded-full text-sm font-medium transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                    data-category="all">
+                <i class="fa fa-th-large mr-1.5"></i>全部
+            </button>
+            <button class="category-btn px-4 py-2 bg-white text-gray-700 rounded-full text-sm font-medium hover:bg-gray-50 transition-all shadow hover:shadow-md transform hover:-translate-y-0.5"
+                    data-category="toggle">
+                <i class="fa fa-exchange mr-1.5"></i>切换功能
+            </button>
+            <button class="category-btn px-4 py-2 bg-white text-gray-700 rounded-full text-sm font-medium hover:bg-gray-50 transition-all shadow hover:shadow-md transform hover:-translate-y-0.5"
+                    data-category="screen">
+                <i class="fa fa-desktop mr-1.5"></i>屏幕管理
+            </button>
+            <button class="category-btn px-4 py-2 bg-white text-gray-700 rounded-full text-sm font-medium hover:bg-gray-50 transition-all shadow hover:shadow-md transform hover:-translate-y-0.5"
+                    data-category="drawing">
+                <i class="fa fa-file-image-o mr-1.5"></i>图纸管理
+            </button>
+            <button class="category-btn px-4 py-2 bg-white text-gray-700 rounded-full text-sm font-medium hover:bg-gray-50 transition-all shadow hover:shadow-md transform hover:-translate-y-0.5"
+                    data-category="workflow">
+                <i class="fa fa-cogs mr-1.5"></i>工作流程
+            </button>
+            <button class="category-btn px-4 py-2 bg-white text-gray-700 rounded-full text-sm font-medium hover:bg-gray-50 transition-all shadow hover:shadow-md transform hover:-translate-y-0.5"
+                    data-category="hotkeys">
+                <i class="fa fa-keyboard-o mr-1.5"></i>A-Z命令
+            </button>
+        </div>
+
+        <!-- 快捷键内容区 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            <!-- 内容将通过JavaScript动态生成 -->
+        </div>
+
+        <!-- 无结果提示 -->
+        <div id="no-results" class="hidden py-16 text-center">
+            <i class="fa fa-search text-gray-300 text-5xl mb-4"></i>
+            <p class="text-gray-500 text-lg">未找到匹配的快捷键</p>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white py-4 border-t border-gray-200 mt-auto">
+        <div class="container mx-auto px-4 flex justify-center">
+            <img alt="今日诗词" align=center src="https://v2.jinrishici.com/one.svg?font-size=20&spacing=2&color=Salmon" style="max-width:100%; display: block; margin: 0 auto;">
+        </div>
+    </footer>
+
+    <script>
+        const shortcutData = [
+            // 切换通用功能
+            {
+                category: "toggle",
+                subcategory: "通用功能切换",
+                shortcut: "Ctrl+d",
+                description: "切换坐标显示"
+            },
+            {
+                category: "toggle",
+                subcategory: "通用功能切换",
+                shortcut: "Ctrl+g",
+                description: "切换网格"
+            },
+            {
+                category: "toggle",
+                subcategory: "通用功能切换",
+                shortcut: "Ctrl+e",
+                description: "循环等轴测平面"
+            },
+            {
+                category: "toggle",
+                subcategory: "通用功能切换",
+                shortcut: "Ctrl+f",
+                description: "切换运行对象捕捉"
+            },
+            {
+                category: "toggle",
+                subcategory: "通用功能切换",
+                shortcut: "Ctrl+h",
+                description: "切换拾取样式"
+            },
+            {
+                category: "toggle",
+                subcategory: "通用功能切换",
+                shortcut: "Ctrl+Shift+h",
+                description: "切换隐藏面板"
+            },
+            {
+                category: "toggle",
+                subcategory: "通用功能切换",
+                shortcut: "Ctrl+i",
+                description: "切换坐标"
+            },
+            {
+                category: "toggle",
+                subcategory: "通用功能切换",
+                shortcut: "Ctrl+Shift+i",
+                description: "切换推断约束"
+            },
+            
+            // 切换绘图模式
+            {
+                category: "toggle",
+                subcategory: "绘图模式切换",
+                shortcut: "F1",
+                description: "显示帮助"
+            },
+            {
+                category: "toggle",
+                subcategory: "绘图模式切换",
+                shortcut: "F2",
+                description: "切换文本屏幕"
+            },
+            {
+                category: "toggle",
+                subcategory: "绘图模式切换",
+                shortcut: "F3",
+                description: "切换对象捕捉模式"
+            },
+            {
+                category: "toggle",
+                subcategory: "绘图模式切换",
+                shortcut: "F4",
+                description: "切换3D对象捕捉"
+            },
+            {
+                category: "toggle",
+                subcategory: "绘图模式切换",
+                shortcut: "F5",
+                description: "切换等轴测平面"
+            },
+            {
+                category: "toggle",
+                subcategory: "绘图模式切换",
+                shortcut: "F6",
+                description: "切换动态UCS"
+            },
+            {
+                category: "toggle",
+                subcategory: "绘图模式切换",
+                shortcut: "F7",
+                description: "切换栅格模式"
+            },
+            {
+                category: "toggle",
+                subcategory: "绘图模式切换",
+                shortcut: "F8",
+                description: "切换正交模式"
+            },
+            {
+                category: "toggle",
+                subcategory: "绘图模式切换",
+                shortcut: "F9",
+                description: "切换捕捉模式"
+            },
+            {
+                category: "toggle",
+                subcategory: "绘图模式切换",
+                shortcut: "F10",
+                description: "切换极轴模式"
+            },
+            {
+                category: "toggle",
+                subcategory: "绘图模式切换",
+                shortcut: "F11",
+                description: "切换对象捕捉追踪"
+            },
+            {
+                category: "toggle",
+                subcategory: "绘图模式切换",
+                shortcut: "F12",
+                description: "切换动态输入模式"
+            },
+            
+            // 屏幕管理
+            {
+                category: "screen",
+                subcategory: "屏幕管理",
+                shortcut: "Ctrl+0",
+                description: "全屏显示"
+            },
+            {
+                category: "screen",
+                subcategory: "屏幕管理",
+                shortcut: "Ctrl+1",
+                description: "特性面板"
+            },
+            {
+                category: "screen",
+                subcategory: "屏幕管理",
+                shortcut: "Ctrl+2",
+                description: "设计中心面板"
+            },
+            {
+                category: "screen",
+                subcategory: "屏幕管理",
+                shortcut: "Ctrl+3",
+                description: "切换面板"
+            },
+            {
+                category: "screen",
+                subcategory: "屏幕管理",
+                shortcut: "Ctrl+4",
+                description: "图纸集面板"
+            },
+            {
+                category: "screen",
+                subcategory: "屏幕管理",
+                shortcut: "Ctrl+6",
+                description: "数据库连接管理器"
+            },
+            {
+                category: "screen",
+                subcategory: "屏幕管理",
+                shortcut: "Ctrl+7",
+                description: "标记集管理器面板"
+            },
+            {
+                category: "screen",
+                subcategory: "屏幕管理",
+                shortcut: "Ctrl+8",
+                description: "快速计算器"
+            },
+            {
+                category: "screen",
+                subcategory: "屏幕管理",
+                shortcut: "Ctrl+9",
+                description: "命令行"
+            },
+            
+            // 图纸管理
+            {
+                category: "drawing",
+                subcategory: "图纸管理",
+                shortcut: "Ctrl+n",
+                description: "新建图纸"
+            },
+            {
+                category: "drawing",
+                subcategory: "图纸管理",
+                shortcut: "Ctrl+s",
+                description: "保存图纸"
+            },
+            {
+                category: "drawing",
+                subcategory: "图纸管理",
+                shortcut: "Ctrl+o",
+                description: "打开图纸"
+            },
+            {
+                category: "drawing",
+                subcategory: "图纸管理",
+                shortcut: "Ctrl+p",
+                description: "打印对话框"
+            },
+            {
+                category: "drawing",
+                subcategory: "图纸管理",
+                shortcut: "Ctrl+Tab",
+                description: "切换到下一个"
+            },
+            {
+                category: "drawing",
+                subcategory: "图纸管理",
+                shortcut: "Ctrl+Shift+Tab",
+                description: "切换到上一个图纸"
+            },
+            {
+                category: "drawing",
+                subcategory: "图纸管理",
+                shortcut: "Ctrl+Page Up",
+                description: "切换到当前图纸的上一个标签"
+            },
+            {
+                category: "drawing",
+                subcategory: "图纸管理",
+                shortcut: "Ctrl+Page Down",
+                description: "切换到当前图纸的下一个标签"
+            },
+            {
+                category: "drawing",
+                subcategory: "图纸管理",
+                shortcut: "Ctrl+q",
+                description: "退出"
+            },
+            {
+                category: "drawing",
+                subcategory: "图纸管理",
+                shortcut: "Ctrl+a",
+                description: "选择所有对象"
+            },
+            
+            // 工作流程管理
+            {
+                category: "workflow",
+                subcategory: "工作流程管理",
+                shortcut: "Ctrl+c",
+                description: "复制对象"
+            },
+            {
+                category: "workflow",
+                subcategory: "工作流程管理",
+                shortcut: "Ctrl+x",
+                description: "剪切对象"
+            },
+            {
+                category: "workflow",
+                subcategory: "工作流程管理",
+                shortcut: "Ctrl+v",
+                description: "粘贴对象"
+            },
+            {
+                category: "workflow",
+                subcategory: "工作流程管理",
+                shortcut: "Ctrl+Shift+c",
+                description: "带基点复制到剪贴板"
+            },
+            {
+                category: "workflow",
+                subcategory: "工作流程管理",
+                shortcut: "Ctrl+Shift+v",
+                description: "粘贴数据为块"
+            },
+            {
+                category: "workflow",
+                subcategory: "工作流程管理",
+                shortcut: "Ctrl+z",
+                description: "撤销上一步操作"
+            },
+            {
+                category: "workflow",
+                subcategory: "工作流程管理",
+                shortcut: "Ctrl+y",
+                description: "重做上一步操作"
+            },
+            {
+                category: "workflow",
+                subcategory: "工作流程管理",
+                shortcut: "Ctrl+[",
+                description: "取消当前命令(或Ctrl+\\)"
+            },
+            {
+                category: "workflow",
+                subcategory: "工作流程管理",
+                shortcut: "ESC",
+                description: "取消当前命令"
+            },
+            
+            // A-Z热键命令
+            {
+                category: "hotkeys",
+                subcategory: "A",
+                shortcut: "A",
+                description: "ARC / 创建圆弧"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "A",
+                shortcut: "AA",
+                description: "AREA / 计算对象或定义区域的面积和周长"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "A",
+                shortcut: "ADC",
+                description: "ADCENTER / 管理和插入内容，如块、外部参照和填充图案"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "A",
+                shortcut: "AL",
+                description: "ALIGN / 对齐对象"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "A",
+                shortcut: "AP",
+                description: "APPLOAD / 加载应用程序"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "A",
+                shortcut: "AR",
+                description: "ARRAY / 创建按矩形或环形排列的多个对象副本"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "A",
+                shortcut: "ARR",
+                description: "ACTRECORD/启动动作录制器"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "A",
+                shortcut: "ARM",
+                description: "ACTUSERMESSAGE/将用户消息插入动作宏。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "A",
+                shortcut: "ARU",
+                description: "ACTUSERINPUT/暂停动作宏以等待用户输入。"
+            },
+                        {
+                category: "hotkeys",
+                subcategory: "A",
+                shortcut: "ARS",
+                description: "ACTSTOP/停止动作录制器，并提供选项以将已录制的动作保存至动作宏文件。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "A",
+                shortcut: "ARU",
+                description: "ACTUSERINPUT/暂停动作宏以等待用户输入。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "A",
+                shortcut: "ATI",
+                description: "ATTIPEDIT /更改块中属性的文本内容。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "A",
+                shortcut: "ATT",
+                description: "ATTDEF /重定义块并更新关联属性。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "A",
+                shortcut: "ATE",
+                description: "ATTEDIT /更改块中的属性信息。"
+            },
+            
+            {
+                category: "hotkeys",
+                subcategory: "B",
+                shortcut: "B",
+                description: "BLOCK/从选定的对象中创建块定义。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "B",
+                shortcut: "BC",
+                description: "BCLOSE/关闭块编辑器。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "B",
+                shortcut: "BE",
+                description: "BEDIT/在块编辑器中打开块定义。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "B",
+                shortcut: "BH",
+                description: "HATCH/使用填充图案、实体填充或渐变填充来填充封闭区域或选定对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "B",
+                shortcut: "BO",
+                description: "BOUNDARY/从封闭区域创建面域或多段线。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "B",
+                shortcut: "BR",
+                description: "BREAK/打断两点之间选定的对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "B",
+                shortcut: "BS",
+                description: "BSAVE/保存当前块定义。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "B",
+                shortcut: "BVS",
+                description: "BVSTATE/创建、设置或删除动态块中的可见性状态。"
+            },
+            
+            {
+                category: "hotkeys",
+                subcategory: "C",
+                shortcut: "C",
+                description: "CIRCLE/创建圆。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "C",
+                shortcut: "CAM",
+                description: "CAMERA/设置相机位置和目标位置，以创建并保存对象的三维透视视图。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "C",
+                shortcut: "CBAR",
+                description: "CONSTRAINTBAR/一个类似于工具栏的 UI 元素，可显示对象上可用的几何约束。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "C",
+                shortcut: "CH",
+                description: "PROPERTIES/控制现有对象的特性。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "C",
+                shortcut: "CHA",
+                description: "CHAMFER/给对象加倒角。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "C",
+                shortcut: "CHK",
+                description: "CHECKSTANDARDS/检查当前图形中是否存在标准冲突。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "C",
+                shortcut: "CLI",
+                description: "COMMANDLINE/显示“命令行”窗口。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "C",
+                shortcut: "COL",
+                description: "COLOR/设置新对象的颜色。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "C",
+                shortcut: "CO",
+                description: "COPY/在指定方向上按指定距离复制对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "C",
+                shortcut: "CT",
+                description: "CTABLESTYLE/设置当前表格样式的名称。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "C",
+                shortcut: "CUBE",
+                description: "NAVVCUBE/控制 ViewCube 工具的可见性和显示特性。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "C",
+                shortcut: "CYL",
+                description: "CYLINDER/创建三维实体圆柱体。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "D",
+                description: "DIMSTYLE/创建和修改标注样式。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DAN",
+                description: "DIMANGULAR/创建角度标注。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DAR",
+                description: "DIMARC/创建圆弧长度标注。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DBA",
+                description: "DIMBASELINE/从上一个标注或选定标注的基线处创建线性标注、角度标注或坐标标注。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DBC",
+                description: "DBCONNECT/提供至外部数据库表的接口。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DCE",
+                description: "DIMCENTER/创建圆和圆弧的圆心标记或中心线。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DCO",
+                description: "DIMCONTINUE/创建从上一次所创建标注的延伸线处开始的标注。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DCON",
+                description: "DIMCONSTRAINT/向选定对象或对象上的点应用标注约束。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DDA",
+                description: "DIMDISASSOCIATE/删除选定标注的关联性。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DDI",
+                description: "DIMDIAMETER/为圆或圆弧创建直径标注。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DED",
+                description: "DIMEDIT/编辑标注文字和延伸线。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DI",
+                description: "DIST/测量两个点之间的距离和角度。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DIV",
+                description: "DIVIDE/创建沿对象的长度或周长按相等间隔排列的点对象或块。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DJL",
+                description: "DIMJOGLINE/在线性标注或对齐标注中添加或删除折弯线。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DJO",
+                description: "DIMJOGGED/创建圆和圆弧的折弯标注。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DL",
+                description: "DATALINK/显示“数据链接”对话框。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DLU",
+                description: "DATALINKUPDATE/将数据更新至已建立的外部数据链接，或从已建立的外部数据链接更新数据。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DO",
+                description: "DONUT/创建实心圆或较宽的环。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DOR",
+                description: "DIMORDINATE/创建坐标标注。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DOV",
+                description: "DIMOVERRIDE/控制选定标注中使用的系统变量的替代值。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DR",
+                description: "DRAWORDER/更改图像和其他对象的绘制顺序。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DRA",
+                description: "DIMRADIUS/为圆或圆弧创建半径标注。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DRE",
+                description: "DIMREASSOCIATE/将选定的标注关联或重新关联到对象或对象上的点。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DRM",
+                description: "DRAWINGRECOVERY/显示可以在程序或系统故障后修复的图形文件的列表。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DS",
+                description: "DSETTINGS/设置栅格和捕捉、极轴和对象捕捉追踪、对象捕捉模式、动态输入和快捷特性。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DT",
+                description: "TEXT/创建单行文字对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DV",
+                description: "DVIEW/使用相机和目标来定义平行投影或透视视图。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DX",
+                description: "DATAEXTRACTION/从外部源提取图形数据，并将数据合并至数据提取表或外部文件。"
+            },
+
+            {
+                category: "hotkeys",
+                subcategory: "D",
+                shortcut: "DX",
+                description: "DATAEXTRACTION/从外部源提取图形数据，并将数据合并至数据提取表或外部文件。"
+            },
+            // E类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "E",
+                shortcut: "E",
+                description: "ERASE/从图形中删除选定的对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "E",
+                shortcut: "ED",
+                description: "DDEDIT/编辑单行文字、标注文字、属性定义和特征控制框。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "E",
+                shortcut: "EL",
+                description: "ELLIPSE/创建椭圆或椭圆弧。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "E",
+                shortcut: "EPDF",
+                description: "EXPORTPDF/将图形输出为 PDF。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "E",
+                shortcut: "ER",
+                description: "EXTERNALREFERENCES/打开“外部参照”选项板。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "E",
+                shortcut: "EX",
+                description: "EXTEND/延伸对象以适合其他对象的边。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "E",
+                shortcut: "EXIT",
+                description: "QUIT/退出程序。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "E",
+                shortcut: "EXP",
+                description: "EXPORT/以其他文件格式保存图形中的对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "E",
+                shortcut: "EXT",
+                description: "EXTRUDE/将二维对象或三维面的标注拉伸为三维空间。"
+            },
+            // F类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "F",
+                shortcut: "F",
+                description: "FILLET/给对象加圆角。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "F",
+                shortcut: "FI",
+                description: "FILTER/创建一个要求列表，对象必须符合这些要求才能包含在选择集中。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "F",
+                shortcut: "FS",
+                description: "FSMODE/创建将接触选定对象的所有对象的选择集。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "F",
+                shortcut: "FSHOT",
+                description: "FLATSHOT/基于当前视图创建所有三维对象的二维表示形式。"
+            },
+            // G类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "G",
+                shortcut: "G",
+                description: "GROUP/创建和管理已保存的对象集（称为组）。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "G",
+                shortcut: "GCON",
+                description: "GEOCONSTRAINT/应用对象之间或对象上的点之间的几何关系或使其永久保持。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "G",
+                shortcut: "GD",
+                description: "GRADIENT/使用渐变填充填充封闭区域或选定对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "G",
+                shortcut: "GEO",
+                description: "GEOGRAPHICLOCATION/指定图形文件的地理位置信息。"
+            },
+            // H类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "H",
+                shortcut: "H",
+                description: "HATCH/使用填充图案、实体填充或渐变填充来填充封闭区域或选定对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "H",
+                shortcut: "HE",
+                description: "HATCHEDIT/修改现有的图案填充或填充。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "H",
+                shortcut: "HI",
+                description: "HIDE/重生成不显示隐藏线的三维线框模型。"
+            },
+            // I类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "I",
+                shortcut: "I",
+                description: "INSERT/将块或图形插入当前图形中。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "I",
+                shortcut: "IAD",
+                description: "IMAGEADJUST/控制图像的亮度、对比度和淡入度。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "I",
+                shortcut: "IAT",
+                description: "IMAGEATTACH/将参照插入到图像文件中。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "I",
+                shortcut: "ICL",
+                description: "IMAGECLIP/根据指定边界修剪选定图像的显示。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "I",
+                shortcut: "ID",
+                description: "ID/显示指定位置的 UCS 坐标值。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "I",
+                shortcut: "IM",
+                description: "IMAGE/显示“外部参照”选项板。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "I",
+                shortcut: "IMP",
+                description: "IMPORT/将不同格式的文件输入到当前图形中。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "I",
+                shortcut: "IN",
+                description: "INTERSECT/通过重叠实体、曲面或面域创建三维实体、曲面或二维面域。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "I",
+                shortcut: "INF",
+                description: "INTERFERE/通过两组选定三维实体之间的干涉创建临时三维实体。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "I",
+                shortcut: "IO",
+                description: "INSERTOBJ/插入链接或嵌入对象。"
+            },
+            // J类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "J",
+                shortcut: "J",
+                description: "JOIN/合并相似对象以形成一个完整的对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "J",
+                shortcut: "JOG",
+                description: "DIMJOGGED/创建圆和圆弧的折弯标注。"
+            },
+            // L类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "L",
+                shortcut: "L",
+                description: "LINE/创建直线段。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "L",
+                shortcut: "LA",
+                description: "LAYER/管理图层和图层特性。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "L",
+                shortcut: "LAS",
+                description: "LAYERSTATE/保存、恢复和管理命名图层的状态。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "L",
+                shortcut: "LE",
+                description: "QLEADER/创建引线和引线注释。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "L",
+                shortcut: "LEN",
+                description: "LENGTHEN/更改对象的长度和圆弧的包含角。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "L",
+                shortcut: "LESS",
+                description: "MESHSMOOTHLESS/将网格对象的平滑度降低一个级别。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "L",
+                shortcut: "LI",
+                description: "LIST/为选定对象显示特性数据。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "L",
+                shortcut: "LO",
+                description: "LAYOUT/创建和修改图形布局选项卡。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "L",
+                shortcut: "LT",
+                description: "LINETYPE/加载、设置和修改线型。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "L",
+                shortcut: "LTS",
+                description: "LTSCALE/更改用于图形中所有对象的线型的比例因子。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "L",
+                shortcut: "LW",
+                description: "LWEIGHT/设置当前线宽、线宽显示选项和线宽单位。"
+            },
+            // M类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "M",
+                description: "MOVE/在指定方向上按指定距离移动对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "MA",
+                description: "MATCHPROP/将选定对象的特性应用于其他对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "MAT",
+                description: "MATERIALS/显示或隐藏“材质”窗口。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "ME",
+                description: "MEASURE/沿对象的长度或周长按测定间隔创建点对象或块。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "MEA",
+                description: "MEASUREGEOM/测量选定对象或点序列的距离、半径、角度、面积和体积。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "MI",
+                description: "MIRROR/创建选定对象的镜像副本。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "ML",
+                description: "MLINE/创建多条平行线。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "MLA",
+                description: "MLEADERALIGN/对齐并间隔排列选定的多重引线对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "MLC",
+                description: "MLEADERCOLLECT/将包含块的选定多重引线整理到行或列中，并通过单引线显示结果。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "MLD",
+                description: "MLEADER/创建多重引线对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "MLE",
+                description: "MLEADEREDIT/将引线添加至多重引线对象，或从多重引线对象中删除引线。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "MLS",
+                description: "MLEADERSTYLE/创建和修改多重引线样式。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "MO",
+                description: "PROPERTIES/控制现有对象的特性。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "MORE",
+                description: "MESHSMOOTHMORE/将网格对象的平滑度提高一个级别。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "MS",
+                description: "MSPACE/从图纸空间切换到模型空间视口。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "MSM",
+                description: "MARKUP/打开标记集管理器。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "MT",
+                description: "MTEXT/创建多行文字对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "M",
+                shortcut: "MV",
+                description: "MVIEW/创建并控制布局视口。"
+            },
+            // N类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "N",
+                shortcut: "NORTH",
+                description: "GEOGRAPHICLOCATION/指定图形文件的地理位置信息。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "N",
+                shortcut: "NSHOT",
+                description: "NEWSHOT/创建其中包含运动的命名视图，该视图将在使用 ShowMotion 进行查看时回放。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "N",
+                shortcut: "NVIEW",
+                description: "NEWVIEW/创建不包含运动的命名视图。"
+            },
+
+            {
+                category: "hotkeys",
+                subcategory: "N",
+                shortcut: "NVIEW",
+                description: "NEWVIEW/创建不包含运动的命名视图。"
+            },
+            // O类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "O",
+                shortcut: "O",
+                description: "OFFSET/创建同心圆、平行线和平行曲线。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "O",
+                shortcut: "OP",
+                description: "OPTIONS/自定义程序设置。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "O",
+                shortcut: "ORBIT",
+                description: "3DORBIT/在三维空间中旋转视图，但仅限于在水平和垂直方向上进行动态观察。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "O",
+                shortcut: "OS",
+                description: "OSNAP/设置执行对象捕捉模式。"
+            },
+            // P类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "P",
+                description: "PAN/向动态块定义中添加带有夹点的参数。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PA",
+                description: "PASTESPEC/将剪贴板中的对象粘贴到当前图形中，并控制数据的格式。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PAR",
+                description: "PARAMETERS/控制图形中使用的关联参数。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PARAM",
+                description: "BPARAMETER/向动态块定义中添加带有夹点的参数。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PATCH",
+                description: "SURFPATCH/通过在形成闭环的曲面边上拟合一个封口来创建新曲面。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PC",
+                description: "POINTCLOUD/提供用于创建和附着点云文件的选项。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PCATTACH",
+                description: "POINTCLOUDATTACH/将带索引的点云文件插入当前图形。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PCINDEX",
+                description: "POINTCLOUDINDEX/根据扫描文件创建带索引的点云（PCG 或 ISD）文件。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PE",
+                description: "PEDIT/编辑多段线和三维多边形网格。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PL",
+                description: "PLINE/创建二维多段线。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PO",
+                description: "POINT/创建点对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "POFF",
+                description: "HIDEPALETTES/隐藏当前显示的选项板（包括命令行）。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "POL",
+                description: "POLYGON/创建等边闭合多段线。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PON",
+                description: "SHOWPALETTES/恢复隐藏的选项板的显示。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PR",
+                description: "PROPERTIES/显示“特性”选项板。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PRE",
+                description: "PREVIEW/显示将要打印的图形。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PRINT",
+                description: "PLOT/将图形打印到绘图仪、打印机或文件。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PS",
+                description: "PSPACE/从模型空间视口切换到图纸空间。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PSOLID",
+                description: "POLYSOLID/创建三维墙状多段体。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PU",
+                description: "PURGE/删除图形中未使用的项目，例如块定义和图层。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "P",
+                shortcut: "PYR",
+                description: "PYRAMID/创建三维实体棱锥体。"
+            },
+            // Q类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "Q",
+                shortcut: "QC",
+                description: "QUICKCALC/打开“快速计算器”计算器。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "Q",
+                shortcut: "QCUI",
+                description: "QUICKCUI/以收拢状态显示自定义用户界面编辑器。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "Q",
+                shortcut: "QP",
+                description: "QUICKPROPERTIES/在预览图像中显示打开的图形和图形中的布局。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "Q",
+                shortcut: "QSAVE",
+                description: "QSAVE/保存当前图形。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "Q",
+                shortcut: "QVD",
+                description: "QVDRAWING/使用预览图像显示打开的图形和图形中的布局。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "Q",
+                shortcut: "QVDC",
+                description: "QVDRAWINGCLOSE/关闭打开图形和图形中布局的预览图像。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "Q",
+                shortcut: "QVL",
+                description: "QVLAYOUT/显示图形中模型空间和布局的预览图像。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "Q",
+                shortcut: "QVLC",
+                description: "QVLAYOUTCLOSE/关闭当前图形中模型空间和布局的预览图像。"
+            },
+            // R类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "R",
+                shortcut: "R",
+                description: "REDRAW/刷新当前视口中的显示。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "R",
+                shortcut: "RA",
+                description: "REDRAWALL/刷新所有视口中的显示。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "R",
+                shortcut: "RC",
+                description: "RENDERCROP/渲染视口内指定的矩形区域（称为修剪窗口）。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "R",
+                shortcut: "RE",
+                description: "REGEN/从当前视口重生成整个图形。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "R",
+                shortcut: "REA",
+                description: "REGENALL/重生成图形并刷新所有视口。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "R",
+                shortcut: "REC",
+                description: "RECTANG/创建矩形多段线。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "R",
+                shortcut: "REG",
+                description: "REGION/将包含封闭区域的对象转换为面域对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "R",
+                shortcut: "REN",
+                description: "RENAME/更改指定给项目（例如图层和标注样式）的名称。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "R",
+                shortcut: "REV",
+                description: "REVOLVE/通过绕轴扫掠二维对象来创建三维实体或曲面。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "R",
+                shortcut: "RO",
+                description: "ROTATE/绕基点旋转对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "R",
+                shortcut: "RP",
+                description: "RENDERPRESETS/指定渲染预设和可重复使用的渲染参数，以便渲染图像。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "R",
+                shortcut: "RPR",
+                description: "RPREF/显示或隐藏用于访问高级渲染设置的“高级渲染设置”选项板。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "R",
+                shortcut: "RR",
+                description: "RENDER/创建三维实体或表面模型的真实照片级或真实着色图像。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "R",
+                shortcut: "RW",
+                description: "RENDERWIN/显示“渲染”窗口而不启动渲染操作。"
+            },
+            // S类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "S",
+                description: "STRETCH/拉伸与选择窗口或多边形交叉的对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SC",
+                description: "SCALE/放大或缩小选定对象，使缩放后对象的比例保持不变。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SCR",
+                description: "SCRIPT/执行源自脚本文件的一系列命令。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SEC",
+                description: "SECTION/用平面和实体的截面、曲面或网格创建面域。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SET",
+                description: "SETVAR/列出系统变量或修改变量值。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SHA",
+                description: "SHADEMODE/启动 VSCURRENT 命令。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SL",
+                description: "SLICE/通过剖切或分割现有对象，创建新的三维实体和曲面。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SN",
+                description: "SNAP/限制光标按指定的间距移动。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SO",
+                description: "SOLID/创建实体填充的三角形和四边形。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SP",
+                description: "SPELL/检查图形中的拼写。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SPE",
+                description: "SPLINEDIT/编辑样条曲线或样条曲线拟合多段线。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SPL",
+                description: "SPLINE/创建通过或接近指定点的平滑曲线。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SPLANE",
+                description: "SECTIONPLANE/创建一个用作三维对象的剪切平面的截面对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SPLAY",
+                description: "SEQUENCEPLAY/播放一种类别中的指定视图。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SPLIT",
+                description: "MESHSPLIT/将一个网格面分割为两个面。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SSM",
+                description: "SHEETSET/打开图纸集管理器。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "ST",
+                description: "STYLE/创建、修改或指定文字样式。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "STA",
+                description: "STANDARDS/管理标准文件与图形之间的关联性。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "S",
+                shortcut: "SU",
+                description: "SUBTRACT/用差集合并选定的三维实体、曲面或二维面域。"
+            },
+            // T类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "T",
+                shortcut: "T",
+                description: "MTEXT/创建多行文字对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "T",
+                shortcut: "TA",
+                description: "TEXTALIGN/垂直、水平或倾斜对齐多个文字对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "T",
+                shortcut: "TB",
+                description: "TABLE/创建空的表格对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "T",
+                shortcut: "TEDIT",
+                description: "TEXTEDIT/编辑标注约束、标注或文字对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "T",
+                shortcut: "TH",
+                description: "THICKNESS/在创建二维几何对象时，设置默认的三维厚度特性。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "T",
+                shortcut: "TI",
+                description: "TILEMODE/控制是否可以访问图纸空间。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "T",
+                shortcut: "TO",
+                description: "TOOLBAR/显示、隐藏和自定义工具栏。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "T",
+                shortcut: "TOL",
+                description: "TOLERANCE/创建包含在特征控制框中的形位公差。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "T",
+                shortcut: "TOR",
+                description: "TORUS/创建圆环形三维实体。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "T",
+                shortcut: "TP",
+                description: "TOOLPALETTES/打开“工具选项板”窗口。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "T",
+                shortcut: "TR",
+                description: "TRIM/修剪对象以与其他对象的边相接。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "T",
+                shortcut: "TS",
+                description: "TABLESTYLE/创建、修改或指定表格样式。"
+            },
+            // U类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "U",
+                shortcut: "UC",
+                description: "UCSMAN/管理已定义的用户坐标系。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "U",
+                shortcut: "UN",
+                description: "UNITS/控制坐标和角度的显示格式和精度。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "U",
+                shortcut: "UNHIDE/UNISOLATE",
+                description: "UNISOLATEOBJECTS/显示之前已通过 ISOLATEOBJECTS 或 HIDEOBJECTS 命令隐藏的对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "U",
+                shortcut: "UNI",
+                description: "UNION/合并两个实体或两个面域对象。"
+            },
+            // V类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "V",
+                shortcut: "V",
+                description: "VIEW/保存和恢复命名视图、相机视图、布局视图和预设视图。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "V",
+                shortcut: "VGO",
+                description: "VIEWGO/恢复命名视图。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "V",
+                shortcut: "VP",
+                description: "DDVPOINT/设置三维观察方向。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "V",
+                shortcut: "VPLAY",
+                description: "VIEWPLAY/播放与命名视图关联的动画。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "V",
+                shortcut: "VS",
+                description: "VSCURRENT/设置当前视口中的视觉样式。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "V",
+                shortcut: "VSM",
+                description: "VISUALSTYLES/创建和修改视觉样式，并将视觉样式应用于视口。"
+            },
+            // W类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "W",
+                shortcut: "W",
+                description: "WBLOCK/将对象或块写入新图形文件。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "W",
+                shortcut: "WE",
+                description: "WEDGE/创建三维实体楔体。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "W",
+                shortcut: "WHEEL",
+                description: "NAVSWHEEL/显示包含一系列视图导航工具的控制盘。"
+            },
+            // X类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "X",
+                shortcut: "X",
+                description: "EXPLODE/将复合对象分解为其组件对象。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "X",
+                shortcut: "XA",
+                description: "XATTACH/插入 DWG 文件作为外部参照。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "X",
+                shortcut: "XB",
+                description: "XBIND/将外部参照中命名对象的一个或多个定义绑定到当前图形。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "X",
+                shortcut: "XC",
+                description: "XCLIP/根据指定边界修剪选定外部参照或块参照的显示。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "X",
+                shortcut: "XL",
+                description: "XLINE/创建无限长的直线。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "X",
+                shortcut: "XR",
+                description: "XREF/启动 EXTERNALREFERENCES 命令。"
+            },
+            // 其他类快捷键
+            {
+                category: "hotkeys",
+                subcategory: "Z",
+                shortcut: "ZEBRA",
+                description: "ANALYSISZEBRA/将条纹投影到三维模型上，以便分析曲面连续性。"
+            },
+            {
+                category: "hotkeys",
+                subcategory: "Z",
+                shortcut: "ZIP",
+                description: "ETRANSMIT/创建自解压或压缩传递包。"
+            },
+        ]
+                    // 渲染快捷键卡片
+        function renderShortcuts(shortcuts) {
+            const container = document.querySelector('.grid');
+            container.innerHTML = '';
+            
+            if (shortcuts.length === 0) {
+                document.getElementById('no-results').classList.remove('hidden');
+                return;
+            } else {
+                document.getElementById('no-results').classList.add('hidden');
+            }
+            
+            // 按子类别分组
+            const grouped = {};
+            shortcuts.forEach(shortcut => {
+                const key = `${shortcut.category}-${shortcut.subcategory}`;
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        subcategory: shortcut.subcategory,
+                        items: []
+                    };
+                }
+                grouped[key].items.push(shortcut);
+            });
+            
+            // 渲染分组后的内容
+            Object.values(grouped).forEach(group => {
+                const groupCard = document.createElement('div');
+                groupCard.className = 'bg-white rounded-xl shadow-lg overflow-hidden card-hover border border-gray-100 transform transition-all duration-300 hover:shadow-xl';
+                
+                // 子类别标题
+                const header = document.createElement('div');
+            header.className = 'bg-gradient-to-r from-primary/90 to-primary px-6 py-4 border-b border-primary/10';
+            header.innerHTML = `<h3 class="font-bold text-white flex items-center"><i class="fa fa-chevron-right mr-2 text-sm opacity-80"></i>${group.subcategory}</h3>`;
+            groupCard.appendChild(header);
+                
+                // 快捷键列表
+                const list = document.createElement('ul');
+                list.className = 'divide-y divide-gray-50';
+                
+                group.items.forEach(item => {
+                    const listItem = document.createElement('li');
+                listItem.className = 'px-6 py-5 hover:bg-gray-50 transition-colors border-l-4 border-transparent hover:border-primary/50';
+                
+                // 格式化快捷键显示
+                let formattedShortcut = item.shortcut;
+                formattedShortcut = formattedShortcut.replace(/Ctrl/g, '<span class="key bg-primary text-white px-2.5 py-1.5 rounded-md text-xs font-medium key-shadow">Ctrl</span>');
+                formattedShortcut = formattedShortcut.replace(/Shift/g, '<span class="key bg-gray-700 text-white px-2.5 py-1.5 rounded-md text-xs font-medium key-shadow">Shift</span>');
+                formattedShortcut = formattedShortcut.replace(/ESC/g, '<span class="key bg-accent text-white px-2.5 py-1.5 rounded-md text-xs font-medium key-shadow">ESC</span>');
+                formattedShortcut = formattedShortcut.replace(/F(\d+)/g, '<span class="key bg-gray-100 text-gray-800 px-2.5 py-1.5 rounded-md text-xs font-medium key-shadow">F$1</span>');
+                
+                listItem.innerHTML = `
+                    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                        <div class="flex flex-wrap gap-1.5">
+                            ${formattedShortcut}
+                        </div>
+                        <div class="text-sm text-gray-600 font-medium leading-relaxed max-w-md whitespace-normal break-words">${item.description}</div>
+                    </div>
+                `;
+                list.appendChild(listItem);
+                });
+                
+                groupCard.appendChild(list);
+                container.appendChild(groupCard);
+            });
+        }
+
+        // 初始渲染所有快捷键
+        renderShortcuts(shortcutData);
+
+        // 搜索功能
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        const resultCount = document.getElementById('result-count');
+        
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            
+            if (searchTerm === '') {
+                searchResults.classList.add('hidden');
+                renderShortcuts(shortcutData);
+                return;
+            }
+            
+            // 模糊搜索逻辑
+            const filtered = shortcutData.filter(item => {
+                const shortcutMatch = item.shortcut.toLowerCase().includes(searchTerm);
+                const descriptionMatch = item.description.toLowerCase().includes(searchTerm);
+                const subcategoryMatch = item.subcategory.toLowerCase().includes(searchTerm);
+                return shortcutMatch || descriptionMatch || subcategoryMatch;
+            });
+            
+            searchResults.classList.remove('hidden');
+            resultCount.textContent = filtered.length;
+            renderShortcuts(filtered);
+        });
+
+        // 分类筛选
+        const categoryBtns = document.querySelectorAll('.category-btn');
+        
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // 更新按钮状态
+                categoryBtns.forEach(b => {
+                    b.classList.remove('active', 'bg-primary', 'text-white');
+                    b.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-100');
+                });
+                
+                this.classList.add('active', 'bg-primary', 'text-white');
+                this.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-100');
+                
+                const category = this.dataset.category;
+                
+                if (category === 'all') {
+                    renderShortcuts(shortcutData);
+                    searchResults.classList.add('hidden');
+                    searchInput.value = '';
+                } else {
+                    const filtered = shortcutData.filter(item => item.category === category);
+                    renderShortcuts(filtered);
+                    searchResults.classList.add('hidden');
+                    searchInput.value = '';
+                }
+            });
+        });
+
+        // 滚动时导航栏效果
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.classList.add('py-2', 'shadow');
+                header.classList.remove('py-4');
+            } else {
+                header.classList.add('py-4');
+                header.classList.remove('py-2', 'shadow');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global CAT M1 & NB-IoT APN List</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#4080FF',
+                        accent: '#7CB305',
+                        dreamy: '#69B1FF',
+                        light: '#E8F3FF',
+                        dark: '#0E42D2'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .bg-gradient-dreamy {
+                background: linear-gradient(135deg, #165DFF 0%, #69B1FF 100%);
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .hover-scale {
+                transition: transform 0.3s ease;
+            }
+            .hover-scale:hover {
+                transform: scale(1.03);
+            }
+            .animate-float {
+                animation: float 6s ease-in-out infinite;
+            }
+            @keyframes float {
+                0% { transform: translateY(0px); }
+                50% { transform: translateY(-10px); }
+                100% { transform: translateY(0px); }
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+    <!-- 导航栏 -->
+    <header class="bg-gradient-dreamy text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <i class="fa fa-globe text-2xl animate-float"></i>
+                <h1 class="text-xl md:text-2xl font-bold text-shadow">Global IoT APN List</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="downloadBtn" class="bg-white text-primary hover:bg-light px-4 py-2 rounded-lg shadow-md transition-all duration-300 flex items-center hover-scale">
+                    <i class="fa fa-download mr-2"></i>
+                    <span>Download Excel</span>
+                </button>
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Search..." class="bg-white/20 text-white placeholder-white/70 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-300 w-40 md:w-60">
+                    <i class="fa fa-search absolute right-3 top-1/2 transform -translate-y-1/2"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 信息卡片 -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8 hover-scale">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <div>
+                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800 mb-2">Global CAT M1 & NB-IoT APN List</h2>
+                    <p class="text-gray-600">Updated: 2025-06-27</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <a href="https://www.mictrack.com/global-cat-m1-nb-iot-apn-list/" target="_blank" class="text-primary hover:text-dark flex items-center transition-colors duration-300">
+                        <span>Reference</span>
+                        <i class="fa fa-external-link ml-2"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 数据概览 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div class="bg-light rounded-lg p-4 flex items-center shadow-sm">
+                    <div class="bg-primary/10 p-3 rounded-full mr-4">
+                        <i class="fa fa-globe text-primary text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Countries</p>
+                        <p class="text-2xl font-bold text-gray-800" id="countryCount">0</p>
+                    </div>
+                </div>
+                <div class="bg-light rounded-lg p-4 flex items-center shadow-sm">
+                    <div class="bg-primary/10 p-3 rounded-full mr-4">
+                        <i class="fa fa-television text-primary text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Operators</p>
+                        <p class="text-2xl font-bold text-gray-800" id="operatorCount">0</p>
+                    </div>
+                </div>
+                <div class="bg-light rounded-lg p-4 flex items-center shadow-sm">
+                    <div class="bg-primary/10 p-3 rounded-full mr-4">
+                        <i class="fa fa-wifi text-primary text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">APNs</p>
+                        <p class="text-2xl font-bold text-gray-800" id="apnCount">0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 数据可视化 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow-sm p-4">
+                    <h3 class="font-semibold text-gray-800 mb-3">Network Type Distribution</h3>
+                    <canvas id="networkChart" height="200"></canvas>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm p-4">
+                    <h3 class="font-semibold text-gray-800 mb-3">Top 5 Countries with Most APNs</h3>
+                    <canvas id="countryChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 表格区域 -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table id="apnTable" class="w-full">
+                    <thead>
+                        <tr class="bg-primary text-white">
+                            <th class="px-6 py-3 text-left text-sm font-semibold tracking-wider cursor-pointer hover:bg-dark transition-colors duration-200">
+                                Country/Region <i class="fa fa-sort ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold tracking-wider cursor-pointer hover:bg-dark transition-colors duration-200">
+                                Operator <i class="fa fa-sort ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold tracking-wider cursor-pointer hover:bg-dark transition-colors duration-200">
+                                Network <i class="fa fa-sort ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold tracking-wider cursor-pointer hover:bg-dark transition-colors duration-200">
+                                Band <i class="fa fa-sort ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold tracking-wider cursor-pointer hover:bg-dark transition-colors duration-200">
+                                APN <i class="fa fa-sort ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold tracking-wider cursor-pointer hover:bg-dark transition-colors duration-200">
+                                User Name <i class="fa fa-sort ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold tracking-wider cursor-pointer hover:bg-dark transition-colors duration-200">
+                                Password <i class="fa fa-sort ml-1"></i>
+                            </th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold tracking-wider">
+                                Note
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 表格内容将由JavaScript动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 分页 -->
+            <div class="px-6 py-4 flex justify-between items-center border-t border-gray-200">
+                <div class="text-sm text-gray-600">
+                    Showing <span id="showingStart">0</span> to <span id="showingEnd">0</span> of <span id="totalEntries">0</span> entries
+                </div>
+                <div class="flex space-x-1">
+                    <button id="prevPage" class="px-3 py-1 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
+                        <i class="fa fa-chevron-left"></i>
+                    </button>
+                    <div id="paginationNumbers" class="flex space-x-1">
+                        <!-- 分页数字将由JavaScript动态生成 -->
+                    </div>
+                    <button id="nextPage" class="px-3 py-1 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
+                        <i class="fa fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-gradient-dreamy text-white py-8 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Global IoT APN List</h3>
+                    <p class="text-white/80">A comprehensive list of CAT M1 and NB-IoT APN configurations worldwide.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Useful Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="https://en.streamax.com/" class="text-white/80 hover:text-white transition-colors duration-200">About Streamax</a></li>
+                        <li><a href="https://youtu.be/edn7FurOFxM" class="text-white/80 hover:text-white transition-colors duration-200">Summer Lofi Chill ☀️</a></li>
+                        <li><a href="https://youtu.be/jfKfPfyJRdk" class="text-white/80 hover:text-white transition-colors duration-200">lofi hip hop radio 📚</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Contact</h3>
+                    <p class="text-white/80">For updates and corrections, please contact us at <a href="mailto:sean@streamax.com" class="underline">sean@streamax.com</a></p>
+                </div>
+            </div>
+            <div class="border-t border-white/20 mt-8 pt-6 text-center text-white/60 text-sm">
+                &copy; Sean Mao. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 示例数据
+        const apnData = [{"Country/Region":"Argentina","Operator":"Telefonica","Network":"CAT M1 & NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Australia","Operator":"ALDI Mobile","Network":"CAT M1","Band":"B28","APN":"mdata.net.au","User Name":"","Password":"","Note":""},{"Country/Region":"Australia","Operator":"Telstra","Network":"CAT M1 & NB-IoT","Band":"B3/B28","APN":"telstra.internet telstra.m2m","User Name":"","Password":"","Note":""},{"Country/Region":"Australia","Operator":"Optus","Network":"NB-IoT","Band":"B28","APN":"yesinternet","User Name":"","Password":"","Note":""},{"Country/Region":"Australia","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"B8","APN":"live.vodafone.com","User Name":"","Password":"","Note":""},{"Country/Region":"Australia","Operator":"Emnify","Network":"CAT M1","Band":"B28","APN":"em (Cat M1)","User Name":"","Password":"","Note":"MVNO"},{"Country/Region":"Austria","Operator":"A1","Network":"NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Austria","Operator":"Magenta Telekom","Network":"CAT M1 & NB-IoT","Band":"B8","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Bangladesh","Operator":"Grameenphone","Network":"NB-IoT","Band":"B3/B8","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Belarus","Operator":"A1","Network":"NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Belgium","Operator":"BASE (Telenet)","Network":"NB-IoT","Band":"B3/B20","APN":"iot.telenet.be","User Name":"","Password":"","Note":""},{"Country/Region":"Belgium","Operator":"Orange","Network":"CAT M1 & NB-IoT","Band":"B3/B20","APN":"nbiot.iot","User Name":"","Password":"","Note":""},{"Country/Region":"Belgium","Operator":"Proximus","Network":"NB-IoT","Band":"B20","APN":"m2minternet.proximus.be","User Name":"","Password":"","Note":""},{"Country/Region":"Brazil","Operator":"TIM Brazi","Network":"NB-IoT","Band":"B3/B28","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Brazil","Operator":"Claro","Network":"CAT M1","Band":"","APN":"claro.com.br (Cat M1)","User Name":"","Password":"","Note":""},{"Country/Region":"Brazil","Operator":"Telefonica","Network":"CAT M1 & NB-IoT","Band":"B3/B28","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Bulgaria","Operator":"A1","Network":"NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Canada","Operator":"Bell","Network":"Cat M1","Band":"B12","APN":"mnet.bell.ca.ioe","User Name":"","Password":"","Note":""},{"Country/Region":"Canada","Operator":"Rogers","Network":"CAT M1 & NB-IoT","Band":"B4/B5/B12","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Canada","Operator":"Telus","Network":"CAT M1","Band":"B2/B4/B5/B12","APN":"m2m-east.telus.iot m2m-west.telus.iot","User Name":"","Password":"","Note":""},{"Country/Region":"Chile","Operator":"movistar","Network":"CAT M1","Band":"B2","APN":"m2m.movistar.cl","User Name":"","Password":"","Note":""},{"Country/Region":"Chile","Operator":"Entel","Network":"NB-IoT","Band":"B28","APN":"iot.entelpcs.cl (NB-IoT)","User Name":"","Password":"","Note":""},{"Country/Region":"China","Operator":"China Mobile","Network":"NB-IoT","Band":"B8","APN":"cmnbiot","User Name":"","Password":"","Note":""},{"Country/Region":"China","Operator":"China Telecom","Network":"NB-IoT","Band":"B5","APN":"ctnb","User Name":"","Password":"","Note":""},{"Country/Region":"China","Operator":"China Union","Network":"NB-IoT","Band":"B8","APN":"wonet","User Name":"","Password":"","Note":""},{"Country/Region":"Colombia","Operator":"Movistar","Network":"CAT M1","Band":"B4","APN":"data.mono","User Name":"","Password":"","Note":""},{"Country/Region":"Colombia","Operator":"Telefonica","Network":"CAT M1 & NB-IoT","Band":"B2","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Croatia","Operator":"A1","Network":"NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Croatia","Operator":"Hrvatski Telekom","Network":"NB-IoT","Band":"B8/B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Czech Republic","Operator":"T-Mobile CZ","Network":"NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Czech Republic","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Denmark","Operator":"TDC","Network":"NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Denmark","Operator":"Telenor","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Denmark","Operator":"Telia","Network":"CAT M1 & NB-IoT","Band":"B8/B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Estonia","Operator":"Telia","Network":"NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Estonia","Operator":"Elisa","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Finland","Operator":"DNA","Network":"CAT M1 & NB-IoT","Band":"B3/B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Finland","Operator":"Elisa","Network":"CAT M1 & NB-IoT","Band":"B3/B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Finland","Operator":"Telia","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"France","Operator":"Orange","Network":"CAT M1","Band":"B20","APN":"Orange","User Name":"","Password":"","Note":""},{"Country/Region":"France","Operator":"Objenious","Network":"CAT M1 & NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"France","Operator":"SFR","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"iotinternet","User Name":"","Password":"","Note":""},{"Country/Region":"France","Operator":"KPN","Network":"CAT M1","Band":"B20","APN":"wlapn.com","User Name":"mediacom","Password":"mediacom","Note":""},{"Country/Region":"Germany","Operator":"Telefonica","Network":"CAT M1 & NB-IoT","Band":"B8/B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Germany","Operator":"Telekom Deutschland","Network":"CAT M1 & NB-IoT","Band":"B8/B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Germany","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Germany","Operator":"1nce","Network":"CAT M1 & NB-IoT","Band":"B8/B20","APN":"iot.1nce.net","User Name":"","Password":"","Note":"MVNO"},{"Country/Region":"Germany","Operator":"Emnify","Network":"CAT M1 & NB-IoT","Band":"B8/B20","APN":"em","User Name":"","Password":"","Note":"MVNO"},{"Country/Region":"HongKong","Operator":"3HK","Network":"NB-IoT","Band":"B8","APN":"3hk.iot","User Name":"","Password":"","Note":""},{"Country/Region":"HongKong","Operator":"China Mobile HK","Network":"NB-IoT","Band":"B3","APN":"nbiot","User Name":"","Password":"","Note":""},{"Country/Region":"HongKong","Operator":"Smartone","Network":"NB-IoT","Band":"B8","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"HongKong","Operator":"HKT","Network":"NB-IoT","Band":"B8","APN":"mobile","User Name":"","Password":"","Note":""},{"Country/Region":"Hungary","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Hungary","Operator":"Magyar Telekom","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"India","Operator":"Reliance Jio","Network":"NB-IoT","Band":"B3/B5","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Indonesia","Operator":"Telkomsel","Network":"NB-IoT","Band":"B8","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Indonesia","Operator":"XL Axiata","Network":"NB-IoT","Band":"B8","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Iceland","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Ireland","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Israel","Operator":"Pelephone","Network":"CAT M1 & NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Italy","Operator":"TIM","Network":"NB-IoT","Band":"B20","APN":"nbiot.tids.tim.it","User Name":"","Password":"","Note":""},{"Country/Region":"Italy","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"B3/B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Italy","Operator":"Windtre","Network":"NB-IoT","Band":"","APN":"nbiot.windtre","User Name":"","Password":"","Note":""},{"Country/Region":"Italy","Operator":"1NCE","Network":"CAT M1 & NB-IoT","Band":"B3/B20","APN":"iot.1nce.net","User Name":"","Password":"","Note":"MVNO"},{"Country/Region":"Japan","Operator":"KDDI","Network":"Cat M1","Band":"B18/B26","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Japan","Operator":"NTT Docomo","Network":"Cat M1","Band":"B1/B19","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Japan","Operator":"SoftBank","Network":"CAT M1 & NB-IoT","Band":"B1/B3/B8","APN":"sb.mvno","User Name":"bmobile@4g","Password":"bmobile","Note":""},{"Country/Region":"Japan","Operator":"1NCE","Network":"CAT M1","Band":"","APN":"iot.1nce.net","User Name":"","Password":"","Note":"MVNO"},{"Country/Region":"Japan","Operator":"Soracom","Network":"CAT M1","Band":"B18/B26","APN":"soracom.io","User Name":"sora","Password":"sora","Note":"MVNO"},{"Country/Region":"Jersey","Operator":"JT Jersey","Network":"CAT M1 & NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Kazakhstan","Operator":"Kcell","Network":"NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Kazakhstan","Operator":"Beeline","Network":"NB-IoT","Band":"B3/B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Kenya","Operator":"Safaricom","Network":"NB-IoT","Band":"B20","APN":"safaricomiot","User Name":"","Password":"","Note":""},{"Country/Region":"Latvia","Operator":"LMT","Network":"CAT M1 & NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Liechtenstein","Operator":"Swisscom","Network":"CAT M1 & NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Lithuania","Operator":"Telia","Network":"NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Luxembourg","Operator":"POST Luxembourg","Network":"CAT M1","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Malaysia","Operator":"Maxis","Network":"NB-IoT","Band":"B3","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Malta","Operator":"Melita","Network":"NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Malta","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Mexico","Operator":"America Movil","Network":"CAT M1","Band":"B4","APN":"internet.itelcel.com","User Name":"","Password":"","Note":""},{"Country/Region":"Mexico","Operator":"AT&T","Network":"Cat M1","Band":"B4/B5","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Netherlands","Operator":"T-Mobile Netherlands","Network":"CAT M1 & NB-IoT","Band":"B8/B20","APN":"iot.t-mobile.nl","User Name":"","Password":"","Note":""},{"Country/Region":"Netherlands","Operator":"KPN","Network":"CAT M1","Band":"B20","APN":"m2mc.webtrial","User Name":"","Password":"","Note":""},{"Country/Region":"Netherlands","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Netherlands","Operator":"Tele2","Network":"CAT M1 & NB-IoT","Band":"","APN":"m2m.tele2.com","User Name":"","Password":"","Note":""},{"Country/Region":"New Zealand","Operator":"Spark New Zealand","Network":"CAT M1","Band":"B3/B28","APN":"m2m","User Name":"","Password":"","Note":""},{"Country/Region":"New Zealand","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"B3/B28","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"New Zealand","Operator":"EMnify","Network":"CAT M1","Band":"B28","APN":"em (Cat M1)","User Name":"","Password":"","Note":"MVNO"},{"Country/Region":"Norway","Operator":"Telenor","Network":"CAT M1 & NB-IoT","Band":"B8/B20","APN":"telenor.iot","User Name":"","Password":"","Note":""},{"Country/Region":"Norway","Operator":"Telia","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Pakistan","Operator":"Telenor","Network":"CAT M1 & NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Philippines","Operator":"Globe Telecoms","Network":"CAT M1","Band":"","APN":"iotemct","User Name":"","Password":"","Note":""},{"Country/Region":"Poland","Operator":"DT Polska","Network":"NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Poland","Operator":"Orange","Network":"CAT M1","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Portugal","Operator":"Vodafone","Network":"NB-IoT","Band":"B8/B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Portugal","Operator":"Altice","Network":"NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Portugal","Operator":"NOS","Network":"CAT M1","Band":"B3/B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Puerto Rico","Operator":"AT&T","Network":"CAT M1","Band":"B2","APN":"m2m64.com.attz","User Name":"","Password":"","Note":""},{"Country/Region":"Qatar","Operator":"Ooredoo","Network":"NB-IoT","Band":"B3/B20","APN":"internet.m2m.ooredoo.qa","User Name":"","Password":"","Note":""},{"Country/Region":"Romania","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Romania","Operator":"Orange","Network":"CAT M1","Band":"B3","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Russia","Operator":"Megafon","Network":"NB-IoT","Band":"B3/B8/B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Russia","Operator":"MTS","Network":"NB-IoT","Band":"B3","APN":"internet.mts.ru","User Name":"mts","Password":"mts","Note":""},{"Country/Region":"Saudi Arabia","Operator":"STC","Network":"NB-IoT","Band":"B3/B8","APN":"Jawalnet.com.sa","User Name":"","Password":"","Note":""},{"Country/Region":"Saudi Arabia","Operator":"Mobily","Network":"CAT M1","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Serbia","Operator":"A1","Network":"NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Singapore","Operator":"M1","Network":"NB-IoT","Band":"B8","APN":"test-nbiot","User Name":"","Password":"","Note":""},{"Country/Region":"Singapore","Operator":"SingTel","Network":"CAT M1 & NB-IoT","Band":"B3/B8","APN":"stmiot m2minternet e-ideas intelligence.m2m","User Name":"","Password":"","Note":""},{"Country/Region":"Singapore","Operator":"Starhub","Network":"NB-IoT","Band":"B3/B8","APN":"shnbiot (NB-IoT)","User Name":"","Password":"","Note":""},{"Country/Region":"Slovakia","Operator":"Slovak Telecom","Network":"NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Slovenia","Operator":"A1","Network":"CAT M1 & NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"South Africa","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"B8","APN":"nbiot.vodacom.za","User Name":"","Password":"","Note":""},{"Country/Region":"South Korea","Operator":"Korea Telecom","Network":"CAT M1 & NB-IoT","Band":"B3","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"South Korea","Operator":"LGU+","Network":"NB-IoT","Band":"B5","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"South Korea","Operator":"Telenor","Network":"CAT M1","Band":"B5","APN":"internet.lte.cxn","User Name":"","Password":"","Note":"MVNO"},{"Country/Region":"Spain","Operator":"Orange","Network":"CAT M1","Band":"B3/B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Spain","Operator":"Telefonica","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"m2mtrial.telefonica.com","User Name":"","Password":"","Note":""},{"Country/Region":"Spain","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"B8/B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Sri Lanka","Operator":"Dialog Axiata","Network":"CAT M1 & NB-IoT","Band":"B3/B8","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Sri Lanka","Operator":"Mobitel","Network":"NB-IoT","Band":"B3/B8","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Sweden","Operator":"Tele2","Network":"CAT M1","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Sweden","Operator":"Telia","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"lpwa.telia.iot","User Name":"","Password":"","Note":""},{"Country/Region":"Sweden","Operator":"Telenor","Network":"CAT M1 & NB-IoT","Band":"","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Switzerland","Operator":"Sunrise","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Switzerland","Operator":"Swisscom","Network":"CAT M1 & NB-IoT","Band":"B8/B20","APN":"shared.m2m.ch","User Name":"","Password":"","Note":""},{"Country/Region":"Switzerland","Operator":"1oT","Network":"CAT M1","Band":"B20","APN":"terminal","User Name":"","Password":"","Note":"MVNO"},{"Country/Region":"Taiwan","Operator":"Taiwan mobile","Network":"NB-IoT","Band":"B3/B8","APN":"twm.nbiot","User Name":"","Password":"","Note":""},{"Country/Region":"Taiwan","Operator":"APTG","Network":"CAT M1 & NB-IoT","Band":"B8","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Taiwan","Operator":"Chunghwa","Network":"CAT M1 & NB-IoT","Band":"B3/B8","APN":"internet.iot","User Name":"","Password":"","Note":""},{"Country/Region":"Taiwan","Operator":"Far EasTone","Network":"NB-IoT","Band":"B28","APN":"nbiot","User Name":"","Password":"","Note":""},{"Country/Region":"Thailand","Operator":"True","Network":"NB-IoT","Band":"B3/B8","APN":"ciot","User Name":"","Password":"","Note":""},{"Country/Region":"Thailand","Operator":"AIS","Network":"CAT M1 & NB-IoT","Band":"","APN":"nb.developer","User Name":"","Password":"","Note":""},{"Country/Region":"Thailand","Operator":"DTAC","Network":"","Band":"","APN":"www.dtac.co.th","User Name":"","Password":"","Note":""},{"Country/Region":"Turkey","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"B8/B20","APN":"iottest","User Name":"","Password":"","Note":""},{"Country/Region":"Turkey","Operator":"Turkcell","Network":"CAT M1 & NB-IoT","Band":"B3/B20","APN":"nbiot","User Name":"","Password":"","Note":""},{"Country/Region":"UAE","Operator":"DU","Network":"NB-IoT","Band":"B20","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"UAE","Operator":"Etisalat","Network":"CAT M1 & NB-IoT","Band":"B5/B20","APN":"nbiot","User Name":"","Password":"","Note":""},{"Country/Region":"Ukraine","Operator":"Kyvistar","Network":"NB-IoT","Band":"B3","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Ukraine","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"B3","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"United Kingdom","Operator":"Vodafone","Network":"CAT M1 & NB-IoT","Band":"B20","APN":"ciot.vodafone.com","User Name":"vodafone","Password":"vodafone","Note":""},{"Country/Region":"United Kingdom","Operator":"Telefonica","Network":"CAT M1","Band":"B20","APN":"m2m.telefonica.com","User Name":"","Password":"","Note":""},{"Country/Region":"United States","Operator":"AT&T","Network":"CAT M1 & NB-IoT","Band":"B2/B4/B12/B17","APN":"m2m64.com.attz","User Name":"","Password":"","Note":""},{"Country/Region":"United States","Operator":"T-Mobile","Network":"CAT M1 & NB-IoT","Band":"B2/B4/B12/B66","APN":"fast.t-mobile.com","User Name":"","Password":"","Note":""},{"Country/Region":"United States","Operator":"Verizon","Network":"CAT M1 & NB-IoT","Band":"B4/B13","APN":"vzwinternet","User Name":"","Password":"","Note":""},{"Country/Region":"United States","Operator":"U.S. Cellular","Network":"CAT M1","Band":"B2/B4/B5/B12","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"United States","Operator":"Choice IoT","Network":"CAT M1","Band":"B12","APN":"iot.tmowholesale","User Name":"","Password":"","Note":""},{"Country/Region":"United States","Operator":"Hologram","Network":"CAT M1","Band":"B12","APN":"hologram","User Name":"","Password":"","Note":"MVNO"},{"Country/Region":"United States","Operator":"Kore","Network":"CAT M1","Band":"B12","APN":"c1.korem2m.com","User Name":"","Password":"","Note":"MVNO"},{"Country/Region":"United States","Operator":"Soracom","Network":"CAT M1","Band":"B12","APN":"soracom.io","User Name":"sora","Password":"sora","Note":"MVNO"},{"Country/Region":"United States","Operator":"Twilio","Network":"","Band":"","APN":"Super","User Name":"","Password":"","Note":"MVNO"},{"Country/Region":"United States","Operator":"Webbing","Network":"","Band":"","APN":"iot0119.com.attz","User Name":"","Password":"","Note":"MVNO"},{"Country/Region":"United States","Operator":"Telnyx","Network":"","Band":"","APN":"data00.telnyx","User Name":"","Password":"","Note":"MVNO"},{"Country/Region":"Uruguay","Operator":"Antel","Network":"NB-IoT","Band":"B3/B28","APN":"","User Name":"","Password":"","Note":""},{"Country/Region":"Vietnam","Operator":"Viettel","Network":"NB-IoT","Band":"B3","APN":"v-internet","User Name":"","Password":"","Note":""}];
+
+        // 每页显示的记录数
+        const itemsPerPage = 10;
+        let currentPage = 1;
+
+        // 表格数据处理和渲染
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化图表
+            initCharts();
+            
+            // 初始化表格
+            initTable();
+            
+            // 绑定下载按钮事件
+            document.getElementById('downloadBtn').addEventListener('click', downloadExcel);
+            
+            // 绑定搜索框事件
+            document.getElementById('searchInput').addEventListener('input', handleSearch);
+        });
+
+        // 初始化图表
+        function initCharts() {
+            // 计算网络类型分布
+            const networkTypes = apnData.reduce((acc, item) => {
+                if (acc[item.Network]) {
+                    acc[item.Network]++;
+                } else {
+                    acc[item.Network] = 1;
+                }
+                return acc;
+            }, {});
+            
+            // 计算国家APN数量
+            const countryCounts = apnData.reduce((acc, item) => {
+                if (acc[item['Country/Region']]) {
+                    acc[item['Country/Region']]++;
+                } else {
+                    acc[item['Country/Region']] = 1;
+                }
+                return acc;
+            }, {});
+            
+            // 获取前5个国家
+            const topCountries = Object.entries(countryCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            // 更新数据概览
+            document.getElementById('countryCount').textContent = Object.keys(countryCounts).length;
+            document.getElementById('operatorCount').textContent = [...new Set(apnData.map(item => item.Operator))].length;
+            document.getElementById('apnCount').textContent = apnData.length;
+            
+            // 网络类型图表
+            const networkCtx = document.getElementById('networkChart').getContext('2d');
+            new Chart(networkCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(networkTypes),
+                    datasets: [{
+                        data: Object.values(networkTypes),
+                        backgroundColor: [
+                            '#165DFF',
+                            '#4080FF',
+                            '#69B1FF',
+                            '#9BCEFF',
+                            '#E8F3FF'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        }
+                    }
+                }
+            });
+            
+            // 国家APN数量图表
+            const countryCtx = document.getElementById('countryChart').getContext('2d');
+            new Chart(countryCtx, {
+                type: 'bar',
+                data: {
+                    labels: topCountries.map(item => item[0]),
+                    datasets: [{
+                        label: 'APN Count',
+                        data: topCountries.map(item => item[1]),
+                        backgroundColor: '#165DFF',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // 初始化表格
+        function initTable() {
+            renderTable(apnData);
+            setupPagination(apnData);
+        }
+
+        // 渲染表格
+        function renderTable(data) {
+            const tableBody = document.getElementById('apnTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = '';
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const currentItems = data.slice(startIndex, endIndex);
+
+            currentItems.forEach(item => {
+                const row = tableBody.insertRow();
+                Object.values(item).forEach(value => {
+                    const cell = row.insertCell();
+                    cell.textContent = value;
+                });
+            });
+
+            // 更新分页信息
+            const showingStart = document.getElementById('showingStart');
+            const showingEnd = document.getElementById('showingEnd');
+            const totalEntries = document.getElementById('totalEntries');
+            showingStart.textContent = startIndex + 1;
+            showingEnd.textContent = Math.min(endIndex, data.length);
+            totalEntries.textContent = data.length;
+        }
+
+        // 设置分页
+        function setupPagination(data) {
+            const paginationNumbers = document.getElementById('paginationNumbers');
+            const totalPages = Math.ceil(data.length / itemsPerPage);
+            paginationNumbers.innerHTML = '';
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageNumber = document.createElement('button');
+                pageNumber.textContent = i;
+                pageNumber.classList.add('px-3', 'py-1', 'rounded', 'hover:bg-gray-100', 'transition-colors', 'duration-200');
+                pageNumber.addEventListener('click', () => {
+                    currentPage = i;
+                    renderTable(data);
+                    updatePaginationButtons(data);
+                });
+                paginationNumbers.appendChild(pageNumber);
+            }
+
+            updatePaginationButtons(data);
+        }
+
+        // 更新分页按钮状态
+        function updatePaginationButtons(data) {
+            const prevPage = document.getElementById('prevPage');
+            const nextPage = document.getElementById('nextPage');
+            const totalPages = Math.ceil(data.length / itemsPerPage);
+
+            prevPage.disabled = currentPage === 1;
+            nextPage.disabled = currentPage === totalPages;
+
+            prevPage.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable(data);
+                    updatePaginationButtons(data);
+                }
+            });
+
+            nextPage.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTable(data);
+                    updatePaginationButtons(data);
+                }
+            });
+        }
+
+        // 下载 Excel 文件
+        function downloadExcel() {
+            const ws = XLSX.utils.json_to_sheet(apnData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'APN List');
+            XLSX.writeFile(wb, 'APN_List.xlsx');
+        }
+
+        // 处理搜索
+        function handleSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filteredData = apnData.filter(item => {
+                return Object.values(item).some(value => {
+                    return value.toString().toLowerCase().includes(searchTerm);
+                });
+            });
+            currentPage = 1;
+            renderTable(filteredData);
+            setupPagination(filteredData);
+        }
+    </script>
+</body>
+
+</html>
