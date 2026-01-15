@@ -1,5 +1,5 @@
-# Streamax🎸⋆⭒˚｡⋆
-This is a Streamax knowledge base template.
+# 🎸⋆⭒˚｡⋆
+
 
 ------
 
