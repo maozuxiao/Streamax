@@ -1,0 +1,620 @@
+<!doctype html>
+<html>
+<head>
+<meta charset='UTF-8'><meta name='viewport' content='width=device-width initial-scale=1'><style type='text/css'>html {overflow-x: initial !important;}</style>
+<style type='text/css'  id="style-base">:root { --bg-color: #ffffff; --text-color: #333333; --select-text-bg-color: #B5D6FC; --select-text-font-color: auto; --monospace: "Lucida Console",Consolas,"Courier",monospace; --title-bar-height: 20px; }
+.mac-os-11 { --title-bar-height: 28px; }
+html { font-size: 14px; background-color: var(--bg-color); color: var(--text-color); font-family: "Helvetica Neue", Helvetica, Arial, "Segoe UI Emoji", "SF Pro", sans-serif; -webkit-font-smoothing: antialiased; }
+h1, h2, h3, h4, h5 { white-space: pre-wrap; }
+body { margin: 0px; padding: 0px; height: auto; inset: 0px; font-size: 1rem; line-height: 1.42857; overflow-x: hidden; background: inherit; }
+iframe { margin: auto; }
+a.url { word-break: break-all; }
+a:active, a:hover { outline: 0px; }
+.in-text-selection, ::selection { text-shadow: none; background: var(--select-text-bg-color); color: var(--select-text-font-color); }
+#write { margin: 0px auto; height: auto; width: inherit; word-break: normal; overflow-wrap: break-word; position: relative; white-space: normal; overflow-x: visible; padding-top: 36px; }
+#write.first-line-indent p { text-indent: 2em; }
+#write.first-line-indent li p, #write.first-line-indent p *, #write.first-line-indent svg * { text-indent: 0px; }
+#write.first-line-indent li { margin-left: 2em; }
+.for-image #write { padding-left: 8px; padding-right: 8px; }
+body.typora-export { padding-left: 30px; padding-right: 30px; }
+.typora-export .footnote-line, .typora-export li, .typora-export p { white-space: pre-wrap; }
+.typora-export .task-list-item input { pointer-events: none; }
+@media screen and (max-width: 500px) {
+  body.typora-export { padding-left: 0px; padding-right: 0px; }
+  #write { padding-left: 20px; padding-right: 20px; }
+}
+#write li > figure:last-child { margin-bottom: 0.5rem; }
+#write ol, #write ul { position: relative; }
+img { max-width: 100%; vertical-align: middle; image-orientation: from-image; }
+button, input, select, textarea { color: inherit; font: inherit; }
+input[type="checkbox"], input[type="radio"] { line-height: normal; padding: 0px; }
+*, ::after, ::before { box-sizing: border-box; }
+#write h1, #write h2, #write h3, #write h4, #write h5, #write h6, #write p, #write pre { width: inherit; position: relative; }
+#write svg h1, #write svg h2, #write svg h3, #write svg h4, #write svg h5, #write svg h6, #write svg p { position: static; }
+.nodeLabel p { padding-right: 2px; padding-left: 2px; }
+.typora-export .nodeLabel p { padding-right: 0px; padding-left: 0px; }
+foreignobject { overflow: visible; }
+p { line-height: inherit; }
+h1, h2, h3, h4, h5, h6 { break-after: avoid-page; break-inside: avoid; orphans: 4; }
+p { orphans: 4; }
+li p { orphans: 1; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.8rem; }
+h3 { font-size: 1.6rem; }
+h4 { font-size: 1.4rem; }
+h5 { font-size: 1.2rem; }
+h6 { font-size: 1rem; }
+.md-math-block, .md-rawblock, h1, h2, h3, h4, h5, h6, p { margin-top: 1rem; margin-bottom: 1rem; }
+.hidden { display: none; }
+.md-blockmeta { color: rgb(204, 204, 204); font-weight: 700; font-style: italic; }
+a { cursor: pointer; }
+sup.md-footnote { padding: 2px 4px; background-color: rgba(238, 238, 238, 0.7); color: rgb(85, 85, 85); border-radius: 4px; cursor: pointer; }
+sup.md-footnote a, sup.md-footnote a:hover { color: inherit; text-transform: inherit; text-decoration: inherit; }
+#write input[type="checkbox"] { cursor: pointer; width: inherit; height: inherit; }
+figure { overflow-x: auto; margin: 1.2em 0px; max-width: calc(100% + 16px); padding: 0px; }
+figure > table { margin: 0px; }
+thead, tr { break-inside: avoid; break-after: auto; }
+thead { display: table-header-group; }
+table { border-collapse: collapse; border-spacing: 0px; width: 100%; overflow: auto; break-inside: auto; text-align: left; }
+table.md-table td { min-width: 32px; }
+.CodeMirror-gutters { border-right: 0px; background-color: inherit; }
+.CodeMirror-linenumber { user-select: none; }
+.CodeMirror { text-align: left; }
+.CodeMirror-placeholder { opacity: 0.3; }
+.CodeMirror pre { padding: 0px 4px; }
+.CodeMirror-lines { padding: 0px; }
+div.hr:focus { cursor: none; }
+#write pre { white-space: pre-wrap; }
+#write.fences-no-line-wrapping pre { white-space: pre; }
+#write pre.ty-contain-cm { white-space: normal; }
+.CodeMirror-gutters { margin-right: 4px; }
+.md-fences { font-size: 0.9rem; display: block; break-inside: avoid; text-align: left; overflow: visible; white-space: pre; background: inherit; position: relative !important; }
+.md-fences-adv-panel { width: 100%; margin-top: 10px; text-align: center; padding-top: 0px; padding-bottom: 8px; overflow-x: auto; }
+#write .md-fences.mock-cm { white-space: pre-wrap; }
+.md-fences.md-fences-with-lineno { padding-left: 0px; }
+#write.fences-no-line-wrapping .md-fences.mock-cm { white-space: pre; overflow-x: auto; }
+.md-fences.mock-cm.md-fences-with-lineno { padding-left: 8px; }
+.CodeMirror-line, twitterwidget { break-inside: avoid; }
+svg { break-inside: avoid; }
+.footnotes { opacity: 0.8; font-size: 0.9rem; margin-top: 1em; margin-bottom: 1em; }
+.footnotes + .footnotes { margin-top: 0px; }
+.md-reset { margin: 0px; padding: 0px; border: 0px; outline: 0px; vertical-align: top; background: 0px 0px; text-decoration: none; text-shadow: none; float: none; position: static; width: auto; height: auto; white-space: nowrap; cursor: inherit; -webkit-tap-highlight-color: transparent; line-height: normal; font-weight: 400; text-align: left; box-sizing: content-box; direction: ltr; }
+li div { padding-top: 0px; }
+blockquote { margin: 1rem 0px; }
+li .mathjax-block, li p { margin: 0.5rem 0px; }
+li blockquote { margin: 1rem 0px; }
+li { margin: 0px; position: relative; }
+blockquote > :last-child { margin-bottom: 0px; }
+blockquote > :first-child, li > :first-child { margin-top: 0px; }
+.footnotes-area { color: rgb(136, 136, 136); margin-top: 0.714rem; padding-bottom: 0.143rem; white-space: normal; }
+#write .footnote-line { white-space: pre-wrap; }
+@media print {
+  body, html { border: 1px solid transparent; height: 99%; break-after: avoid; break-before: avoid; font-variant-ligatures: no-common-ligatures; }
+  #write { margin-top: 0px; border-color: transparent !important; padding-top: 0px !important; padding-bottom: 0px !important; }
+  .typora-export * { -webkit-print-color-adjust: exact; }
+  .typora-export #write { break-after: avoid; }
+  .typora-export #write::after { height: 0px; }
+  .is-mac table { break-inside: avoid; }
+  #write > p:nth-child(1) { margin-top: 0px; }
+  .typora-export-show-outline .typora-export-sidebar { display: none; }
+  figure { overflow-x: visible; }
+}
+.footnote-line { margin-top: 0.714em; font-size: 0.7em; }
+a img, img a { cursor: pointer; }
+pre.md-meta-block { font-size: 0.8rem; min-height: 0.8rem; white-space: pre-wrap; background: rgb(204, 204, 204); display: block; overflow-x: hidden; }
+p > .md-image:only-child:not(.md-img-error) img, p > img:only-child { display: block; margin: auto; }
+#write.first-line-indent p > .md-image:only-child:not(.md-img-error) img { left: -2em; position: relative; }
+p > .md-image:only-child { display: inline-block; width: 100%; }
+#write .MathJax_Display { margin: 0.8em 0px 0px; }
+.md-math-block { width: 100%; }
+.md-math-block:not(:empty)::after { display: none; }
+.MathJax_ref { fill: currentcolor; }
+[contenteditable="true"]:active, [contenteditable="true"]:focus, [contenteditable="false"]:active, [contenteditable="false"]:focus { outline: 0px; box-shadow: none; }
+.md-task-list-item { position: relative; list-style-type: none; }
+.task-list-item.md-task-list-item { padding-left: 0px; }
+.md-task-list-item > input { position: absolute; top: 0px; left: 0px; margin-left: -1.2em; margin-top: calc(1em - 10px); border: none; }
+.math { font-size: 1rem; }
+.md-toc { min-height: 3.58rem; position: relative; font-size: 0.9rem; border-radius: 10px; }
+.md-toc-content { position: relative; margin-left: 0px; }
+.md-toc-content::after, .md-toc::after { display: none; }
+.md-toc-item { display: block; color: rgb(65, 131, 196); }
+.md-toc-item a { text-decoration: none; }
+.md-toc-inner:hover { text-decoration: underline; }
+.md-toc-inner { display: inline-block; cursor: pointer; }
+.md-toc-h1 .md-toc-inner { margin-left: 0px; font-weight: 700; }
+.md-toc-h2 .md-toc-inner { margin-left: 2em; }
+.md-toc-h3 .md-toc-inner { margin-left: 4em; }
+.md-toc-h4 .md-toc-inner { margin-left: 6em; }
+.md-toc-h5 .md-toc-inner { margin-left: 8em; }
+.md-toc-h6 .md-toc-inner { margin-left: 10em; }
+@media screen and (max-width: 48em) {
+  .md-toc-h3 .md-toc-inner { margin-left: 3.5em; }
+  .md-toc-h4 .md-toc-inner { margin-left: 5em; }
+  .md-toc-h5 .md-toc-inner { margin-left: 6.5em; }
+  .md-toc-h6 .md-toc-inner { margin-left: 8em; }
+}
+a.md-toc-inner { font-size: inherit; font-style: inherit; font-weight: inherit; line-height: inherit; }
+.footnote-line a:not(.reversefootnote) { color: inherit; }
+.reversefootnote { font-family: ui-monospace, sans-serif; }
+.md-attr { display: none; }
+.md-fn-count::after { content: "."; }
+code, pre, samp, tt { font-family: var(--monospace); }
+kbd { margin: 0px 0.1em; padding: 0.1em 0.6em; font-size: 0.8em; color: rgb(36, 39, 41); background: rgb(255, 255, 255); border: 1px solid rgb(173, 179, 185); border-radius: 3px; box-shadow: rgba(12, 13, 14, 0.2) 0px 1px 0px, rgb(255, 255, 255) 0px 0px 0px 2px inset; white-space: nowrap; vertical-align: middle; }
+.md-comment { color: rgb(162, 127, 3); opacity: 0.6; font-family: var(--monospace); }
+code { text-align: left; vertical-align: initial; }
+a.md-print-anchor { white-space: pre !important; border-width: initial !important; border-style: none !important; border-color: initial !important; display: inline-block !important; position: absolute !important; width: 1px !important; right: 0px !important; outline: 0px !important; background: 0px 0px !important; text-decoration: initial !important; text-shadow: initial !important; }
+.os-windows.monocolor-emoji .md-emoji { font-family: "Segoe UI Symbol", sans-serif; }
+.md-diagram-panel > svg { max-width: 100%; }
+[lang="flow"] svg, [lang="mermaid"] svg { max-width: 100%; height: auto; }
+[lang="mermaid"] .node text { font-size: 1rem; }
+table tr th { border-bottom: 0px; }
+video { max-width: 100%; display: block; margin: 0px auto; }
+iframe { max-width: 100%; width: 100%; border: none; }
+.highlight td, .highlight tr { border: 0px; }
+mark { background: rgb(255, 255, 0); color: rgb(0, 0, 0); }
+.md-html-inline .md-plain, .md-html-inline strong, mark .md-inline-math, mark strong { color: inherit; }
+.md-expand mark .md-meta { opacity: 0.3 !important; }
+mark .md-meta { color: rgb(0, 0, 0); }
+@media print {
+  .typora-export h1, .typora-export h2, .typora-export h3, .typora-export h4, .typora-export h5, .typora-export h6 { break-inside: avoid; }
+}
+.md-diagram-panel .messageText { stroke: none !important; }
+.md-diagram-panel .start-state { fill: var(--node-fill); }
+.md-diagram-panel .edgeLabel rect { opacity: 1 !important; }
+.md-fences.md-fences-math { font-size: 1em; }
+.md-fences-advanced:not(.md-focus) { padding: 0px; white-space: nowrap; border: 0px; }
+.md-fences-advanced:not(.md-focus) { background: inherit; }
+.mermaid-svg { margin: auto; }
+.typora-export-show-outline .typora-export-content { max-width: 1440px; margin: auto; display: flex; flex-direction: row; }
+.typora-export-sidebar { width: 300px; font-size: 0.8rem; margin-top: 80px; margin-right: 18px; }
+.typora-export-show-outline #write { --webkit-flex: 2; flex: 2 1 0%; }
+.typora-export-sidebar .outline-content { position: fixed; top: 0px; max-height: 100%; overflow: hidden auto; padding-bottom: 30px; padding-top: 60px; width: 300px; }
+@media screen and (max-width: 1024px) {
+  .typora-export-sidebar, .typora-export-sidebar .outline-content { width: 240px; }
+}
+@media screen and (max-width: 800px) {
+  .typora-export-sidebar { display: none; }
+}
+.outline-content li, .outline-content ul { margin-left: 0px; margin-right: 0px; padding-left: 0px; padding-right: 0px; list-style: none; overflow-wrap: anywhere; }
+.outline-content ul { margin-top: 0px; margin-bottom: 0px; }
+.outline-content strong { font-weight: 400; }
+.outline-expander { width: 1rem; height: 1.42857rem; position: relative; display: table-cell; vertical-align: middle; cursor: pointer; padding-left: 4px; }
+.outline-expander::before { content: ""; position: relative; font-family: Ionicons; display: inline-block; font-size: 8px; vertical-align: middle; }
+.outline-item { padding-top: 3px; padding-bottom: 3px; cursor: pointer; }
+.outline-expander:hover::before { content: ""; }
+.outline-h1 > .outline-item { padding-left: 0px; }
+.outline-h2 > .outline-item { padding-left: 1em; }
+.outline-h3 > .outline-item { padding-left: 2em; }
+.outline-h4 > .outline-item { padding-left: 3em; }
+.outline-h5 > .outline-item { padding-left: 4em; }
+.outline-h6 > .outline-item { padding-left: 5em; }
+.outline-label { cursor: pointer; display: table-cell; vertical-align: middle; text-decoration: none; color: inherit; }
+.outline-label:hover { text-decoration: underline; }
+.outline-item:hover { border-color: rgb(245, 245, 245); background-color: var(--item-hover-bg-color); }
+.outline-item:hover { margin-left: -28px; margin-right: -28px; border-left: 28px solid transparent; border-right: 28px solid transparent; }
+.outline-item-single .outline-expander::before, .outline-item-single .outline-expander:hover::before { display: none; }
+.outline-item-open > .outline-item > .outline-expander::before { content: ""; }
+.outline-children { display: none; }
+.info-panel-tab-wrapper { display: none; }
+.outline-item-open > .outline-children { display: block; }
+.typora-export .outline-item { padding-top: 1px; padding-bottom: 1px; }
+.typora-export .outline-item:hover { margin-right: -8px; border-right: 8px solid transparent; }
+.typora-export .outline-expander::before { content: "+"; font-family: inherit; top: -1px; }
+.typora-export .outline-expander:hover::before, .typora-export .outline-item-open > .outline-item > .outline-expander::before { content: "−"; }
+.typora-export-collapse-outline .outline-children { display: none; }
+.typora-export-collapse-outline .outline-item-open > .outline-children, .typora-export-no-collapse-outline .outline-children { display: block; }
+.typora-export-no-collapse-outline .outline-expander::before { content: "" !important; }
+.typora-export-show-outline .outline-item-active > .outline-item .outline-label { font-weight: 700; }
+.md-inline-math-container mjx-container { zoom: 0.95; }
+mjx-container { break-inside: avoid; }
+.md-alert.md-alert-note { border-left-color: rgb(9, 105, 218); }
+.md-alert.md-alert-important { border-left-color: rgb(130, 80, 223); }
+.md-alert.md-alert-warning { border-left-color: rgb(154, 103, 0); }
+.md-alert.md-alert-tip { border-left-color: rgb(31, 136, 61); }
+.md-alert.md-alert-caution { border-left-color: rgb(207, 34, 46); }
+.md-alert { padding: 0px 1em; margin-bottom: 16px; color: inherit; border-left: 0.25em solid rgb(0, 0, 0); }
+.md-alert-text-note { color: rgb(9, 105, 218); }
+.md-alert-text-important { color: rgb(130, 80, 223); }
+.md-alert-text-warning { color: rgb(154, 103, 0); }
+.md-alert-text-tip { color: rgb(31, 136, 61); }
+.md-alert-text-caution { color: rgb(207, 34, 46); }
+.md-alert-text { font-size: 0.9rem; font-weight: 700; }
+.md-alert-text svg { fill: currentcolor; position: relative; top: 0.125em; margin-right: 1ch; overflow: visible; }
+.md-alert-text-container::after { content: attr(data-text); text-transform: capitalize; pointer-events: none; margin-right: 1ch; }
+
+</style>
+<style type='text/css'  id="style-theme_css">:root {
+    --bg-color: #fffbe8;
+    --text-color: #499504ff;
+    /*change color of meta characetrs like `*` in markdown */
+    --md-char-color: #577909;
+    /*change color of meta contents like image text or link address in markdown */
+    --meta-content-color: #0d1171ff;
+    --table-border-color: #ddd6c1;
+
+    /* color of primary buttons */
+    --primary-color: #b58900;
+    --primary-btn-border-color: #cc9a00;
+    --primary-btn-text-color: #fff;
+
+    /*border for sidebar, etc*/
+    --window-border: 1px solid #eee8d5;
+
+    /*background color if list item in file tree or file list*/
+    --active-file-bg-color: #dfca8844;
+    --active-file-text-color: inherit;
+    --active-file-border-color: #cc9a00;
+
+    /*change background of sidebar*/
+    --side-bar-bg-color: #eee8d5;
+    /*background of control items when hover, like menu in sidebar*/
+    --item-hover-bg-color: #dfca8844;
+    --item-hover-text-color: inherit;
+    /*monospace font for codes, fences*/
+    --monospace: "Monaco", "Consolas", monospace;
+
+    --rawblock-edit-panel-bd: #eee8d5;
+
+    --search-select-bg-color: #b58900;
+    --active-search-item-bg-color: #dfca88;
+}
+
+p {
+    margin: 0.5rem 0;
+}
+
+code,
+.md-fences,
+tt {
+    font-size: 1rem;
+    border: 1px solid #ddd6c1;
+    border-radius: 0.25rem;
+    padding: 0 0.125rem;
+    background: transparent;
+    /* font-family: var(--monospace); */
+}
+
+blockquote {
+    background-color: var(--side-bar-bg-color);
+    position: relative;
+    margin: 1rem 0rem 1.25rem 0rem;
+    padding-left: 0.75rem;
+    font-family: var(--monospace);
+}
+
+blockquote::before {
+    content: "";
+    position: absolute;
+    left: 0rem;
+    height: 100%;
+    width: .25rem;
+    background: var(--primary-color);
+}
+
+table {
+    border: 1px solid #ddd6c1;
+    margin: 1rem 0;
+}
+
+thead {
+    background: #e8dfc4;
+}
+
+table tr:nth-child(2n) {
+    background: #eee8d5;
+}
+
+td,
+th {
+    padding: 0.35rem 0.7rem;
+    border: 1px solid #ddd6c1;
+}
+
+hr {
+    border-color: var(--table-border-color);
+}
+
+mark {
+    padding: 2px 1px;
+    color: darkred;
+}
+
+#write {
+    position: static;
+    padding-left: 10ch;
+    padding-right: 10ch;
+    line-height: 1.6;
+    transform: none;
+}
+
+/* YAML block on the top */
+#write .md-meta-block {
+    background-color: #eee8d5b0;
+    border-bottom: 2px solid #ddd6c1;
+    padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+}
+
+#write .md-task-list-item>input {
+    -webkit-appearance: initial;
+    display: block;
+    position: absolute;
+    border: 1px solid #ddd6c1;
+    border-radius: 0.25rem;
+    margin-top: 0.1rem;
+    margin-left: -1.8rem;
+    height: 1.2rem;
+    width: 1.2rem;
+    transition: background 0.3s;
+}
+
+#write .md-task-list-item>input:hover {
+    background: #d47405;
+}
+
+#write .md-task-list-item>input[checked]::before {
+    content: "";
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    height: 60%;
+    width: 2px;
+    transform: rotate(40deg);
+    background: var(--primary-color);
+}
+
+#write .md-task-list-item>input[checked]::after {
+    content: "";
+    position: absolute;
+    top: 46%;
+    left: 25%;
+    height: 30%;
+    width: 2px;
+    transform: rotate(-40deg);
+    background: var(--primary-color);
+}
+
+#write .md-task-list-item>p {
+    transition: color 0.3s;
+}
+
+#write .md-task-list-item.task-list-done>p {
+    color: var(--primary-color);
+    text-decoration: line-through;
+}
+
+.on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container),
+.on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container) *,
+.on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container) ol,
+.on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container) ul {
+    color: #499504ff !important;
+}
+
+#write .md-toc-item {
+    color: var(--primary-btn-border-color);
+}
+
+#write .md-toc-h1 {
+    font-size: 1.3rem;
+}
+
+#write .md-toc-h2 {
+    font-size: 1.2rem;
+}
+
+#write h1::before,
+#write h2::before,
+#write h3::before,
+#write h4::before,
+#write h5::before,
+#write h6::before {
+    position: absolute;
+    right: calc(100% + 10px);
+    bottom: 0;
+    color: #ddd6c1;
+    font-size: 1rem;
+    font-weight: bold;
+    font-variant: "small-caps";
+    border: 0;
+    border-radius: 0;
+    left: auto;
+    float: none;
+    padding: 0;
+    vertical-align: baseline;
+    line-height: 20px;
+}
+
+#write h1 {
+    font-size: 1.8rem;
+    margin: 1rem 0;
+}
+
+/* #write h1::before {
+    content: "H1";
+    bottom: 0.45rem;
+} */
+
+#write h2 {
+    font-size: 1.4rem;
+    margin: 0.7rem 0;
+}
+
+/* #write h2::before {
+    content: "H2";
+    bottom: 0.2rem;
+} */
+
+#write h3 {
+    font-size: 1.2rem;
+    margin: 0.5rem 0;
+}
+
+/* #write h3::before {
+    content: "H3";
+    bottom: 0.18rem;
+} */
+
+#write h4 {
+    font-size: 1.1rem;
+    margin: 0.2rem 0;
+}
+
+/* #write h4::before {
+    content: "H4";
+    bottom: 0.15rem;
+} */
+
+#write h5,
+#write h6 {
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* #write h5::before,
+#write h6::before {
+    bottom: 0.1rem;
+} */
+
+/* #write h5::before {
+    content: "H5";
+} */
+
+/* #write h6::before {
+    content: "H6";
+} */
+
+#outline-content li .outline-item-open>.outline-children {
+    border-left: var(--primary-btn-border-color) 1px dashed;
+}
+
+/* diagrams like mermaid, sequence, gantt, flow etc */
+#write .md-focus .md-diagram-panel {
+    border-color: var(--table-border-color);
+}
+
+/* hover tooltip for formula etc */
+.code-tooltip.md-hover-tip {
+    color: var(--text-color);
+    background-color: #e8dfc4ff;
+}
+
+.md-hover-tip .md-arrow:after {
+    background: #e8dfc4ff;
+}
+
+/* for ``` code block */
+.md-fences.md-focus .cm-s-inner .CodeMirror-activeline-background {
+    background: #e8dfc470;
+}
+
+.cm-s-inner .cm-number {
+    color: #9b3aff;
+}
+
+.cm-s-inner .cm-keyword {
+    color: #577909;
+    font-weight: bold;
+}
+
+.cm-s-inner .cm-def {
+    color: #499504;
+}
+
+.cm-s-inner .cm-variable {
+    color: #499504;
+}
+
+.cm-s-inner .cm-variable-2 {
+    color: #05a;
+}
+
+.cm-s-inner .cm-variable-3 {
+    color: #085;
+}
+
+.cm-s-inner .cm-property {
+    color: #934b3cff;
+}
+
+.cm-s-inner .cm-operator {
+    color: #577909;
+    font-weight: bold;
+}
+
+.cm-s-inner .cm-comment,
+.cm-s-inner.cm-comment {
+    color: #95a3abff;
+}
+
+.cm-s-inner .cm-string {
+    color: #2aa198;
+}
+
+.cm-s-inner .cm-string-2 {
+    color: #f50;
+}
+
+.cm-s-inner .cm-meta {
+    color: #577909;
+    font-weight: bold;
+}
+
+.cm-s-inner .cm-builtin {
+    color: #9b3affff;
+}
+
+.cm-s-inner .cm-tag {
+    color: #2369b6ff;
+}
+
+.cm-s-inner .cm-attribute {
+    color: #cb2d01ff;
+}
+
+.cm-s-inner .cm-quote,
+.cm-s-inner.cm-quote {
+    color: #0b6125ff;
+    background-color: #bbbbbb30;
+}
+
+/* for win10 unibody, which lacks the sense of beauty, but tested */
+#megamenu-menu-sidebar {
+    color: #586e75;
+    background-color: var(--side-bar-bg-color);
+}
+
+#megamenu-menu-sidebar .megamenu-menu-header {
+    background-color: var(--primary-color);
+}
+
+#megamenu-back-btn {
+    color: var(--primary-btn-text-color);
+}
+
+#megamenu-menu-header-title {
+    color: var(--primary-color);
+}
+
+#megamenu-menu-list .li :hover {
+    background-color: var(--item-hover-bg-color) !important;
+}
+
+#megamenu-menu-list .li>.active {
+    color: var(--primary-color);
+}
+
+#megamenu-content {
+    background-color: var(--bg-color);
+}
+
+/* source mode, for WIDE screen */
+#typora-source .CodeMirror-lines {
+    max-width: 128rem;
+}</style>
+<style type='text/css'  id="style-lp">ol, ul {padding-left: 40px}</style>
+
+<title>莫斯科地铁打开线路</title>
+</head>
+<body class='typora-export os-windows'><div class='typora-export-content'>
+<div id='write'  class=''><h1 id='🚇-完整路线含第一段1号线krasnoselskaya-→-komsomolskaya'><span>🚇 完整路线（含第一段：1号线（Krasnoselskaya → Komsomolskaya）</span></h1><figure class='table-figure'><table><thead><tr><th style='text-align:center;' ><span>#</span></th><th style='text-align:left;' ><span>中文</span></th><th style='text-align:left;' ><span>俄文</span></th><th style='text-align:left;' ><span>英文</span></th><th style='text-align:center;' ><span>线路</span></th><th style='text-align:center;' ><span>方向</span></th><th style='text-align:left;' ><span>toward to</span></th><th style='text-align:center;' ><span>间隔</span></th><th style='text-align:left;' ><span>换乘</span></th></tr></thead><tbody><tr><td style='text-align:center;' ><span>起点</span></td><td style='text-align:left;' ><strong><span>红村站</span></strong></td><td style='text-align:left;' ><span>Красносельская</span></td><td style='text-align:left;' ><strong><span>Krasnoselskaya</span></strong></td><td style='text-align:center;' ><strong><span>1号线</span></strong><span> 🔴</span></td><td style='text-align:center;' ><span>—</span></td><td style='text-align:left;' ><span>—</span></td><td style='text-align:center;' ><span>—</span></td><td style='text-align:left;' ><span>🚀</span></td></tr><tr><td style='text-align:center;' ><span>1</span></td><td style='text-align:left;' ><strong><span>共青团站</span></strong></td><td style='text-align:left;' ><span>Комсомольская</span></td><td style='text-align:left;' ><strong><span>Komsomolskaya</span></strong></td><td style='text-align:center;' ><strong><span>1号线</span></strong><span> 🔴 </span><strong><span>+ 5号线</span></strong><span> 🟤</span></td><td style='text-align:center;' ><strong><span>南向</span></strong></td><td style='text-align:left;' ><strong><span>Universitet</span></strong></td><td style='text-align:center;' ><span>1站</span></td><td style='text-align:left;' ><span>站内换乘5号线</span></td></tr></tbody></table></figure><hr /><h3 id='第二段5号线顺时针komsomolskaya-→-kievskaya'><span>第二段：5号线顺时针（Komsomolskaya → Kievskaya）</span></h3><figure class='table-figure'><table><thead><tr><th style='text-align:center;' ><span>#</span></th><th style='text-align:left;' ><span>中文</span></th><th style='text-align:left;' ><span>俄文</span></th><th style='text-align:left;' ><span>英文</span></th><th style='text-align:center;' ><span>线路</span></th><th style='text-align:center;' ><span>方向</span></th><th style='text-align:left;' ><span>toward to</span></th><th style='text-align:center;' ><span>间隔</span></th><th style='text-align:left;' ><span>换乘</span></th></tr></thead><tbody><tr><td style='text-align:center;' ><span>2</span></td><td style='text-align:left;' ><strong><span>和平大街站</span></strong></td><td style='text-align:left;' ><span>Проспект Мира</span></td><td style='text-align:left;' ><strong><span>Prospekt Mira</span></strong></td><td style='text-align:center;' ><strong><span>5号线</span></strong><span> 🟤 </span><strong><span>+ 6号线</span></strong><span> 🟠</span></td><td style='text-align:center;' ><strong><span>顺时针</span></strong></td><td style='text-align:left;' ><strong><span>循环无终点</span></strong></td><td style='text-align:center;' ><span>1站</span></td><td style='text-align:left;' ><span>无需出站</span></td></tr><tr><td style='text-align:center;' ><span>3</span></td><td style='text-align:left;' ><strong><span>新庄站</span></strong></td><td style='text-align:left;' ><span>Новослободская</span></td><td style='text-align:left;' ><strong><span>Novoslobodskaya</span></strong></td><td style='text-align:center;' ><strong><span>5号线</span></strong><span> 🟤 </span><strong><span>+ 9号线</span></strong><span> 🟠</span></td><td style='text-align:center;' ><strong><span>顺时针</span></strong></td><td style='text-align:left;' ><strong><span>循环无终点</span></strong></td><td style='text-align:center;' ><span>1站</span></td><td style='text-align:left;' ><span>无需出站</span></td></tr><tr><td style='text-align:center;' ><span>4</span></td><td style='text-align:left;' ><strong><span>白俄罗斯站</span></strong></td><td style='text-align:left;' ><span>Белорусская</span></td><td style='text-align:left;' ><strong><span>Belorusskaya</span></strong></td><td style='text-align:center;' ><strong><span>5号线</span></strong><span> 🟤 </span><strong><span>+ 2号线</span></strong><span> 🟢</span></td><td style='text-align:center;' ><strong><span>顺时针</span></strong></td><td style='text-align:left;' ><strong><span>循环无终点</span></strong></td><td style='text-align:center;' ><span>1站</span></td><td style='text-align:left;' ><span>无需出站</span></td></tr><tr><td style='text-align:center;' ><span>5</span></td><td style='text-align:left;' ><strong><span>红普列斯尼亚站</span></strong></td><td style='text-align:left;' ><span>Краснопресненская</span></td><td style='text-align:left;' ><strong><span>Krasnopresnenskaya</span></strong></td><td style='text-align:center;' ><strong><span>5号线</span></strong><span> 🟤 </span><strong><span>+ 7号线</span></strong><span> 🟣</span></td><td style='text-align:center;' ><strong><span>顺时针</span></strong></td><td style='text-align:left;' ><strong><span>循环无终点</span></strong></td><td style='text-align:center;' ><span>1站</span></td><td style='text-align:left;' ><span>无需出站</span></td></tr><tr><td style='text-align:center;' ><span>6</span></td><td style='text-align:left;' ><strong><span>基辅站</span></strong></td><td style='text-align:left;' ><span>Киевская</span></td><td style='text-align:left;' ><strong><span>Kievskaya</span></strong></td><td style='text-align:center;' ><strong><span>5号线</span></strong><span> 🟤 </span><strong><span>+ 3号线</span></strong><span> 🔵 </span><strong><span>+ 4号线</span></strong><span> 🔵</span></td><td style='text-align:center;' ><strong><span>顺时针</span></strong></td><td style='text-align:left;' ><strong><span>循环无终点</span></strong></td><td style='text-align:center;' ><span>1站</span></td><td style='text-align:left;' ><span>站内换乘3号线</span></td></tr></tbody></table></figure><hr /><h3 id='第三段3号线kievskaya-→-ploshchad-revolyutsii'><span>第三段：3号线（Kievskaya → Ploshchad Revolyutsii）</span></h3><figure class='table-figure'><table><thead><tr><th style='text-align:center;' ><span>#</span></th><th style='text-align:left;' ><span>中文</span></th><th style='text-align:left;' ><span>俄文</span></th><th style='text-align:left;' ><span>英文</span></th><th style='text-align:center;' ><span>线路</span></th><th style='text-align:center;' ><span>方向</span></th><th style='text-align:left;' ><span>toward to</span></th><th style='text-align:center;' ><span>间隔</span></th><th style='text-align:left;' ><span>换乘</span></th></tr></thead><tbody><tr><td style='text-align:center;' ><span>7</span></td><td style='text-align:left;' ><strong><span>阿尔巴特站</span></strong></td><td style='text-align:left;' ><span>Арбатская</span></td><td style='text-align:left;' ><strong><span>Arbatskaya</span></strong></td><td style='text-align:center;' ><strong><span>3号线</span></strong><span> 🔵 </span><strong><span>+ 4号线</span></strong><span> 🔵</span></td><td style='text-align:center;' ><strong><span>东向</span></strong></td><td style='text-align:left;' ><strong><span>Shchyolkovskaya</span></strong></td><td style='text-align:center;' ><span>2站</span></td><td style='text-align:left;' ><span>无需出站</span></td></tr><tr><td style='text-align:center;' ><span>8</span></td><td style='text-align:left;' ><strong><span>革命广场站</span></strong></td><td style='text-align:left;' ><span>Площадь Революции</span></td><td style='text-align:left;' ><strong><span>Ploshchad Revolyutsii</span></strong></td><td style='text-align:center;' ><strong><span>3号线</span></strong><span> 🔵</span></td><td style='text-align:center;' ><strong><span>东向</span></strong></td><td style='text-align:left;' ><strong><span>Shchyolkovskaya</span></strong></td><td style='text-align:center;' ><span>2站</span></td><td style='text-align:left;' ><span>站内换乘2号线（同站不同层）</span></td></tr></tbody></table></figure><hr /><h3 id='第四段2号线teatralnaya-→-dinamo⚠️-关键段'><span>第四段：2号线（Teatralnaya → Dinamo）⚠️ 关键段</span></h3><figure class='table-figure'><table><thead><tr><th style='text-align:center;' ><span>#</span></th><th style='text-align:left;' ><span>中文</span></th><th style='text-align:left;' ><span>俄文</span></th><th style='text-align:left;' ><span>英文</span></th><th style='text-align:center;' ><span>线路</span></th><th style='text-align:center;' ><span>方向</span></th><th style='text-align:left;' ><span>toward to</span></th><th style='text-align:center;' ><span>间隔</span></th><th style='text-align:left;' ><span>换乘</span></th></tr></thead><tbody><tr><td style='text-align:center;' ><span>9</span></td><td style='text-align:left;' ><strong><span>剧院站</span></strong></td><td style='text-align:left;' ><span>Театральная</span></td><td style='text-align:left;' ><strong><span>Teatralnaya</span></strong></td><td style='text-align:center;' ><strong><span>2号线</span></strong><span> 🟢</span></td><td style='text-align:center;' ><span>—</span></td><td style='text-align:left;' ><span>—</span></td><td style='text-align:center;' ><span>—</span></td><td style='text-align:left;' ><span>同站换乘</span></td></tr><tr><td style='text-align:center;' ><span>10</span></td><td style='text-align:left;' ><strong><span>新库兹涅茨克站</span></strong></td><td style='text-align:left;' ><span>Новокузнецкая</span></td><td style='text-align:left;' ><strong><span>Novokuznetskaya</span></strong></td><td style='text-align:center;' ><strong><span>2号线</span></strong><span> 🟢 </span><strong><span>+ 6号线</span></strong><span> 🟠</span></td><td style='text-align:center;' ><strong><span>南向</span></strong></td><td style='text-align:left;' ><strong><span>Alma-Atinskaya</span></strong></td><td style='text-align:center;' ><span>1站</span></td><td style='text-align:left;' ><span>无需出站</span></td></tr><tr><td style='text-align:center;' ><span>11</span></td><td style='text-align:left;' ><strong><span>马雅可夫斯基站</span></strong></td><td style='text-align:left;' ><span>Маяковская</span></td><td style='text-align:left;' ><strong><span>Mayakovskaya</span></strong></td><td style='text-align:center;' ><strong><span>2号线</span></strong><span> 🟢</span></td><td style='text-align:center;' ><strong><span>北向</span></strong></td><td style='text-align:left;' ><strong><span>Rechnoy Vokzal</span></strong></td><td style='text-align:center;' ><span>2站</span></td><td style='text-align:left;' ><span>⚠️ </span><strong><span>换方向！对面站台</span></strong></td></tr><tr><td style='text-align:center;' ><span>12</span></td><td style='text-align:left;' ><strong><span>迪纳摩站</span></strong></td><td style='text-align:left;' ><span>Динамо</span></td><td style='text-align:left;' ><strong><span>Dinamo</span></strong></td><td style='text-align:center;' ><strong><span>2号线</span></strong><span> 🟢</span></td><td style='text-align:center;' ><strong><span>北向</span></strong></td><td style='text-align:left;' ><strong><span>Rechnoy Vokzal</span></strong></td><td style='text-align:center;' ><span>3站</span></td><td style='text-align:left;' ><span>需出站换乘8A号线</span></td></tr></tbody></table></figure><blockquote><p><strong><span>方向变化</span></strong><span>：南向（Alma-Atinskaya）→ 北向（Rechnoy Vokzal）</span></p></blockquote><hr /><h3 id='第五段8a号线dinamo区域-→-pykhtino'><span>第五段：8A号线（Dinamo区域 → Pykhtino）</span></h3><figure class='table-figure'><table><thead><tr><th style='text-align:center;' ><span>#</span></th><th style='text-align:left;' ><span>中文</span></th><th style='text-align:left;' ><span>俄文</span></th><th style='text-align:left;' ><span>英文</span></th><th style='text-align:center;' ><span>线路</span></th><th style='text-align:center;' ><span>方向</span></th><th style='text-align:left;' ><span>toward to</span></th><th style='text-align:center;' ><span>间隔</span></th><th style='text-align:left;' ><span>换乘</span></th></tr></thead><tbody><tr><td style='text-align:center;' ><span>13</span></td><td style='text-align:left;' ><strong><span>米丘林大道站</span></strong></td><td style='text-align:left;' ><span>Мичуринский проспект</span></td><td style='text-align:left;' ><strong><span>Michurinsky Prospekt</span></strong></td><td style='text-align:center;' ><strong><span>8A号线</span></strong><span> 🟡 </span><strong><span>+ 11号线</span></strong><span> 🟢</span></td><td style='text-align:center;' ><strong><span>西向</span></strong></td><td style='text-align:left;' ><strong><span>Rasskazovka</span></strong></td><td style='text-align:center;' ><span>7站</span></td><td style='text-align:left;' ><span>无需出站</span></td></tr><tr><td style='text-align:center;' ><span>14</span></td><td style='text-align:left;' ><strong><span>佩赫季诺站</span></strong></td><td style='text-align:left;' ><span>Пыхтино</span></td><td style='text-align:left;' ><strong><span>Pykhtino</span></strong></td><td style='text-align:center;' ><strong><span>8A号线</span></strong><span> 🟡</span></td><td style='text-align:center;' ><strong><span>西向</span></strong></td><td style='text-align:left;' ><strong><span>Rasskazovka</span></strong></td><td style='text-align:center;' ><span>1站</span></td><td style='text-align:left;' ><span>站内换乘10号线</span></td></tr></tbody></table></figure><hr /><h3 id='第六段10号线pykhtino-→-rimskaya'><span>第六段：10号线（Pykhtino → Rimskaya）</span></h3><figure class='table-figure'><table><thead><tr><th style='text-align:center;' ><span>#</span></th><th style='text-align:left;' ><span>中文</span></th><th style='text-align:left;' ><span>俄文</span></th><th style='text-align:left;' ><span>英文</span></th><th style='text-align:center;' ><span>线路</span></th><th style='text-align:center;' ><span>方向</span></th><th style='text-align:left;' ><span>toward to</span></th><th style='text-align:center;' ><span>间隔</span></th><th style='text-align:left;' ><span>换乘</span></th></tr></thead><tbody><tr><td style='text-align:center;' ><span>15</span></td><td style='text-align:left;' ><strong><span>罗马站</span></strong></td><td style='text-align:left;' ><span>Римская</span></td><td style='text-align:left;' ><strong><span>Rimskaya</span></strong></td><td style='text-align:center;' ><strong><span>10号线</span></strong><span> 🟣</span></td><td style='text-align:center;' ><strong><span>东北向</span></strong></td><td style='text-align:left;' ><strong><span>Selenogradskaya</span></strong></td><td style='text-align:center;' ><span>12站</span></td><td style='text-align:left;' ><span>需出站换乘5号线</span></td></tr></tbody></table></figure><hr /><h3 id='第七段5号线返回--1号线taganskaya-→-krasnoselskaya'><span>第七段：5号线返回 + 1号线（Taganskaya → Krasnoselskaya）</span></h3><figure class='table-figure'><table><thead><tr><th style='text-align:center;' ><span>#</span></th><th style='text-align:left;' ><span>中文</span></th><th style='text-align:left;' ><span>俄文</span></th><th style='text-align:left;' ><span>英文</span></th><th style='text-align:center;' ><span>线路</span></th><th style='text-align:center;' ><span>方向</span></th><th style='text-align:left;' ><span>toward to</span></th><th style='text-align:center;' ><span>间隔</span></th><th style='text-align:left;' ><span>换乘</span></th></tr></thead><tbody><tr><td style='text-align:center;' ><span>—</span></td><td style='text-align:left;' ><strong><span>塔甘卡站</span></strong></td><td style='text-align:left;' ><span>Таганская</span></td><td style='text-align:left;' ><strong><span>Taganskaya</span></strong></td><td style='text-align:center;' ><strong><span>5号线</span></strong><span> 🟤 </span><strong><span>+ 7号线</span></strong><span> 🟣</span></td><td style='text-align:center;' ><strong><span>顺时针</span></strong></td><td style='text-align:left;' ><strong><span>循环无终点</span></strong></td><td style='text-align:center;' ><span>—</span></td><td style='text-align:left;' ><span>出站步行3分钟</span></td></tr><tr><td style='text-align:center;' ><span>—</span></td><td style='text-align:left;' ><strong><span>共青团站</span></strong></td><td style='text-align:left;' ><span>Комсомольская</span></td><td style='text-align:left;' ><strong><span>Komsomolskaya</span></strong></td><td style='text-align:center;' ><strong><span>5号线</span></strong><span> 🟤 </span><strong><span>+ 1号线</span></strong><span> 🔴</span></td><td style='text-align:center;' ><strong><span>顺时针</span></strong></td><td style='text-align:left;' ><strong><span>循环无终点</span></strong></td><td style='text-align:center;' ><span>3站</span></td><td style='text-align:left;' ><span>站内换乘1号线</span></td></tr><tr><td style='text-align:center;' ><span>终点</span></td><td style='text-align:left;' ><strong><span>红村站</span></strong></td><td style='text-align:left;' ><span>Красносельская</span></td><td style='text-align:left;' ><strong><span>Krasnoselskaya</span></strong></td><td style='text-align:center;' ><strong><span>1号线</span></strong><span> 🔴</span></td><td style='text-align:center;' ><strong><span>北向</span></strong></td><td style='text-align:left;' ><strong><span>Komsomolskaya</span></strong></td><td style='text-align:center;' ><span>1站</span></td><td style='text-align:left;' ><span>🏁</span></td></tr></tbody></table></figure><hr /><h2 id='📊-方向变化汇总'><span>📊 方向变化汇总</span></h2><figure class='table-figure'><table><thead><tr><th style='text-align:left;' ><span>线路</span></th><th style='text-align:left;' ><span>区间</span></th><th style='text-align:center;' ><span>方向</span></th><th style='text-align:left;' ><span>toward to</span></th><th style='text-align:center;' ><span>变化</span></th></tr></thead><tbody><tr><td style='text-align:left;' ><span>1号线</span></td><td style='text-align:left;' ><span>Krasnoselskaya → Komsomolskaya</span></td><td style='text-align:center;' ><span>南向</span></td><td style='text-align:left;' ><span>Universitet</span></td><td style='text-align:center;' ><span>—</span></td></tr><tr><td style='text-align:left;' ><span>5号线</span></td><td style='text-align:left;' ><span>全程</span></td><td style='text-align:center;' ><span>顺时针</span></td><td style='text-align:left;' ><span>循环</span></td><td style='text-align:center;' ><span>—</span></td></tr><tr><td style='text-align:left;' ><span>3号线</span></td><td style='text-align:left;' ><span>Kievskaya → Ploshchad Revolyutsii</span></td><td style='text-align:center;' ><span>东向</span></td><td style='text-align:left;' ><span>Shchyolkovskaya</span></td><td style='text-align:center;' ><span>—</span></td></tr><tr><td style='text-align:left;' ><span>2号线</span></td><td style='text-align:left;' ><span>Teatralnaya → Novokuznetskaya</span></td><td style='text-align:center;' ><span>南向</span></td><td style='text-align:left;' ><span>Alma-Atinskaya</span></td><td style='text-align:center;' ><span>—</span></td></tr><tr><td style='text-align:left;' ><span>2号线</span></td><td style='text-align:left;' ><span>Novokuznetskaya → Mayakovskaya</span></td><td style='text-align:center;' ><span>北向</span></td><td style='text-align:left;' ><span>Rechnoy Vokzal</span></td><td style='text-align:center;' ><span>⚠️ </span><strong><span>换向</span></strong></td></tr><tr><td style='text-align:left;' ><span>2号线</span></td><td style='text-align:left;' ><span>Mayakovskaya → Dinamo</span></td><td style='text-align:center;' ><span>北向</span></td><td style='text-align:left;' ><span>Rechnoy Vokzal</span></td><td style='text-align:center;' ><span>继续</span></td></tr><tr><td style='text-align:left;' ><span>8A号线</span></td><td style='text-align:left;' ><span>全程</span></td><td style='text-align:center;' ><span>西向</span></td><td style='text-align:left;' ><span>Rasskazovka</span></td><td style='text-align:center;' ><span>—</span></td></tr><tr><td style='text-align:left;' ><span>10号线</span></td><td style='text-align:left;' ><span>Pykhtino → Rimskaya</span></td><td style='text-align:center;' ><span>东北向</span></td><td style='text-align:left;' ><span>Selenogradskaya</span></td><td style='text-align:center;' ><span>—</span></td></tr><tr><td style='text-align:left;' ><span>1号线</span></td><td style='text-align:left;' ><span>Komsomolskaya → Krasnoselskaya</span></td><td style='text-align:center;' ><span>北向</span></td><td style='text-align:left;' ><span>Komsomolskaya</span></td><td style='text-align:center;' ><span>—</span></td></tr></tbody></table></figure><hr /><p>&nbsp;</p></div></div>
+</body>
+</html>
