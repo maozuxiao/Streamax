@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bloom Petal Markdown 编辑器</title>
+<link rel="stylesheet" href="bloom-petal.css" id="theme-link">
+<script src="marked.min.js"></script>
+<style>
+/* ===== 编辑器界面布局 ===== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 顶部工具栏 */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.toolbar-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--accent);
+  margin-right: 16px;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.toolbar .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  color: var(--text-semi);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.toolbar .btn:hover {
+  color: var(--text);
+  border-color: var(--border-semi);
+  background: var(--surface-2);
+  transform: translateY(-1px);
+}
+
+.toolbar .btn.primary {
+  background: var(--accent);
+  color: white;
+  border-color: transparent;
+}
+
+.toolbar .btn.primary:hover {
+  background: var(--accent-hover);
+  color: white;
+}
+
+.toolbar .separator {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.toolbar .filename {
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 主编辑区域 */
+.editor-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* 左侧编辑面板 */
+.editor-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  min-width: 0;
+}
+
+.editor-panel textarea {
+  flex: 1;
+  padding: 24px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  border: none;
+  outline: none;
+  resize: none;
+  tab-size: 4;
+}
+
+.editor-panel textarea::placeholder {
+  color: var(--muted);
+}
+
+/* 右侧预览面板 */
+.preview-panel {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg);
+  min-width: 0;
+}
+
+/* 将 bloom-petal.css 的 #write 样式适配到预览区 */
+.preview-panel .markdown-body {
+  max-width: 860px;
+  line-height: 1.8;
+  font-size: 16px;
+  color: var(--text);
+  margin: 0 auto;
+  padding: var(--space-2xl) var(--space-xl) var(--space-3xl);
+  background: linear-gradient(180deg, var(--accent-soft), transparent 460px),
+    linear-gradient(120deg, oklch(100% 0 0 / 70%), transparent 70%);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-lg);
+}
+
+/* 为预览区适配 bloom-petal.css 的各元素样式 */
+.markdown-body p { margin: 1.1em 0; }
+.markdown-body a { color: var(--accent); text-decoration: none; transition: color 0.2s ease; border-bottom: 1px solid transparent; }
+.markdown-body a:hover { border-bottom-color: var(--accent); }
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
+  color: var(--text); font-weight: 800; line-height: 1.25; margin: var(--space-2xl) 0 var(--space-md); letter-spacing: -0.015em; position: relative;
+}
+.markdown-body h1 { font-size: 2.25em; letter-spacing: -0.02em; border-bottom: 1px solid rgba(var(--accent-rgb), 0.3); padding-bottom: 0.3em; }
+.markdown-body h2 { font-size: 1.68em; border-bottom: 1px solid rgba(var(--accent-rgb), 0.22); padding-bottom: 0.24em; color: rgba(var(--text-rgb), 0.9); }
+.markdown-body h3 { font-size: 1.32em; color: rgba(var(--text-rgb), 0.86); }
+.markdown-body h4 { font-size: 1.15em; color: rgba(var(--text-rgb), 0.8); }
+.markdown-body h1::after, .markdown-body h2::after {
+  content: ""; position: absolute; left: 0; bottom: -0.5em; width: 76px; height: 3px;
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.45), transparent); border-radius: 999px;
+}
+.markdown-body h3::after {
+  content: ""; position: absolute; left: 0; bottom: -0.38em; width: 44px; height: 2px;
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.32), transparent); border-radius: 999px;
+}
+.markdown-body h4::after {
+  content: ""; position: absolute; left: 0; bottom: -0.34em; width: 32px; height: 2px;
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.22), transparent); border-radius: 999px;
+}
+.markdown-body hr { border: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--border-semi), transparent); margin: var(--space-3xl) 0; }
+.markdown-body blockquote {
+  margin: var(--space-xl) 0; padding: var(--space-lg) var(--space-xl);
+  background: rgba(var(--accent-rgb), 0.08); border-left: 4px solid var(--accent);
+  border-radius: 14px; color: var(--text); position: relative; box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.08);
+}
+.markdown-body blockquote p:first-child { margin-top: 0; }
+.markdown-body blockquote p:last-child { margin-bottom: 0; }
+.markdown-body ul, .markdown-body ol { padding-left: 1.5em; margin: 1em 0; }
+.markdown-body li { margin: 0.5em 0; }
+.markdown-body li>ul, .markdown-body li>ol { margin: 0.4em 0; }
+.markdown-body ul li::marker { color: rgba(var(--accent-rgb), 0.72); font-size: 0.98em; font-weight: 700; }
+.markdown-body ol li::marker { color: rgba(var(--accent-rgb), 0.72); font-weight: 800; font-variant-numeric: tabular-nums; }
+.markdown-body table { border-collapse: separate; border-spacing: 0; width: 100%; margin: 2em 0; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 12px rgba(var(--black-rgb), 0.02); }
+.markdown-body th, .markdown-body td { padding: 0.75em 1em; border-bottom: 1px solid var(--border); }
+.markdown-body th { text-align: left; background: var(--surface); font-weight: 600; color: var(--text); }
+.markdown-body tr:last-child td { border-bottom: 0; }
+.markdown-body tr:nth-child(even) td { background: rgba(var(--accent-rgb), 0.02); }
+.markdown-body code {
+  font-family: var(--font-mono); font-size: 0.88em; padding: 0.2em 0.45em; border-radius: 7px;
+  background: rgba(var(--accent-rgb), 0.14); color: var(--accent); font-weight: 600;
+  border: 1px solid rgba(var(--accent-rgb), 0.32);
+}
+.markdown-body pre {
+  background: var(--code-bg); color: var(--code-text); border: 1px solid rgba(var(--accent-rgb), 0.18);
+  border-radius: 16px; padding: 3.2em 1.4em 1.4em; margin: 2em 0; overflow: auto;
+  box-shadow: 0 18px 50px rgba(var(--text-rgb), 0.12); font-family: var(--font-mono); font-size: 14.5px;
+  line-height: 1.6; position: relative;
+}
+.markdown-body pre::before {
+  content: ""; position: absolute; top: 14px; left: 14px; width: 10px; height: 10px;
+  border-radius: 50%; background: var(--code-dot-red);
+  box-shadow: 18px 0 0 var(--code-dot-yellow), 36px 0 0 var(--code-dot-green); z-index: 2;
+}
+.markdown-body pre code { background: transparent; padding: 0; color: var(--code-ink); font-weight: normal; border: none; }
+.markdown-body img { max-width: 100%; height: auto; border-radius: 14px; box-shadow: var(--shadow); display: block; margin: 1.5em auto; }
+.markdown-body mark {
+  background: linear-gradient(120deg, rgba(var(--accent-rgb), 0.25), rgba(var(--accent-rgb), 0.12));
+  color: inherit; padding: 0.12em 0.26em; border-radius: 9px;
+  border: 1px solid rgba(var(--accent-rgb), 0.32); box-shadow: 0 10px 26px rgba(var(--accent-rgb), 0.18);
+}
+.markdown-body u {
+  text-decoration: none; background-image: linear-gradient(120deg, rgba(var(--accent-rgb), 0.5), rgba(var(--accent-rgb), 0.18));
+  background-repeat: no-repeat; background-size: 100% 0.16em; background-position: 0 90%; border-radius: 4px; padding-bottom: 2px;
+}
+.markdown-body kbd {
+  font-family: var(--font-mono); font-size: 0.85em; padding: 0.2em 0.5em;
+  border: 1px solid var(--border-semi); border-bottom-width: 3px; border-radius: 8px;
+  background: var(--bg); color: var(--text); margin: 0 0.2em;
+}
+
+/* 任务列表 */
+.markdown-body .task-list-item { list-style-type: none; padding-left: 0; margin-left: -1.5em; }
+.markdown-body .task-list-item input { margin-right: 0.6em; accent-color: var(--accent); transform: translateY(1px); }
+
+/* 底部状态栏 */
+.statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 20px;
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* Toast 通知 */
+.toast {
+  position: fixed;
+  bottom: 60px;
+  right: 24px;
+  padding: 10px 20px;
+  background: var(--text);
+  color: var(--bg);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* 拖拽分隔线 */
+.divider {
+  width: 5px;
+  cursor: col-resize;
+  background: var(--border);
+  transition: background 0.2s;
+  flex-shrink: 0;
+  position: relative;
+}
+.divider:hover, .divider.active {
+  background: var(--accent);
+}
+
+/* 隐藏的文件输入 */
+#fileInput { display: none; }
+
+/* 打印/导出样式 */
+@media print {
+  .toolbar, .statusbar, .editor-panel, .divider { display: none !important; }
+  .preview-panel { overflow: visible !important; }
+  .markdown-body { border: none !important; box-shadow: none !important; background: white !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- 工具栏 -->
+<div class="toolbar">
+  <span class="toolbar-title">Bloom Petal</span>
+  <button class="btn primary" onclick="document.getElementById('fileInput').click()" title="打开本地 .md 文件">
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M3 4.5C3 3.67 3.67 3 4.5 3h5.79a2 2 0 0 1 1.42.59l4.71 4.7A2 2 0 0 1 17 9.71V15.5c0 .83-.67 1.5-1.5 1.5h-11C3.67 17 3 16.33 3 15.5v-11Z" fill="currentColor" opacity="0.3"/><path d="M8 3v3.5C8 7.33 8.67 8 9.5 8H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    打开文件
+  </button>
+  <input type="file" id="fileInput" accept=".md,.markdown,.txt,.text">
+  <span class="filename" id="fileName">未打开文件</span>
+
+  <div class="separator"></div>
+
+  <button class="btn" onclick="exportHTML()" title="导出为 HTML 文件">
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M10 2v10m0 0 3.5-3.5M10 12 6.5 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 14v2.5C3 17.33 3.67 18 4.5 18h11c.83 0 1.5-.67 1.5-1.5V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    导出 HTML
+  </button>
+  <button class="btn" onclick="printPreview()" title="打印 / 导出 PDF">
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M6 2h8a1 1 0 0 1 1 1v3H5V3a1 1 0 0 1 1-1ZM4 9h12a1 1 0 0 1 1 1v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="13" r="1" fill="currentColor"/><path d="M5 16v1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    打印 / PDF
+  </button>
+  <button class="btn" onclick="exportWord()" title="导出为 Word 文件">
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><text x="3" y="15" font-size="14" font-weight="bold" fill="currentColor" font-family="sans-serif">W</text></svg>
+    导出 Word
+  </button>
+
+  <div class="separator"></div>
+
+  <button class="btn" onclick="toggleTheme()" id="themeBtn" title="切换日/夜模式">
+    <svg id="themeIcon" width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M10 3v1m0 12v1m9-7h-1M2 10H1m15.07-6.07-.71.71M4.64 15.36l-.71.71m12.14 0-.71-.71M4.64 4.64l-.71-.71" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="10" r="4" stroke="currentColor" stroke-width="1.5"/></svg>
+    <span id="themeLabel">夜间</span>
+  </button>
+
+  <div class="separator"></div>
+
+  <button class="btn" onclick="clearEditor()" title="清空编辑器内容">
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5 5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    清空
+  </button>
+</div>
+
+<!-- 编辑器主体 -->
+<div class="editor-container">
+  <!-- 左侧编辑 -->
+  <div class="editor-panel" id="editorPanel">
+    <textarea id="editor" placeholder="在此输入 Markdown 内容，或点击「打开文件」加载本地 .md 文件..."></textarea>
+  </div>
+  <!-- 可拖拽分隔线 -->
+  <div class="divider" id="divider"></div>
+  <!-- 右侧预览 -->
+  <div class="preview-panel" id="previewPanel">
+    <div class="markdown-body" id="preview"></div>
+  </div>
+</div>
+
+<!-- 底部状态栏 -->
+<div class="statusbar">
+  <span id="statusLeft">就绪</span>
+  <span id="statusRight">字数: 0 | 行数: 0</span>
+</div>
+
+<!-- Toast 通知 -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== 初始化 =====
+var editor = document.getElementById('editor');
+var preview = document.getElementById('preview');
+var fileInput = document.getElementById('fileInput');
+var fileNameEl = document.getElementById('fileName');
+var statusLeft = document.getElementById('statusLeft');
+var statusRight = document.getElementById('statusRight');
+var toastEl = document.getElementById('toast');
+var themeLink = document.getElementById('theme-link');
+
+// 主题状态
+var _currentTheme = localStorage.getItem('bloom-editor-theme') || 'light';
+
+// marked 配置
+marked.setOptions({
+  breaks: true,
+  gfm: true
+});
+
+// ===== 从 localStorage 恢复内容 =====
+const savedContent = localStorage.getItem('bloom-editor-content');
+const savedFileName = localStorage.getItem('bloom-editor-filename');
+if (savedContent) {
+  editor.value = savedContent;
+  fileNameEl.textContent = savedFileName || '未命名';
+}
+updatePreview();
+
+// ===== 实时预览 =====
+editor.addEventListener('input', () => {
+  updatePreview();
+  saveToStorage();
+  updateStatus();
+});
+
+// ===== 打开本地文件 =====
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    editor.value = event.target.result;
+    fileNameEl.textContent = file.name;
+    saveToStorage();
+    updatePreview();
+    updateStatus();
+    showToast('文件已打开: ' + file.name);
+  };
+  reader.onerror = () => showToast('读取文件失败');
+  reader.readAsText(file);
+  fileInput.value = '';
+});
+
+// ===== 持久化到 localStorage =====
+function saveToStorage() {
+  localStorage.setItem('bloom-editor-content', editor.value);
+  localStorage.setItem('bloom-editor-filename', fileNameEl.textContent);
+}
+
+// ===== 日/夜模式切换 =====
+function toggleTheme() {
+  _currentTheme = _currentTheme === 'light' ? 'dark' : 'light';
+  localStorage.setItem('bloom-editor-theme', _currentTheme);
+  applyTheme();
+  showToast(_currentTheme === 'dark' ? '已切换到夜间模式' : '已切换到日间模式');
+}
+
+function applyTheme() {
+  if (_currentTheme === 'dark') {
+    themeLink.href = 'bloom-petal-dark.css';
+    document.getElementById('themeIcon').innerHTML = '<path d="M17.3 11.05A7.5 7.5 0 0 1 8.95 2.7a7.5 7.5 0 1 0 8.35 8.35z" fill="currentColor"/>';
+    document.getElementById('themeLabel').textContent = '日间';
+  } else {
+    themeLink.href = 'bloom-petal.css';
+    document.getElementById('themeIcon').innerHTML = '<path d="M10 3v1m0 12v1m9-7h-1M2 10H1m15.07-6.07-.71.71M4.64 15.36l-.71.71m12.14 0-.71-.71M4.64 4.64l-.71-.71" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="10" r="4" stroke="currentColor" stroke-width="1.5"/>';
+    document.getElementById('themeLabel').textContent = '夜间';
+  }
+}
+
+// ===== 更新预览 =====
+function updatePreview() {
+  preview.innerHTML = marked.parse(editor.value);
+}
+
+// ===== 更新状态栏 =====
+function updateStatus() {
+  const text = editor.value;
+  const chars = text.length;
+  const lines = text.split('\n').length;
+  statusRight.textContent = '字数: ' + chars + ' | 行数: ' + lines;
+}
+
+// ===== Toast 通知 =====
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(function() { toastEl.classList.remove('show'); }, 2500);
+}
+
+// ===== 清空编辑器 =====
+function clearEditor() {
+  if (editor.value.trim() === '') return;
+  editor.value = '';
+  fileNameEl.textContent = '未打开文件';
+  saveToStorage();
+  updatePreview();
+  updateStatus();
+  showToast('内容已清空');
+}
+
+// ===== 导出 HTML =====
+function exportHTML() {
+  var content = editor.value.trim();
+  if (!content) { showToast('编辑器中没有内容'); return; }
+
+  var isDark = _currentTheme === 'dark';
+  var cssContent = isDark ? getDarkSafeCSS() : getInlineCSS();
+  var htmlContent = marked.parse(content);
+  var htmlDoc = '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>' + fileNameEl.textContent + '<\/title>\n<style>\n' + cssContent + '\n<\/style>\n<\/head>\n<body>\n<div id="write">\n' + htmlContent + '\n<\/div>\n<\/body>\n<\/html>';
+
+  downloadBlob(htmlDoc, getExportName('.html'), 'text/html;charset=utf-8');
+  showToast('HTML 文件已导出');
+}
+
+// ===== 打印 / 导出 PDF =====
+function printPreview() {
+  var content = editor.value.trim();
+  if (!content) { showToast('编辑器中没有内容'); return; }
+
+  var isDark = _currentTheme === 'dark';
+  var safeCSS = isDark ? getDarkSafeCSS() : getSafeCSS();
+  var htmlContent = marked.parse(content);
+
+  var printWin = window.open('', '_blank');
+  printWin.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + fileNameEl.textContent + '<\/title><style>' + safeCSS + 'body{margin:0;padding:0;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><div id="write">' + htmlContent + '<\/div><script>window.onafterprint=function(){window.close();};<\/script></body></html>');
+  printWin.document.close();
+  printWin.focus();
+  setTimeout(function() { printWin.print(); }, 300);
+}
+
+// ===== 导出 Word =====
+function exportWord() {
+  var content = editor.value.trim();
+  if (!content) { showToast('编辑器中没有内容'); return; }
+
+  var htmlContent = marked.parse(content);
+  var isDark = _currentTheme === 'dark';
+  var wordCSS = isDark ? getDarkWordCSS() : getWordCSS();
+
+  var wordDoc = '<html xmlns:o="urn:schemas-microsoft-com:office:office"\nxmlns:w="urn:schemas-microsoft-com:office:word"\nxmlns="http://www.w3.org/TR/REC-html40">\n<head>\n<meta charset="UTF-8">\n<title>' + fileNameEl.textContent + '<\/title>\n<!--[if gte mso 9]>\n<xml>\n<w:WordDocument>\n<w:View>Print<\/w:View>\n<w:Zoom>100<\/w:Zoom>\n<w:DoNotOptimizeForBrowser/>\n<\/w:WordDocument>\n<\/xml>\n<![endif]-->\n<style>\n' + wordCSS + '\n<\/style>\n<\/head>\n<body>\n<div id="write">\n' + htmlContent + '\n<\/div>\n<\/body>\n<\/html>';
+
+  var blob = new Blob(['\ufeff', wordDoc], { type: 'application/msword' });
+  downloadBlob(blob, getExportName('.doc'), 'application/msword');
+  showToast('Word 文件已导出');
+}
+
+// ===== 辅助函数 =====
+
+function getExportName(ext) {
+  var name = fileNameEl.textContent === '未打开文件' ? '未命名' : fileNameEl.textContent.replace(/\.(md|markdown|txt|text)$/i, '');
+  return name + ext;
+}
+
+function downloadBlob(content, filename, mimeType) {
+  var blob;
+  if (typeof content === 'string') {
+    blob = new Blob([content], { type: mimeType });
+  } else {
+    blob = content;
+  }
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function() {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
+/**
+ * 获取 bloom-petal.css 的完整 CSS 文本
+ * 优先从页面 styleSheets 读取，失败则返回内联的回退 CSS
+ */
+function getInlineCSS() {
+  // 方法1：从样式表读取
+  var styleSheets = document.styleSheets;
+  for (var i = 0; i < styleSheets.length; i++) {
+    var sheet = styleSheets[i];
+    if (sheet.href && sheet.href.indexOf('bloom-petal.css') !== -1) {
+      try {
+        var rules = [];
+        for (var j = 0; j < sheet.cssRules.length; j++) {
+          rules.push(sheet.cssRules[j].cssText);
+        }
+        if (rules.length > 0) return rules.join('\n');
+      } catch (e) {
+        // file:// 协议下 cssRules 可能无法访问，走回退
+        break;
+      }
+    }
+  }
+
+  // 方法2：回退 —— 使用安全 CSS（不含 oklch）
+  return getSafeCSS();
+}
+
+/**
+ * Word 导出专用 CSS —— 所有 oklch 替换为 hex，去除不支持的属性
+ */
+function getWordCSS() {
+  return [
+    '@charset "UTF-8";',
+    'body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #faf8f7; color: #443a3e; font-size: 16px; line-height: 1.8; }',
+    '#write { max-width: 100%; padding: 20px; }',
+    '#write p { margin: 1.1em 0; }',
+    '#write a { color: #e8859b; text-decoration: underline; }',
+    '#write h1, #write h2, #write h3, #write h4, #write h5, #write h6 { color: #443a3e; font-weight: bold; margin: 1.5em 0 0.5em; }',
+    '#write h1 { font-size: 2em; border-bottom: 1px solid #f0d0d8; padding-bottom: 0.3em; }',
+    '#write h2 { font-size: 1.5em; border-bottom: 1px solid #f0d8e0; padding-bottom: 0.2em; }',
+    '#write h3 { font-size: 1.25em; }',
+    '#write h4 { font-size: 1.1em; }',
+    '#write hr { border: none; border-top: 1px solid #ddd; margin: 2em 0; }',
+    '#write blockquote { margin: 1em 0; padding: 1em 1.5em; border-left: 4px solid #e8859b; background: #fdf2f5; color: #443a3e; }',
+    '#write ul, #write ol { padding-left: 2em; margin: 1em 0; }',
+    '#write li { margin: 0.4em 0; }',
+    '#write table { border-collapse: collapse; width: 100%; margin: 1.5em 0; }',
+    '#write th, #write td { padding: 8px 12px; border: 1px solid #ddd; }',
+    '#write th { background: #f5f2f1; font-weight: bold; }',
+    '#write code { font-family: Consolas, monospace; font-size: 0.9em; padding: 2px 6px; background: #fdf2f5; color: #e8859b; border: 1px solid #f0d0d8; }',
+    '#write pre { background: #f5f2f1; padding: 16px; margin: 1.5em 0; overflow: auto; border: 1px solid #e8d0d8; }',
+    '#write pre code { background: transparent; padding: 0; color: #443a3e; border: none; }',
+    '#write img { max-width: 100%; }',
+    '#write mark { background: #fdf2f5; color: inherit; padding: 2px 4px; }',
+    '#write kbd { font-family: Consolas, monospace; padding: 2px 6px; border: 1px solid #ccc; border-bottom-width: 2px; background: #faf8f7; }',
+    '#write strong { font-weight: bold; }',
+    '#write em { font-style: italic; }',
+  ].join('\n');
+}
+
+/**
+ * Word 导出暗色 CSS
+ */
+function getDarkWordCSS() {
+  return [
+    '@charset "UTF-8";',
+    'body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #484347; color: #fff5f8; font-size: 16px; line-height: 1.8; }',
+    '#write { max-width: 100%; padding: 20px; }',
+    '#write p { margin: 1.1em 0; color: #fff5f8; }',
+    '#write a { color: #f0adc8; text-decoration: underline; }',
+    '#write h1, #write h2, #write h3, #write h4, #write h5, #write h6 { color: #fff5f8; font-weight: bold; margin: 1.5em 0 0.5em; }',
+    '#write h1 { font-size: 2em; border-bottom: 1px solid rgba(255, 170, 200, 0.32); padding-bottom: 0.3em; }',
+    '#write h2 { font-size: 1.5em; border-bottom: 1px solid rgba(255, 170, 200, 0.24); padding-bottom: 0.2em; }',
+    '#write h3 { font-size: 1.25em; }',
+    '#write h4 { font-size: 1.1em; }',
+    '#write hr { border: none; border-top: 1px solid rgba(255, 245, 248, 0.22); margin: 2em 0; }',
+    '#write blockquote { margin: 1em 0; padding: 1em 1.5em; border-left: 4px solid #f0adc8; background: rgba(255, 170, 200, 0.12); color: #fff5f8; }',
+    '#write ul, #write ol { padding-left: 2em; margin: 1em 0; }',
+    '#write li { margin: 0.4em 0; }',
+    '#write table { border-collapse: collapse; width: 100%; margin: 1.5em 0; }',
+    '#write th, #write td { padding: 8px 12px; border: 1px solid rgba(255, 245, 248, 0.12); }',
+    '#write th { background: #565152; font-weight: bold; }',
+    '#write code { font-family: Consolas, monospace; font-size: 0.9em; padding: 2px 6px; background: rgba(255, 170, 200, 0.18); color: #f0adc8; border: 1px solid rgba(255, 170, 200, 0.30); }',
+    '#write pre { background: #3c383a; padding: 16px; margin: 1.5em 0; overflow: auto; border: 1px solid rgba(255, 170, 200, 0.15); }',
+    '#write pre code { background: transparent; padding: 0; color: #fff5f8; border: none; }',
+    '#write img { max-width: 100%; }',
+    '#write mark { background: rgba(255, 170, 200, 0.25); color: inherit; padding: 2px 4px; }',
+    '#write kbd { font-family: Consolas, monospace; padding: 2px 6px; border: 1px solid rgba(255, 245, 248, 0.22); border-bottom-width: 2px; background: #484347; }',
+    '#write strong { font-weight: bold; }',
+    '#write em { font-style: italic; }',
+  ].join('\n');
+}
+
+/**
+ * 安全 CSS —— 完整 bloom-petal 风格，不含 oklch / color-mix 替换为 hex / rgba
+ * 用于 PDF 导出（html2canvas 不支持 oklch）
+ * 颜色对照表（从 bloom-petal.css 提取）：
+ *   --accent: oklch(64% 0.22 350)     → #e8859b
+ *   --bg: oklch(98% 0.01 350)         → #faf8f7
+ *   --surface: oklch(96% 0.015 350)   → #f5f2f1
+ *   --surface-2: oklch(94% 0.02 350)  → #efede8
+ *   --text: oklch(25% 0.02 354)       → #443a3e
+ *   --text-semi: oklch(45% 0.02 354)  → #7b6c71
+ *   --success: oklch(70% 0.1 150)      → #7cb87c
+ *   --warning: oklch(75% 0.1 75)       → #d4c87a
+ *   --error: oklch(60% 0.12 25)        → #c47070
+ *   --info: oklch(62% 0.1 250)         → #7070c4
+ *   --important: oklch(65% 0.16 280)   → #9070c4
+ *   --code-dot-red: oklch(65% 0.12 25) → #d87070
+ *   --code-dot-yellow: oklch(78% 0.12 85) → #d8c870
+ *   --code-dot-green: oklch(72% 0.12 145) → #70c888
+ */
+function getSafeCSS() {
+  return [
+    '@charset "UTF-8";',
+    ':root {',
+    '  --space-unit: 8px;',
+    '  --space-3xs: calc(var(--space-unit) * 0.25);',
+    '  --space-2xs: calc(var(--space-unit) * 0.5);',
+    '  --space-xs: calc(var(--space-unit) * 1);',
+    '  --space-sm: calc(var(--space-unit) * 1.5);',
+    '  --space-md: calc(var(--space-unit) * 2);',
+    '  --space-lg: calc(var(--space-unit) * 3);',
+    '  --space-xl: calc(var(--space-unit) * 4);',
+    '  --space-2xl: calc(var(--space-unit) * 6);',
+    '  --space-3xl: calc(var(--space-unit) * 8);',
+    '  --accent: #e8859b;',
+    '  --accent-rgb: 232, 133, 155;',
+    '  --accent-hover: #d6788d;',
+    '  --accent-active: #c56b80;',
+    '  --accent-soft: rgba(232, 133, 155, 0.12);',
+    '  --success: #7cb87c;',
+    '  --warning: #d4c87a;',
+    '  --error: #c47070;',
+    '  --info: #7070c4;',
+    '  --important: #9070c4;',
+    '  --bg: #faf8f7;',
+    '  --surface: #f5f2f1;',
+    '  --surface-2: #efede8;',
+    '  --text: #443a3e;',
+    '  --text-rgb: 68, 58, 62;',
+    '  --text-semi: #7b6c71;',
+    '  --muted: rgba(68, 58, 62, 0.55);',
+    '  --border: rgba(68, 58, 62, 0.10);',
+    '  --border-semi: rgba(68, 58, 62, 0.20);',
+    '  --shadow-sm: 0 2px 8px rgba(68, 58, 62, 0.04);',
+    '  --shadow: 0 10px 30px rgba(68, 58, 62, 0.06);',
+    '  --shadow-lg: 0 24px 60px rgba(68, 58, 62, 0.10);',
+    '  --font-sans: "MiSans", "PingFang SC", "Microsoft YaHei", sans-serif;',
+    '  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace;',
+    '  --selection: rgba(232, 133, 155, 0.20);',
+    '  --code-bg: var(--surface);',
+    '  --code-text: var(--text-semi);',
+    '  --code-ink: var(--text);',
+    '  --code-dot-red: #d87070;',
+    '  --code-dot-yellow: #d8c870;',
+    '  --code-dot-green: #70c888;',
+    '  --white-rgb: 255, 255, 255;',
+    '  --black-rgb: 0, 0, 0;',
+    '}',
+    'html, body {',
+    '  background: radial-gradient(1400px circle at 16% 10%, rgba(232, 133, 155, 0.08), transparent 36%), linear-gradient(150deg, rgba(232, 133, 155, 0.05), transparent 48%), linear-gradient(180deg, rgba(255, 255, 255, 0.7), transparent 340px), #faf8f7;',
+    '  color: #443a3e;',
+    '  font-family: "MiSans", "PingFang SC", "Microsoft YaHei", sans-serif;',
+    '  -webkit-font-smoothing: antialiased;',
+    '}',
+    '::selection { background: rgba(232, 133, 155, 0.20); }',
+    '#write {',
+    '  max-width: 860px;',
+    '  line-height: 1.8;',
+    '  font-size: 16px;',
+    '  color: #443a3e;',
+    '  margin: 0 auto;',
+    '  padding: 48px 32px 64px;',
+    '  background: linear-gradient(180deg, rgba(232, 133, 155, 0.12), transparent 460px), linear-gradient(120deg, rgba(255,255,255,0.70), transparent 70%);',
+    '  border: 1px solid rgba(68, 58, 62, 0.10);',
+    '  border-radius: 24px;',
+    '  box-shadow: 0 24px 60px rgba(68, 58, 62, 0.10);',
+    '}',
+    '#write p { margin: 1.1em 0; }',
+    '#write a { color: #e8859b; text-decoration: none; border-bottom: 1px solid transparent; }',
+    '#write a:hover { border-bottom-color: #e8859b; }',
+    '#write h1, #write h2, #write h3, #write h4, #write h5, #write h6 { color: #443a3e; font-weight: 800; line-height: 1.25; margin: 48px 0 16px; letter-spacing: -0.015em; position: relative; }',
+    '#write h1 { font-size: 2.25em; letter-spacing: -0.02em; border-bottom: 1px solid rgba(232, 133, 155, 0.3); padding-bottom: 0.3em; }',
+    '#write h2 { font-size: 1.68em; border-bottom: 1px solid rgba(232, 133, 155, 0.22); padding-bottom: 0.24em; color: rgba(68, 58, 62, 0.9); }',
+    '#write h3 { font-size: 1.32em; color: rgba(68, 58, 62, 0.86); }',
+    '#write h4 { font-size: 1.15em; color: rgba(68, 58, 62, 0.8); }',
+    '#write h1::after, #write h2::after { content: ""; position: absolute; left: 0; bottom: -0.5em; width: 76px; height: 3px; background: linear-gradient(90deg, rgba(232, 133, 155, 0.45), transparent); border-radius: 999px; }',
+    '#write h3::after { content: ""; position: absolute; left: 0; bottom: -0.38em; width: 44px; height: 2px; background: linear-gradient(90deg, rgba(232, 133, 155, 0.32), transparent); border-radius: 999px; }',
+    '#write h4::after { content: ""; position: absolute; left: 0; bottom: -0.34em; width: 32px; height: 2px; background: linear-gradient(90deg, rgba(232, 133, 155, 0.22), transparent); border-radius: 999px; }',
+    '#write hr { border: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(68, 58, 62, 0.20), transparent); margin: 64px 0; }',
+    '#write blockquote { margin: 32px 0; padding: 24px 32px; background: rgba(232, 133, 155, 0.08); border-left: 4px solid #e8859b; border-radius: 14px; color: #443a3e; position: relative; box-shadow: 0 2px 8px rgba(232, 133, 155, 0.08); }',
+    '#write blockquote p:first-child { margin-top: 0; }',
+    '#write blockquote p:last-child { margin-bottom: 0; }',
+    '#write ul, #write ol { padding-left: 1.5em; margin: 1em 0; }',
+    '#write li { margin: 0.5em 0; }',
+    '#write li>ul, #write li>ol { margin: 0.4em 0; }',
+    '#write ul li::marker { color: rgba(232, 133, 155, 0.72); font-size: 0.98em; font-weight: 700; }',
+    '#write ol li::marker { color: rgba(232, 133, 155, 0.72); font-weight: 800; font-variant-numeric: tabular-nums; }',
+    '#write table { border-collapse: separate; border-spacing: 0; width: 100%; margin: 2em 0; border: 1px solid rgba(68, 58, 62, 0.10); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02); }',
+    '#write th, #write td { padding: 0.75em 1em; border-bottom: 1px solid rgba(68, 58, 62, 0.10); }',
+    '#write th { text-align: left; background: #f5f2f1; font-weight: 600; color: #443a3e; }',
+    '#write tr:last-child td { border-bottom: 0; }',
+    '#write tr:nth-child(even) td { background: rgba(232, 133, 155, 0.02); }',
+    '#write code { font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace; font-size: 0.88em; padding: 0.2em 0.45em; border-radius: 7px; background: rgba(232, 133, 155, 0.14); color: #e8859b; font-weight: 600; border: 1px solid rgba(232, 133, 155, 0.32); }',
+    '#write pre { background: #f5f2f1; color: #7b6c71; border: 1px solid rgba(232, 133, 155, 0.18); border-radius: 16px; padding: 3.2em 1.4em 1.4em; margin: 2em 0; overflow: auto; box-shadow: 0 18px 50px rgba(68, 58, 62, 0.12); font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace; font-size: 14.5px; line-height: 1.6; position: relative; }',
+    '#write pre::before { content: ""; position: absolute; top: 14px; left: 14px; width: 10px; height: 10px; border-radius: 50%; background: #d87070; box-shadow: 18px 0 0 #d8c870, 36px 0 0 #70c888; z-index: 2; }',
+    '#write pre code { background: transparent; padding: 0; color: #443a3e; font-weight: normal; border: none; }',
+    '#write img { max-width: 100%; height: auto; border-radius: 14px; box-shadow: 0 10px 30px rgba(68, 58, 62, 0.06); display: block; margin: 1.5em auto; }',
+    '#write mark { background: linear-gradient(120deg, rgba(232, 133, 155, 0.25), rgba(232, 133, 155, 0.12)); color: inherit; padding: 0.12em 0.26em; border-radius: 9px; border: 1px solid rgba(232, 133, 155, 0.32); box-shadow: 0 10px 26px rgba(232, 133, 155, 0.18); }',
+    '#write u { text-decoration: none; background-image: linear-gradient(120deg, rgba(232, 133, 155, 0.5), rgba(232, 133, 155, 0.18)); background-repeat: no-repeat; background-size: 100% 0.16em; background-position: 0 90%; border-radius: 4px; padding-bottom: 2px; }',
+    '#write kbd { font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace; font-size: 0.85em; padding: 0.2em 0.5em; border: 1px solid rgba(68, 58, 62, 0.20); border-bottom-width: 3px; border-radius: 8px; background: #faf8f7; color: #443a3e; margin: 0 0.2em; }',
+    '#write strong { font-weight: 800; }',
+    '#write em { font-style: italic; }',
+    '#write del { text-decoration: line-through; opacity: 0.7; }',
+  ].join('\n');
+}
+
+/**
+ * 安全 CSS（暗色版本）—— bloom-petal-dark 风格，不含 oklch / color-mix
+ * 颜色对照表（从 bloom-petal-dark.css 提取）：
+ *   --accent: oklch(75% 0.18 350)      → #f0adc8
+ *   --accent-rgb: 255, 170, 200
+ *   --bg: oklch(28% 0.02 350)          → #484347
+ *   --surface: oklch(34% 0.02 350)      → #565152
+ *   --surface-2: oklch(40% 0.02 350)     → #645f5c
+ *   --text: oklch(98% 0.01 350)         → #fff5f8
+ *   --text-rgb: 255, 245, 248
+ *   --text-semi: oklch(86% 0.02 350)     → #e4dce0
+ *   --ink-rgb: 228, 220, 224
+ *   --code-bg: oklch(24% 0.02 350)      → #3c383a
+ *   --code-dot-red: oklch(65% 0.12 25)  → #d87070
+ *   --code-dot-yellow: oklch(78% 0.12 85) → #d8c870
+ *   --code-dot-green: oklch(72% 0.12 145) → #70c888
+ */
+function getDarkSafeCSS() {
+  return [
+    '@charset "UTF-8";',
+    ':root {',
+    '  --space-unit: 8px;',
+    '  --space-3xs: calc(var(--space-unit) * 0.25);',
+    '  --space-2xs: calc(var(--space-unit) * 0.5);',
+    '  --space-xs: calc(var(--space-unit) * 1);',
+    '  --space-sm: calc(var(--space-unit) * 1.5);',
+    '  --space-md: calc(var(--space-unit) * 2);',
+    '  --space-lg: calc(var(--space-unit) * 3);',
+    '  --space-xl: calc(var(--space-unit) * 4);',
+    '  --space-2xl: calc(var(--space-unit) * 6);',
+    '  --space-3xl: calc(var(--space-unit) * 8);',
+    '  --accent: #f0adc8;',
+    '  --accent-rgb: 255, 170, 200;',
+    '  --accent-hover: #f5bcd2;',
+    '  --accent-active: #facadc;',
+    '  --accent-soft: rgba(255, 170, 200, 0.18);',
+    '  --success: #8cc48c;',
+    '  --warning: #dcd48c;',
+    '  --error: #d47878;',
+    '  --info: #8888d4;',
+    '  --important: #b088d4;',
+    '  --bg: #484347;',
+    '  --surface: #565152;',
+    '  --surface-2: #645f5c;',
+    '  --text: #fff5f8;',
+    '  --text-rgb: 255, 245, 248;',
+    '  --text-semi: #e4dce0;',
+    '  --muted: rgba(255, 245, 248, 0.70);',
+    '  --border: rgba(255, 245, 248, 0.12);',
+    '  --border-semi: rgba(255, 245, 248, 0.22);',
+    '  --shadow: 0 16px 48px rgba(0, 0, 0, 0.25);',
+    '  --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.30);',
+    '  --font-sans: "MiSans", "PingFang SC", "Microsoft YaHei", sans-serif;',
+    '  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace;',
+    '  --selection: rgba(240, 173, 200, 0.35);',
+    '  --code-bg: #3c383a;',
+    '  --code-text: var(--text-semi);',
+    '  --code-ink: var(--text);',
+    '  --code-dot-red: #d87070;',
+    '  --code-dot-yellow: #d8c870;',
+    '  --code-dot-green: #70c888;',
+    '  --white-rgb: 255, 255, 255;',
+    '  --black-rgb: 0, 0, 0;',
+    '}',
+    'html, body {',
+    '  background: radial-gradient(1200px circle at 18% 8%, rgba(255, 170, 200, 0.06), transparent 36%), linear-gradient(180deg, rgba(255,255,255,0.02), transparent 300px), #484347;',
+    '  color: #fff5f8;',
+    '  font-family: "MiSans", "PingFang SC", "Microsoft YaHei", sans-serif;',
+    '  -webkit-font-smoothing: antialiased;',
+    '}',
+    '::selection { background: rgba(240, 173, 200, 0.35); }',
+    '#write {',
+    '  max-width: 880px;',
+    '  line-height: 1.85;',
+    '  letter-spacing: 0.015em;',
+    '  font-size: 16px;',
+    '  color: #fff5f8;',
+    '  margin: 0 auto;',
+    '  padding: 48px 32px 64px;',
+    '  background: linear-gradient(180deg, rgba(255, 170, 200, 0.18), transparent 460px);',
+    '  border: 1px solid rgba(255, 245, 248, 0.12);',
+    '  border-radius: 22px;',
+    '  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.30);',
+    '}',
+    '#write p { margin: 1.1em 0; color: #fff5f8; }',
+    '#write a { color: #f0adc8; text-decoration: none; border-bottom: 1px solid transparent; }',
+    '#write a:hover { color: #f5bcd2; border-bottom-color: rgba(255, 170, 200, 0.55); }',
+    '#write h1, #write h2, #write h3, #write h4, #write h5, #write h6 { color: #fff5f8; font-weight: 800; line-height: 1.35; margin: 24px 0 16px; letter-spacing: -0.02em; position: relative; }',
+    '#write h1 { font-size: 2.35em; border-bottom: 1px solid rgba(255, 170, 200, 0.32); padding-bottom: 0.35em; text-shadow: 0 10px 36px rgba(0, 0, 0, 0.35); }',
+    '#write h2 { font-size: 1.82em; border-bottom: 1px solid rgba(255, 170, 200, 0.24); padding-bottom: 0.3em; color: rgba(228, 220, 224, 0.92); }',
+    '#write h3 { font-size: 1.36em; color: rgba(228, 220, 224, 0.88); }',
+    '#write h4 { font-size: 1.18em; color: rgba(228, 220, 224, 0.82); }',
+    '#write h1::after, #write h2::after { content: ""; position: absolute; left: 0; bottom: -0.52em; width: 78px; height: 3px; background: linear-gradient(90deg, rgba(255, 170, 200, 0.5), transparent); border-radius: 999px; }',
+    '#write h3::after { content: ""; position: absolute; left: 0; bottom: -0.4em; width: 48px; height: 2px; background: linear-gradient(90deg, rgba(255, 170, 200, 0.35), transparent); border-radius: 999px; }',
+    '#write h4::after { content: ""; position: absolute; left: 0; bottom: -0.35em; width: 36px; height: 2px; background: linear-gradient(90deg, rgba(255, 170, 200, 0.25), transparent); border-radius: 999px; }',
+    '#write hr { border: 0; height: 2px; background: linear-gradient(90deg, transparent, rgba(255, 245, 248, 0.22), transparent); margin: 48px 0; }',
+    '#write blockquote { margin: 24px 0; padding: 24px 32px; background: rgba(255, 170, 200, 0.12); border: 1px solid rgba(255, 170, 200, 0.18); border-left: 4px solid #f0adc8; border-radius: 14px; color: #fff5f8; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); position: relative; }',
+    '#write blockquote p:first-child { margin-top: 0; }',
+    '#write blockquote p:last-child { margin-bottom: 0; }',
+    '#write ul, #write ol { padding-left: 1.5em; margin: 1em 0; }',
+    '#write li { margin: 0.5em 0; }',
+    '#write li>ul, #write li>ol { margin: 0.4em 0; }',
+    '#write ul li::marker { color: rgba(255, 170, 200, 0.72); font-size: 0.98em; font-weight: 700; }',
+    '#write ol li::marker { color: rgba(255, 170, 200, 0.72); font-weight: 800; font-variant-numeric: tabular-nums; }',
+    '#write table { border-collapse: separate; border-spacing: 0; width: 100%; margin: 2em 0; border: 1px solid rgba(255, 245, 248, 0.12); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }',
+    '#write th, #write td { padding: 0.75em 1em; border-bottom: 1px solid rgba(255, 245, 248, 0.12); }',
+    '#write th { text-align: left; background: #565152; font-weight: 600; color: #fff5f8; }',
+    '#write tr:last-child td { border-bottom: 0; }',
+    '#write tr:nth-child(even) td { background: rgba(255, 170, 200, 0.03); }',
+    '#write code { font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace; font-size: 0.88em; padding: 0.2em 0.45em; border-radius: 7px; background: rgba(255, 170, 200, 0.18); color: #f0adc8; font-weight: 600; border: 1px solid rgba(255, 170, 200, 0.30); }',
+    '#write pre { background: #3c383a; color: #e4dce0; border: 1px solid rgba(255, 170, 200, 0.15); border-radius: 16px; padding: 3.2em 1.4em 1.4em; margin: 2em 0; overflow: auto; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25); font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace; font-size: 14.5px; line-height: 1.6; position: relative; }',
+    '#write pre::before { content: ""; position: absolute; top: 14px; left: 14px; width: 10px; height: 10px; border-radius: 50%; background: #d87070; box-shadow: 18px 0 0 #d8c870, 36px 0 0 #70c888; z-index: 2; }',
+    '#write pre code { background: transparent; padding: 0; color: #fff5f8; font-weight: normal; border: none; }',
+    '#write img { max-width: 100%; height: auto; border-radius: 14px; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25); display: block; margin: 1.5em auto; }',
+    '#write mark { background: linear-gradient(120deg, rgba(255, 170, 200, 0.30), rgba(255, 170, 200, 0.15)); color: inherit; padding: 0.12em 0.26em; border-radius: 9px; border: 1px solid rgba(255, 170, 200, 0.30); }',
+    '#write u { text-decoration: none; background-image: linear-gradient(120deg, rgba(255, 170, 200, 0.5), rgba(255, 170, 200, 0.20)); background-repeat: no-repeat; background-size: 100% 0.16em; background-position: 0 90%; border-radius: 4px; padding-bottom: 2px; }',
+    '#write kbd { font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace; font-size: 0.85em; padding: 0.2em 0.5em; border: 1px solid rgba(255, 245, 248, 0.22); border-bottom-width: 3px; border-radius: 8px; background: #484347; color: #fff5f8; margin: 0 0.2em; }',
+    '#write strong { font-weight: 800; }',
+    '#write em { font-style: italic; }',
+    '#write del { text-decoration: line-through; opacity: 0.7; }',
+  ].join('\n');
+}
+
+// ===== 拖拽分隔线调整面板比例 =====
+var divider = document.getElementById('divider');
+var editorPanel = document.getElementById('editorPanel');
+var previewPanel = document.getElementById('previewPanel');
+var isDragging = false;
+
+divider.addEventListener('mousedown', function(e) {
+  isDragging = true;
+  divider.classList.add('active');
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+  e.preventDefault();
+});
+
+document.addEventListener('mousemove', function(e) {
+  if (!isDragging) return;
+  var container = document.querySelector('.editor-container');
+  var rect = container.getBoundingClientRect();
+  var x = e.clientX - rect.left;
+  var pct = Math.max(20, Math.min(80, (x / rect.width) * 100));
+  editorPanel.style.flex = 'none';
+  editorPanel.style.width = pct + '%';
+  previewPanel.style.flex = 'none';
+  previewPanel.style.width = (100 - pct) + '%';
+});
+
+document.addEventListener('mouseup', function() {
+  if (isDragging) {
+    isDragging = false;
+    divider.classList.remove('active');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }
+});
+
+// ===== Tab 键支持 =====
+editor.addEventListener('keydown', function(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    var start = editor.selectionStart;
+    var end = editor.selectionEnd;
+    editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
+    editor.selectionStart = editor.selectionEnd = start + 4;
+    updatePreview();
+    saveToStorage();
+  }
+});
+
+// ===== 拖放文件支持 =====
+editor.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+});
+
+editor.addEventListener('dragleave', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+});
+
+editor.addEventListener('drop', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  var file = e.dataTransfer.files[0];
+  if (file && (file.name.endsWith('.md') || file.name.endsWith('.markdown') || file.name.endsWith('.txt'))) {
+    var reader = new FileReader();
+    reader.onload = function(event) {
+      editor.value = event.target.result;
+      fileNameEl.textContent = file.name;
+      saveToStorage();
+      updatePreview();
+      updateStatus();
+      showToast('文件已打开: ' + file.name);
+    };
+    reader.readAsText(file);
+  } else {
+    showToast('请拖入 .md 或 .txt 文件');
+  }
+});
+
+// ===== Ctrl+S 保存提示 =====
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    saveToStorage();
+    showToast('内容已自动保存到本地');
+  }
+});
+
+// 初始化状态
+applyTheme();
+updateStatus();
+statusLeft.textContent = '内容自动保存中';
+</script>
+</body>
+</html>
