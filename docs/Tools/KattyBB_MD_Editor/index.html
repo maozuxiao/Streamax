@@ -744,6 +744,10 @@ const savedFileName = localStorage.getItem('bloom-editor-filename');
 if (savedContent) {
   editor.value = savedContent;
   fileNameEl.textContent = savedFileName || '未命名';
+  // 如果恢复的文件名不是未命名/未打开，说明之前打开过本地文件
+  if (savedFileName && savedFileName !== '未命名' && savedFileName !== '未打开文件') {
+    window._openedFileName = savedFileName.replace(/\.(md|markdown|txt|text)$/i, '');
+  }
 }
 updatePreview();
 
@@ -763,6 +767,7 @@ fileInput.addEventListener('change', (e) => {
   reader.onload = (event) => {
     editor.value = event.target.result;
     fileNameEl.textContent = file.name;
+    window._openedFileName = file.name.replace(/\.(md|markdown|txt|text)$/i, '');
     saveToStorage();
     updatePreview();
     updateStatus();
@@ -961,6 +966,7 @@ function clearEditor() {
   if (editor.value.trim() === '') return;
   editor.value = '';
   fileNameEl.textContent = '未打开文件';
+  window._openedFileName = '';
   saveToStorage();
   updatePreview();
   updateStatus();
@@ -1066,8 +1072,54 @@ function saveMarkdown() {
 
 // ===== 辅助函数 =====
 
+/**
+ * 从 Markdown 内容中提取第一个标题（h1 > h2 > h3 > h4 > h5 > h6）
+ * 返回去掉 # 符号的标题文本，如果没有标题则返回空字符串
+ */
+function extractTitleFromMarkdown(text) {
+  // 去掉 YAML front matter
+  text = text.replace(/^---\n[\s\S]*?\n---\n?/, '');
+  // 从 h1 到 h6 依次查找
+  for (var level = 1; level <= 6; level++) {
+    var hashes = '';
+    for (var i = 0; i < level; i++) hashes += '#';
+    var regex = new RegExp('^' + hashes + ' +(.+)$', 'm');
+    var match = text.match(regex);
+    if (match) {
+      return match[1].trim().replace(/[#]+$/, '').trim();
+    }
+  }
+  return '';
+}
+
+/**
+ * 生成导出文件名
+ * 规则：
+ * 1. 如果是从本地打开的文件，使用原文件名（去掉扩展名）
+ * 2. 如果是未命名文件，自动提取 Markdown 第一个标题作为文件名
+ */
 function getExportName(ext) {
-  var name = fileNameEl.textContent === '未打开文件' ? '未命名' : fileNameEl.textContent.replace(/\.(md|markdown|txt|text)$/i, '');
+  var name;
+
+  // 规则1：优先使用本地打开的文件名（不含扩展名）
+  if (window._openedFileName) {
+    name = window._openedFileName;
+  }
+  // 规则2：未命名/未打开文件，从 Markdown 内容提取标题
+  else if (fileNameEl.textContent === '未命名' || fileNameEl.textContent === '未打开文件') {
+    name = extractTitleFromMarkdown(editor.value);
+    if (!name) name = '未命名';
+  }
+  // 兜底：使用当前显示的文件名（去掉扩展名）
+  else {
+    name = fileNameEl.textContent.replace(/\.(md|markdown|txt|text)$/i, '');
+  }
+
+  // 清理非法文件名字符
+  name = name.replace(/[\\/:*?"<>|]/g, '_').trim();
+  // 限制长度，避免文件名过长
+  if (name.length > 100) name = name.substring(0, 100);
+
   return name + ext;
 }
 
@@ -1640,6 +1692,7 @@ editor.addEventListener('drop', function(e) {
     reader.onload = function(event) {
       editor.value = event.target.result;
       fileNameEl.textContent = file.name;
+      window._openedFileName = file.name.replace(/\.(md|markdown|txt|text)$/i, '');
       saveToStorage();
       updatePreview();
       updateStatus();
