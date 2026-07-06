@@ -1386,18 +1386,41 @@ function svgToPng(svgUrl, width, height, scale) {
 }
 
 /**
+ * 获取 CSS 变量的计算后颜色值（浏览器会将 oklch/color-mix 转为 rgb/rgba）
+ * getComputedStyle().getPropertyValue() 返回的是原始声明值，可能含 oklch/color-mix
+ * Word 不支持这些现代函数，需通过临时元素获取计算后的 rgb/rgba 值
+ */
+function getComputedCSSVar(varName, fallback) {
+  try {
+    var tempEl = document.createElement('div');
+    tempEl.style.color = 'var(' + varName + ')';
+    tempEl.style.display = 'none';
+    document.body.appendChild(tempEl);
+    var computed = getComputedStyle(tempEl).color;
+    document.body.removeChild(tempEl);
+    if (computed && computed.indexOf('rgb') === 0) {
+      return computed;
+    }
+  } catch (e) {}
+  return fallback;
+}
+
+/**
  * 从当前主题的实时 CSS 变量生成 Word 导出专用 CSS
- * 通过 getComputedStyle 读取当前页面的实际颜色值
+ * 通过临时元素读取计算后的颜色值，确保 Word 能正确解析（不含 oklch/color-mix）
  */
 function getThemeWordCSS() {
-  var s = getComputedStyle(document.documentElement);
-  var bg = s.getPropertyValue('--bg').trim() || '#faf8f7';
-  var surface = s.getPropertyValue('--surface').trim() || '#f5f2f1';
-  var text = s.getPropertyValue('--text').trim() || '#443a3e';
-  var textSemi = s.getPropertyValue('--text-semi').trim() || '#7b6c71';
-  var accent = s.getPropertyValue('--accent').trim() || '#e8859b';
-  var muted = s.getPropertyValue('--muted').trim() || 'rgba(68,58,62,0.55)';
-  var border = s.getPropertyValue('--border').trim() || 'rgba(68,58,62,0.10)';
+  var bg = getComputedCSSVar('--bg', '#faf8f7');
+  var surface = getComputedCSSVar('--surface', '#f5f2f1');
+  var text = getComputedCSSVar('--text', '#443a3e');
+  var textSemi = getComputedCSSVar('--text-semi', '#7b6c71');
+  var accent = getComputedCSSVar('--accent', '#e8859b');
+  var border = getComputedCSSVar('--border', 'rgba(68,58,62,0.20)');
+
+  // 从 border 提取 RGB 分量，使用更高不透明度（Word 中低透明度边框不可见）
+  var borderRgb = border.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+  var solidBorder = borderRgb ? 'rgb(' + borderRgb[1] + ',' + borderRgb[2] + ',' + borderRgb[3] + ')' : border;
+  var semiBorder = borderRgb ? 'rgba(' + borderRgb[1] + ',' + borderRgb[2] + ',' + borderRgb[3] + ',0.5)' : border;
 
   return [
     '@charset "UTF-8";',
@@ -1406,23 +1429,23 @@ function getThemeWordCSS() {
     '#write p { margin: 1.1em 0; }',
     '#write a { color: ' + accent + '; text-decoration: underline; }',
     '#write h1, #write h2, #write h3, #write h4, #write h5, #write h6 { color: ' + text + '; font-weight: bold; margin: 1.5em 0 0.5em; }',
-    '#write h1 { font-size: 2em; border-bottom: 1px solid ' + border + '; padding-bottom: 0.3em; }',
-    '#write h2 { font-size: 1.5em; border-bottom: 1px solid ' + border + '; padding-bottom: 0.2em; }',
+    '#write h1 { font-size: 2em; border-bottom: 2px solid ' + semiBorder + '; padding-bottom: 0.3em; }',
+    '#write h2 { font-size: 1.5em; border-bottom: 2px solid ' + semiBorder + '; padding-bottom: 0.2em; }',
     '#write h3 { font-size: 1.25em; }',
     '#write h4 { font-size: 1.1em; }',
-    '#write hr { border: none; border-top: 1px solid ' + border + '; margin: 2em 0; }',
+    '#write hr { border: none; border-top: 2px solid ' + semiBorder + '; margin: 2em 0; }',
     '#write blockquote { margin: 1em 0; padding: 1em 1.5em; border-left: 4px solid ' + accent + '; background: ' + surface + '; color: ' + text + '; }',
     '#write ul, #write ol { padding-left: 2em; margin: 1em 0; }',
     '#write li { margin: 0.4em 0; }',
-    '#write table { border-collapse: collapse; width: 100%; margin: 1.5em 0; }',
-    '#write th, #write td { padding: 8px 12px; border: 1px solid ' + border + '; }',
-    '#write th { background: ' + surface + '; font-weight: bold; }',
-    '#write code { font-family: Consolas, monospace; font-size: 0.9em; padding: 2px 6px; background: ' + surface + '; color: ' + accent + '; border: 1px solid ' + border + '; }',
-    '#write pre { background: ' + surface + '; padding: 16px; margin: 1.5em 0; overflow: auto; border: 1px solid ' + border + '; }',
+    '#write table { border-collapse: collapse; width: 100%; margin: 1.5em 0; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }',
+    '#write th, #write td { padding: 8px 12px; border: 1px solid ' + solidBorder + '; mso-border-alt: 0.5pt solid ' + solidBorder + '; }',
+    '#write th { background: ' + surface + '; font-weight: bold; border: 1px solid ' + solidBorder + '; }',
+    '#write code { font-family: Consolas, monospace; font-size: 0.9em; padding: 2px 6px; background: ' + surface + '; color: ' + accent + '; border: 1px solid ' + semiBorder + '; }',
+    '#write pre { background: ' + surface + '; padding: 16px; margin: 1.5em 0; overflow: auto; border: 1px solid ' + solidBorder + '; }',
     '#write pre code { background: transparent; padding: 0; color: ' + text + '; border: none; }',
     '#write img { max-width: 100%; }',
     '#write mark { background: ' + surface + '; color: inherit; padding: 2px 4px; }',
-    '#write kbd { font-family: Consolas, monospace; padding: 2px 6px; border: 1px solid ' + border + '; border-bottom-width: 2px; background: ' + bg + '; }',
+    '#write kbd { font-family: Consolas, monospace; padding: 2px 6px; border: 1px solid ' + semiBorder + '; border-bottom-width: 2px; background: ' + bg + '; }',
     '#write strong { font-weight: bold; }',
     '#write em { font-style: italic; }',
   ].join('\n');
