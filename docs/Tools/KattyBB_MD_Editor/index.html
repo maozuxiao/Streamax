@@ -1222,11 +1222,10 @@ function getExportExtraCSS() {
     '.markdown-body pre { background: var(--code-bg, #f5f2f1); border: 1px solid var(--border, rgba(0,0,0,0.1)); border-radius: 14px; padding: 16px 20px; overflow-x: auto; position: relative; }',
     '.markdown-body pre code { background: transparent; padding: 0; color: var(--code-ink, #443a3e); font-weight: normal; border: none; }',
     '.markdown-body code { font-family: var(--font-mono, monospace); font-size: 0.88em; padding: 0.2em 0.45em; border-radius: 7px; background: rgba(var(--accent-rgb, 232,133,155), 0.14); color: var(--accent, #e8859b); font-weight: 600; border: 1px solid rgba(var(--accent-rgb, 232,133,155), 0.32); }',
-    /* 表格 */
-    '.markdown-body table { border-collapse: separate; border-spacing: 0; width: 100%; margin: 2em 0; border: 1px solid var(--border, rgba(0,0,0,0.1)); border-radius: 14px; overflow: hidden; }',
-    '.markdown-body th, .markdown-body td { padding: 0.75em 1em; border-bottom: 1px solid var(--border, rgba(0,0,0,0.1)); }',
-    '.markdown-body th { text-align: left; background: var(--surface, #f5f2f1); font-weight: 600; }',
-    '.markdown-body tr:last-child td { border-bottom: 0; }',
+    /* 表格（仅布局兜底，颜色由主题CSS控制） */
+    '.markdown-body table { width: 100%; margin: 2em 0; }',
+    '.markdown-body th, .markdown-body td { padding: 0.75em 1em; }',
+    '.markdown-body th { text-align: left; font-weight: 600; }',
     /* 引用块 */
     '.markdown-body blockquote { margin: 1.5em 0; padding: 1em 1.25em; background: rgba(var(--accent-rgb, 232,133,155), 0.08); border-left: 4px solid var(--accent, #e8859b); border-radius: 14px; }',
     /* 标题装饰线 */
@@ -1254,12 +1253,10 @@ async function exportHTML() {
   var content = editor.value.trim();
   if (!content) { showToast('编辑器中没有内容'); return; }
 
-  var cssContent = await fetchThemeCSS();
-  var extraCSS = getExportExtraCSS();
+  var cssContent = await collectAllStyles();
   // 直接使用预览区已渲染的 HTML（包含 mermaid SVG、代码高亮等）
   var htmlContent = preview.innerHTML;
-  var previewCSS = '.markdown-body { max-width: 860px; margin: 0 auto; padding: 48px 32px 64px; }';
-  var htmlDoc = '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>' + fileNameEl.textContent + '<\/title>\n<style>\n' + cssContent + '\n' + extraCSS + '\n' + previewCSS + '\n<\/style>\n<\/head>\n<body>\n<div id="write" class="markdown-body">\n' + htmlContent + '\n<\/div>\n<\/body>\n<\/html>';
+  var htmlDoc = '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>' + fileNameEl.textContent + '<\/title>\n<style>\n' + cssContent + '\n<\/style>\n<\/head>\n<body>\n<div id="write" class="markdown-body">\n' + htmlContent + '\n<\/div>\n<\/body>\n<\/html>';
 
   downloadBlob(htmlDoc, getExportName('.html'), 'text/html;charset=utf-8');
   showToast('HTML 文件已导出');
@@ -1270,13 +1267,12 @@ async function printPreview() {
   var content = editor.value.trim();
   if (!content) { showToast('编辑器中没有内容'); return; }
 
-  var cssContent = await fetchThemeCSS();
-  var extraCSS = getExportExtraCSS();
+  var cssContent = await collectAllStyles();
   // 直接使用预览区已渲染的 HTML
   var htmlContent = preview.innerHTML;
 
   var printWin = window.open('', '_blank');
-  printWin.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + fileNameEl.textContent + '<\/title><style>' + cssContent + '\n' + extraCSS + 'body{margin:0;padding:0;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><div id="write" class="markdown-body">' + htmlContent + '<\/div><script>window.onafterprint=function(){window.close();};<\/script></body></html>');
+  printWin.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + fileNameEl.textContent + '<\/title><style>' + cssContent + 'body{margin:0;padding:0;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><div id="write" class="markdown-body">' + htmlContent + '<\/div><script>window.onafterprint=function(){window.close();};<\/script></body></html>');
   printWin.document.close();
   printWin.focus();
   setTimeout(function() { printWin.print(); }, 500);
@@ -1327,6 +1323,7 @@ async function waitForMermaidRender(container, timeout) {
  * 将预览区中的 mermaid SVG 元素转换为 PNG 格式的 <img> 标签
  * Word 不支持 SVG，但支持 PNG 图片
  * 对于渲染失败的图表，用代码块样式降级显示
+ * 使用 DOM 操作而非字符串替换，确保替换可靠
  */
 async function convertMermaidToPng(container) {
   // 先等待 Mermaid 渲染完成
@@ -1346,19 +1343,24 @@ async function convertMermaidToPng(container) {
     await waitForMermaidRender(container, 5000);
   }
 
-  var html = container.innerHTML;
-  var mermaidDivs = container.querySelectorAll('.mermaid');
+  // 克隆容器，在克隆体上操作（不影响原预览区）
+  var clone = container.cloneNode(true);
+  var mermaidDivs = clone.querySelectorAll('.mermaid');
 
   for (var i = 0; i < mermaidDivs.length; i++) {
     var div = mermaidDivs[i];
     var svg = div.querySelector('svg');
-    var divHtml = div.outerHTML;
+    var parent = div.parentNode;
 
     // 如果没有 SVG（渲染失败），降级为代码块显示
     if (!svg) {
       var codeText = div.textContent || 'Mermaid 图表渲染失败';
-      var fallbackHtml = '<pre style="background:#f5f2f1;border:1px solid #ddd;border-radius:8px;padding:16px;margin:1.5em 0;overflow:auto;font-family:Consolas,monospace;font-size:14px;line-height:1.6;"><code>' + escapeHtml(codeText) + '</code></pre>';
-      html = html.replace(divHtml, fallbackHtml);
+      var preEl = document.createElement('pre');
+      preEl.style.cssText = 'background:#f5f2f1;border:1px solid #ddd;border-radius:8px;padding:16px;margin:1.5em 0;overflow:auto;font-family:Consolas,monospace;font-size:14px;line-height:1.6;';
+      var codeEl = document.createElement('code');
+      codeEl.textContent = codeText;
+      preEl.appendChild(codeEl);
+      parent.replaceChild(preEl, div);
       continue;
     }
 
@@ -1366,9 +1368,16 @@ async function convertMermaidToPng(container) {
       var svgClone = svg.cloneNode(true);
       svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
       // 获取 SVG 实际尺寸，确保有足够大的宽度
-      var rect = svg.getBoundingClientRect();
-      var width = svg.getAttribute('width') || rect.width || 800;
-      var height = svg.getAttribute('height') || rect.height || 600;
+      var originalSvg = container.querySelectorAll('.mermaid')[i].querySelector('svg');
+      var width, height;
+      if (originalSvg) {
+        var rect = originalSvg.getBoundingClientRect();
+        width = originalSvg.getAttribute('width') || rect.width || 800;
+        height = originalSvg.getAttribute('height') || rect.height || 600;
+      } else {
+        width = svg.getAttribute('width') || 800;
+        height = svg.getAttribute('height') || 600;
+      }
       width = parseFloat(width);
       height = parseFloat(height);
       // 确保最小宽度，避免小图模糊
@@ -1389,32 +1398,38 @@ async function convertMermaidToPng(container) {
       URL.revokeObjectURL(url);
 
       if (pngDataUrl) {
-        var imgHtml = '<div style="text-align:center;margin:1.5em 0;"><img src="' + pngDataUrl + '" width="' + Math.round(width) + '" height="' + Math.round(height) + '" style="max-width:100%;"/></div>';
-        html = html.replace(divHtml, imgHtml);
+        var imgDiv = document.createElement('div');
+        imgDiv.style.cssText = 'text-align:center;margin:1.5em 0;';
+        var img = document.createElement('img');
+        img.src = pngDataUrl;
+        img.width = Math.round(width);
+        img.height = Math.round(height);
+        img.style.cssText = 'max-width:100%;';
+        imgDiv.appendChild(img);
+        parent.replaceChild(imgDiv, div);
       } else {
         // 转 PNG 失败，降级为代码块
         var codeText2 = div.textContent || 'Mermaid 图表渲染失败';
-        var fallbackHtml2 = '<pre style="background:#f5f2f1;border:1px solid #ddd;border-radius:8px;padding:16px;margin:1.5em 0;overflow:auto;font-family:Consolas,monospace;font-size:14px;line-height:1.6;"><code>' + escapeHtml(codeText2) + '</code></pre>';
-        html = html.replace(divHtml, fallbackHtml2);
+        var preEl2 = document.createElement('pre');
+        preEl2.style.cssText = 'background:#f5f2f1;border:1px solid #ddd;border-radius:8px;padding:16px;margin:1.5em 0;overflow:auto;font-family:Consolas,monospace;font-size:14px;line-height:1.6;';
+        var codeEl2 = document.createElement('code');
+        codeEl2.textContent = codeText2;
+        preEl2.appendChild(codeEl2);
+        parent.replaceChild(preEl2, div);
       }
     } catch (e) {
       console.warn('Mermaid 转 PNG 失败:', e);
       // 异常时降级为代码块
       var codeText3 = div.textContent || 'Mermaid 图表渲染失败';
-      var fallbackHtml3 = '<pre style="background:#f5f2f1;border:1px solid #ddd;border-radius:8px;padding:16px;margin:1.5em 0;overflow:auto;font-family:Consolas,monospace;font-size:14px;line-height:1.6;"><code>' + escapeHtml(codeText3) + '</code></pre>';
-      html = html.replace(divHtml, fallbackHtml3);
+      var preEl3 = document.createElement('pre');
+      preEl3.style.cssText = 'background:#f5f2f1;border:1px solid #ddd;border-radius:8px;padding:16px;margin:1.5em 0;overflow:auto;font-family:Consolas,monospace;font-size:14px;line-height:1.6;';
+      var codeEl3 = document.createElement('code');
+      codeEl3.textContent = codeText3;
+      preEl3.appendChild(codeEl3);
+      parent.replaceChild(preEl3, div);
     }
   }
-  return html;
-}
-
-/**
- * HTML 转义函数
- */
-function escapeHtml(text) {
-  var div = document.createElement('div');
-  div.appendChild(document.createTextNode(text));
-  return div.innerHTML;
+  return clone.innerHTML;
 }
 
 /**
@@ -1528,6 +1543,91 @@ function saveMarkdown() {
 }
 
 // ===== 辅助函数 =====
+
+/**
+ * 收集页面所有激活的样式规则，确保导出 HTML 与渲染窗口所见即所得
+ * 导出HTML的包裹元素为 <div id="write" class="markdown-body">
+ * 所以 #write 选择器能匹配主题CSS，但仍需补充：
+ * 1. themeCompat 兼容层（变量映射）
+ * 2. 编辑器内联样式中的 .markdown-body 细节样式
+ * 3. 通用兜底样式
+ */
+async function collectAllStyles() {
+  var allCSS = '';
+
+  // 1. fetch 主题 CSS 文件（包含 :root 变量、#write 样式等）
+  var theme = themeList[_currentThemeName];
+  var cssFile = _currentThemeMode === 'dark' ? theme.dark : theme.light;
+  var themeCSS = '';
+  try {
+    var resp = await fetch(cssFile);
+    if (resp.ok) {
+      themeCSS = await resp.text();
+    }
+  } catch (e) {}
+
+  if (!themeCSS) {
+    try {
+      var styleSheets = document.styleSheets;
+      for (var i = 0; i < styleSheets.length; i++) {
+        var sheet = styleSheets[i];
+        if (sheet.href && sheet.href.indexOf(cssFile) !== -1) {
+          var rules = [];
+          for (var j = 0; j < sheet.cssRules.length; j++) {
+            rules.push(sheet.cssRules[j].cssText);
+          }
+          if (rules.length > 0) { themeCSS = rules.join('\n'); break; }
+        }
+      }
+    } catch (e) {}
+  }
+
+  if (!themeCSS) {
+    themeCSS = _currentThemeMode === 'dark' ? getDarkSafeCSS() : getSafeCSS();
+  }
+
+  allCSS += themeCSS;
+
+  // 2. 从 document.styleSheets 收集内联样式表中的内容渲染规则
+  //    过滤掉编辑器 UI 样式，只保留 .markdown-body / 内容元素 / :root 等
+  try {
+    var sheets = document.styleSheets;
+    for (var si = 0; si < sheets.length; si++) {
+      var s = sheets[si];
+      // 跳过外部 CSS 文件（主题CSS已经单独处理）
+      if (s.href) continue;
+      try {
+        for (var ri = 0; ri < s.cssRules.length; ri++) {
+          var rule = s.cssRules[ri];
+          var ruleText = rule.cssText;
+          // 跳过 @charset 和 @keyframes
+          if (ruleText.indexOf('@charset') === 0) continue;
+          // 跳过编辑器 UI 样式
+          if (/toolbar|statusbar|toast|editor-panel|\.editor\b|#editor\b|theme-selector|theme-dropdown|\.btn|file-input|\.split-|mode-btn|toc-float-btn|toc-float-content|\.open-btn|icon-btn/i.test(ruleText)) continue;
+          // 收集内容相关样式
+          if (/\.markdown-body|#write|#preview|\.preview-panel|:root|\.toc\b|\.mermaid|\.md-fences|\.task-list-item|@media\s+print/i.test(ruleText)) {
+            allCSS += '\n' + ruleText;
+          }
+        }
+      } catch (e) {}
+    }
+  } catch (e) {}
+
+  // 3. 附加 themeCompat 兼容层（变量映射）
+  var compatStyle = document.getElementById('themeCompat');
+  if (compatStyle && compatStyle.textContent) {
+    allCSS += '\n' + compatStyle.textContent;
+  }
+
+  // 4. 通用兜底样式
+  allCSS += '\n\n/* export compat */\n' +
+    '.markdown-body { max-width: 860px; margin: 30px auto 60px; padding: 52px 64px 96px; line-height: 1.8; font-size: 16px; }\n' +
+    '#write pre { background: var(--code-bg, #f5f2f1); color: var(--code-text, #7b6c71); border: 1px solid rgba(var(--accent-rgb, 232,133,155), 0.18); border-radius: 16px; padding: 3.2em 1.4em 1.4em; margin: 2em 0; overflow: auto; font-family: var(--font-mono, monospace); font-size: 14.5px; line-height: 1.6; position: relative; }\n' +
+    '#write pre::before { content: ""; position: absolute; top: 14px; left: 14px; width: 10px; height: 10px; border-radius: 50%; background: var(--code-dot-red, #d87070); box-shadow: 18px 0 0 var(--code-dot-yellow, #d8c870), 36px 0 0 var(--code-dot-green, #70c888); z-index: 2; }\n' +
+    '#write pre code { background: transparent; padding: 0; color: var(--code-ink, #443a3e); font-weight: normal; border: none; }';
+
+  return allCSS;
+}
 
 /**
  * 从 Markdown 内容中提取第一个标题（h1 > h2 > h3 > h4 > h5 > h6）
