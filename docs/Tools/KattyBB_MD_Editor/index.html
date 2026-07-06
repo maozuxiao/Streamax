@@ -352,14 +352,17 @@ body {
 }
 .markdown-body pre {
   background: var(--code-bg); color: var(--code-text); border: 1px solid rgba(var(--accent-rgb), 0.18);
-  border-radius: 16px; padding: 3.2em 1.4em 1.4em; margin: 2em 0; overflow: auto;
+  border-radius: 16px; padding: 1.4em; margin: 2em 0; overflow: auto;
   box-shadow: 0 18px 50px rgba(var(--text-rgb), 0.12); font-family: var(--font-mono); font-size: 14.5px;
   line-height: 1.6; position: relative;
 }
 .markdown-body pre::before {
-  content: ""; position: absolute; top: 14px; left: 14px; width: 10px; height: 10px;
-  border-radius: 50%; background: var(--code-dot-red);
-  box-shadow: 18px 0 0 var(--code-dot-yellow), 36px 0 0 var(--code-dot-green); z-index: 2;
+  content: ""; display: block; width: 64px; height: 10px; margin-bottom: 12px;
+  border-radius: 0; background:
+    radial-gradient(circle at 5px 5px, var(--code-dot-red) 5px, transparent 5.5px),
+    radial-gradient(circle at 23px 5px, var(--code-dot-yellow) 5px, transparent 5.5px),
+    radial-gradient(circle at 41px 5px, var(--code-dot-green) 5px, transparent 5.5px);
+  background-size: 64px 10px; background-repeat: no-repeat;
 }
 .markdown-body pre code { background: transparent; padding: 0; color: var(--code-ink); font-weight: normal; border: none; }
 .markdown-body img { max-width: 100%; height: auto; border-radius: 14px; box-shadow: var(--shadow); display: block; margin: 1.5em auto; }
@@ -809,13 +812,13 @@ renderer.code = function(code, lang) {
     codeText = code.text || '';
     codeLang = code.lang || '';
     if (codeLang === 'mermaid') {
-      return '<div class="mermaid">' + codeText + '</div>';
+      return '<div class="mermaid" data-mermaid-src="' + encodeURIComponent(codeText) + '">' + codeText + '</div>';
     }
     var originalHtml = originalCodeRenderer.call(this, code);
     return originalHtml.replace('<pre><code', '<pre class="md-fences" mdtype="fences"><code').replace('</code></pre>', '</code></pre>');
   }
   if (lang === 'mermaid') {
-    return '<div class="mermaid">' + code + '</div>';
+    return '<div class="mermaid" data-mermaid-src="' + encodeURIComponent(code) + '">' + code + '</div>';
   }
   var originalHtml = originalCodeRenderer.call(this, code, lang);
   return originalHtml.replace('<pre><code', '<pre class="md-fences" mdtype="fences"><code').replace('</code></pre>', '</code></pre>');
@@ -1323,10 +1326,9 @@ async function waitForMermaidRender(container, timeout) {
  * 将预览区中的 mermaid SVG 元素转换为 PNG 格式的 <img> 标签
  * Word 不支持 SVG，但支持 PNG 图片
  * 对于渲染失败的图表，用代码块样式降级显示
- * 使用 DOM 操作而非字符串替换，确保替换可靠
+ * 直接在真实DOM上操作（保存→替换→取HTML→恢复），确保100%可靠
  */
 async function convertMermaidToPng(container) {
-  // 先等待 Mermaid 渲染完成
   if (window.mermaid) {
     try {
       var allMermaidDivs = container.querySelectorAll('.mermaid');
@@ -1343,93 +1345,92 @@ async function convertMermaidToPng(container) {
     await waitForMermaidRender(container, 5000);
   }
 
-  // 克隆容器，在克隆体上操作（不影响原预览区）
-  var clone = container.cloneNode(true);
-  var mermaidDivs = clone.querySelectorAll('.mermaid');
+  var originalHtml = container.innerHTML;
+  var mermaidEls = container.querySelectorAll('.mermaid');
+  var replacements = [];
 
-  for (var i = 0; i < mermaidDivs.length; i++) {
-    var div = mermaidDivs[i];
+  for (var i = 0; i < mermaidEls.length; i++) {
+    var div = mermaidEls[i];
     var svg = div.querySelector('svg');
-    var parent = div.parentNode;
+    // 从 data-mermaid-src 属性获取原始代码（用于降级显示）
+    var srcCode = decodeURIComponent(div.getAttribute('data-mermaid-src') || '') || div.textContent || 'Mermaid 图表';
 
-    // 如果没有 SVG（渲染失败），降级为代码块显示
     if (!svg) {
-      var codeText = div.textContent || 'Mermaid 图表渲染失败';
-      var preEl = document.createElement('pre');
-      preEl.style.cssText = 'background:#f5f2f1;border:1px solid #ddd;border-radius:8px;padding:16px;margin:1.5em 0;overflow:auto;font-family:Consolas,monospace;font-size:14px;line-height:1.6;';
-      var codeEl = document.createElement('code');
-      codeEl.textContent = codeText;
-      preEl.appendChild(codeEl);
-      parent.replaceChild(preEl, div);
+      replacements.push({ el: div, html: buildFallbackCodeBlock(srcCode) });
       continue;
     }
 
     try {
       var svgClone = svg.cloneNode(true);
       svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-      // 获取 SVG 实际尺寸，确保有足够大的宽度
-      var originalSvg = container.querySelectorAll('.mermaid')[i].querySelector('svg');
-      var width, height;
-      if (originalSvg) {
-        var rect = originalSvg.getBoundingClientRect();
-        width = originalSvg.getAttribute('width') || rect.width || 800;
-        height = originalSvg.getAttribute('height') || rect.height || 600;
-      } else {
-        width = svg.getAttribute('width') || 800;
-        height = svg.getAttribute('height') || 600;
+      svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+
+      var rect = svg.getBoundingClientRect();
+      var w = Math.round(rect.width) || parseInt(svg.getAttribute('width')) || 800;
+      var h = Math.round(rect.height) || parseInt(svg.getAttribute('height')) || 600;
+
+      svgClone.setAttribute('width', w);
+      svgClone.setAttribute('height', h);
+      if (!svgClone.getAttribute('viewBox')) {
+        svgClone.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
       }
-      width = parseFloat(width);
-      height = parseFloat(height);
-      // 确保最小宽度，避免小图模糊
-      if (width < 600) {
-        var scale = 600 / width;
-        width = 600;
-        height = height * scale;
-      }
-      // 确保最小高度
-      if (height < 100) height = 300;
+
+      var MAX_SIZE = 4000;
+      var finalW = w, finalH = h;
+      if (finalW > MAX_SIZE) { var s = MAX_SIZE / finalW; finalW = MAX_SIZE; finalH = Math.round(finalH * s); }
+      if (finalH > MAX_SIZE) { var s = MAX_SIZE / finalH; finalH = MAX_SIZE; finalW = Math.round(finalW * s); }
+      if (finalW < 400) { var s = 400 / finalW; finalW = 400; finalH = Math.round(finalH * s); }
 
       var svgStr = new XMLSerializer().serializeToString(svgClone);
-      var svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
-      var url = URL.createObjectURL(svgBlob);
+      var svgDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
 
-      // SVG -> PNG via canvas（4x 清晰度，确保 Word 中清晰）
-      var pngDataUrl = await svgToPng(url, width, height, 4);
-      URL.revokeObjectURL(url);
+      var pngDataUrl = await svgToPng(svgDataUrl, finalW, finalH, 4);
 
-      if (pngDataUrl) {
-        var imgDiv = document.createElement('div');
-        imgDiv.style.cssText = 'text-align:center;margin:1.5em 0;';
-        var img = document.createElement('img');
-        img.src = pngDataUrl;
-        img.width = Math.round(width);
-        img.height = Math.round(height);
-        img.style.cssText = 'max-width:100%;';
-        imgDiv.appendChild(img);
-        parent.replaceChild(imgDiv, div);
+      if (pngDataUrl && pngDataUrl.length > 2000) {
+        var imgHtml = '<div style="text-align:center;margin:1.5em 0;"><img src="' + pngDataUrl + '" width="' + finalW + '" height="' + finalH + '" style="max-width:100%;"/></div>';
+        replacements.push({ el: div, html: imgHtml });
       } else {
-        // 转 PNG 失败，降级为代码块
-        var codeText2 = div.textContent || 'Mermaid 图表渲染失败';
-        var preEl2 = document.createElement('pre');
-        preEl2.style.cssText = 'background:#f5f2f1;border:1px solid #ddd;border-radius:8px;padding:16px;margin:1.5em 0;overflow:auto;font-family:Consolas,monospace;font-size:14px;line-height:1.6;';
-        var codeEl2 = document.createElement('code');
-        codeEl2.textContent = codeText2;
-        preEl2.appendChild(codeEl2);
-        parent.replaceChild(preEl2, div);
+        replacements.push({ el: div, html: buildFallbackCodeBlock(srcCode) });
       }
     } catch (e) {
       console.warn('Mermaid 转 PNG 失败:', e);
-      // 异常时降级为代码块
-      var codeText3 = div.textContent || 'Mermaid 图表渲染失败';
-      var preEl3 = document.createElement('pre');
-      preEl3.style.cssText = 'background:#f5f2f1;border:1px solid #ddd;border-radius:8px;padding:16px;margin:1.5em 0;overflow:auto;font-family:Consolas,monospace;font-size:14px;line-height:1.6;';
-      var codeEl3 = document.createElement('code');
-      codeEl3.textContent = codeText3;
-      preEl3.appendChild(codeEl3);
-      parent.replaceChild(preEl3, div);
+      replacements.push({ el: div, html: buildFallbackCodeBlock(srcCode) });
     }
   }
-  return clone.innerHTML;
+
+  for (var r = 0; r < replacements.length; r++) {
+    var rep = replacements[r];
+    if (rep.el && rep.el.parentNode) {
+      var tempDiv = document.createElement('div');
+      tempDiv.innerHTML = rep.html;
+      var newNode = tempDiv.firstChild;
+      rep.el.parentNode.replaceChild(newNode, rep.el);
+    }
+  }
+
+  var resultHtml = container.innerHTML;
+  container.innerHTML = originalHtml;
+  if (window.mermaid) {
+    try { mermaid.run({ nodes: container.querySelectorAll('.mermaid') }); } catch(e) {}
+  }
+
+  return resultHtml;
+}
+
+/**
+ * 构建降级用的代码块HTML
+ */
+function buildFallbackCodeBlock(code) {
+  return '<pre style="background:#f5f2f1;border:1px solid #ddd;border-radius:8px;padding:16px;margin:1.5em 0;overflow:auto;font-family:Consolas,monospace;font-size:14px;line-height:1.6;white-space:pre-wrap;"><code>' + escapeHtml(code) + '</code></pre>';
+}
+
+/**
+ * HTML 转义函数
+ */
+function escapeHtml(text) {
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(text));
+  return div.innerHTML;
 }
 
 /**
@@ -1439,33 +1440,109 @@ async function convertMermaidToPng(container) {
  * @param {number} height - 高度
  * @param {number} scale - 缩放倍数（默认 4）
  */
-function svgToPng(svgUrl, width, height, scale) {
+function svgToPng(svgDataUrl, width, height, scale) {
   scale = scale || 4;
   return new Promise(function(resolve, reject) {
-    var img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = function() {
-      try {
-        var canvas = document.createElement('canvas');
-        canvas.width = width * scale;
-        canvas.height = height * scale;
-        var ctx = canvas.getContext('2d');
-        // 启用高质量渲染
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.scale(scale, scale);
-        ctx.drawImage(img, 0, 0, width, height);
-        var dataUrl = canvas.toDataURL('image/png');
-        resolve(dataUrl);
-      } catch (e) {
-        reject(e);
+    var attempts = [
+      { type: 'dataUrl', url: svgDataUrl }
+    ];
+
+    // 尝试从data URL解析出SVG字符串，同时生成blob URL作为备选
+    try {
+      var svgStr = decodeURIComponent(svgDataUrl.replace('data:image/svg+xml;charset=utf-8,', ''));
+      var blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+      var blobUrl = URL.createObjectURL(blob);
+      attempts.push({ type: 'blobUrl', url: blobUrl });
+    } catch(e) {}
+
+    var currentAttempt = 0;
+    var lastError = null;
+
+    function tryNext() {
+      if (currentAttempt >= attempts.length) {
+        reject(lastError || new Error('所有 SVG 加载方式都失败'));
+        return;
       }
-    };
-    img.onerror = function() {
-      reject(new Error('SVG 图片加载失败'));
-    };
-    img.src = svgUrl;
+
+      var attempt = attempts[currentAttempt++];
+      var img = new Image();
+      img.onload = function() {
+        try {
+          var nw = img.naturalWidth || width;
+          var nh = img.naturalHeight || height;
+          if (nw < 10 || nh < 10) { nw = width; nh = height; }
+          var canvas = document.createElement('canvas');
+          canvas.width = Math.round(nw * scale);
+          canvas.height = Math.round(nh * scale);
+          var ctx = canvas.getContext('2d');
+          // 白色背景（避免透明背景在某些情况下的问题）
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.scale(scale, scale);
+          ctx.drawImage(img, 0, 0, nw, nh);
+          var dataUrl = canvas.toDataURL('image/png');
+          // 清理blob URL
+          if (attempt.type === 'blobUrl') { try { URL.revokeObjectURL(attempt.url); } catch(e) {} }
+          // 验证：图片数据不能太小（说明可能是空白）
+          if (dataUrl && dataUrl.length > 2000) {
+            resolve(dataUrl);
+          } else {
+            lastError = new Error('生成的PNG太小，可能是空白图');
+            tryNext();
+          }
+        } catch (e) {
+          lastError = e;
+          if (attempt.type === 'blobUrl') { try { URL.revokeObjectURL(attempt.url); } catch(e) {} }
+          tryNext();
+        }
+      };
+      img.onerror = function() {
+        lastError = new Error('SVG 加载失败: ' + attempt.type);
+        if (attempt.type === 'blobUrl') { try { URL.revokeObjectURL(attempt.url); } catch(e) {} }
+        tryNext();
+      };
+      img.src = attempt.url;
+    }
+
+    tryNext();
   });
+}
+
+/**
+ * 将Mermaid相关的CSS规则嵌入到SVG中
+ * Mermaid生成的SVG使用外部CSS类（如.node、.edge、.label等），
+ * 序列化后脱离了原文档环境，需要把相关CSS规则作为<style>标签嵌入SVG
+ * 比逐元素内联更可靠，能保留CSS的完整功能
+ */
+function embedMermaidStyles(svgClone) {
+  try {
+    var cssText = '';
+    var sheets = document.styleSheets;
+    for (var i = 0; i < sheets.length; i++) {
+      try {
+        var rules = sheets[i].cssRules || sheets[i].rules;
+        if (!rules) continue;
+        for (var j = 0; j < rules.length; j++) {
+          var rule = rules[j];
+          var text = rule.cssText;
+          // 收集mermaid相关的CSS规则（包括mermaid id选择器、各类图表样式）
+          if (/mermaid|\.label|\.node|\.edge|\.cluster|\.arrowhead|\.flowchart|\.sequence|#mermaid-\d+/i.test(text)) {
+            cssText += text + '\n';
+          }
+        }
+      } catch (e) {}
+    }
+    
+    if (cssText) {
+      var styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+      styleEl.textContent = cssText;
+      svgClone.insertBefore(styleEl, svgClone.firstChild);
+    }
+  } catch (e) {
+    console.warn('嵌入Mermaid CSS失败:', e);
+  }
 }
 
 /**
@@ -1604,8 +1681,10 @@ async function collectAllStyles() {
           if (ruleText.indexOf('@charset') === 0) continue;
           // 跳过编辑器 UI 样式
           if (/toolbar|statusbar|toast|editor-panel|\.editor\b|#editor\b|theme-selector|theme-dropdown|\.btn|file-input|\.split-|mode-btn|toc-float-btn|toc-float-content|\.open-btn|icon-btn/i.test(ruleText)) continue;
+          // 跳过 .markdown-body blockquote（让主题CSS的 #write blockquote 优先）
+          if (/\.markdown-body\s*blockquote/i.test(ruleText)) continue;
           // 收集内容相关样式
-          if (/\.markdown-body|#write|#preview|\.preview-panel|:root|\.toc\b|\.mermaid|\.md-fences|\.task-list-item|@media\s+print/i.test(ruleText)) {
+          if (/\.markdown-body|#write|#preview|\.preview-panel|:root|\.toc\b|\.mermaid|\.md-fences|\.md-alert|\.task-list-item|@media\s+print/i.test(ruleText)) {
             allCSS += '\n' + ruleText;
           }
         }
@@ -1620,11 +1699,19 @@ async function collectAllStyles() {
   }
 
   // 4. 通用兜底样式
+  //    注意：不添加 .markdown-body blockquote 样式，让主题CSS中的 #write blockquote 优先
   allCSS += '\n\n/* export compat */\n' +
     '.markdown-body { max-width: 860px; margin: 30px auto 60px; padding: 52px 64px 96px; line-height: 1.8; font-size: 16px; }\n' +
-    '#write pre { background: var(--code-bg, #f5f2f1); color: var(--code-text, #7b6c71); border: 1px solid rgba(var(--accent-rgb, 232,133,155), 0.18); border-radius: 16px; padding: 3.2em 1.4em 1.4em; margin: 2em 0; overflow: auto; font-family: var(--font-mono, monospace); font-size: 14.5px; line-height: 1.6; position: relative; }\n' +
-    '#write pre::before { content: ""; position: absolute; top: 14px; left: 14px; width: 10px; height: 10px; border-radius: 50%; background: var(--code-dot-red, #d87070); box-shadow: 18px 0 0 var(--code-dot-yellow, #d8c870), 36px 0 0 var(--code-dot-green, #70c888); z-index: 2; }\n' +
-    '#write pre code { background: transparent; padding: 0; color: var(--code-ink, #443a3e); font-weight: normal; border: none; }';
+    '#write pre { background: var(--code-bg, #f5f2f1); color: var(--code-text, #7b6c71); border: 1px solid rgba(var(--accent-rgb, 232,133,155), 0.18); border-radius: 16px; padding: 1.4em; margin: 2em 0; overflow: auto; font-family: var(--font-mono, monospace); font-size: 14.5px; line-height: 1.6; position: relative; }\n' +
+    '#write pre::before { content: ""; display: block; width: 64px; height: 10px; margin-bottom: 12px; border-radius: 0; background: radial-gradient(circle at 5px 5px, var(--code-dot-red, #d87070) 5px, transparent 5.5px), radial-gradient(circle at 23px 5px, var(--code-dot-yellow, #d8c870) 5px, transparent 5.5px), radial-gradient(circle at 41px 5px, var(--code-dot-green, #70c888) 5px, transparent 5.5px); background-size: 64px 10px; background-repeat: no-repeat; }\n' +
+    '#write pre code { background: transparent; padding: 0; color: var(--code-ink, #443a3e); font-weight: normal; border: none; }\n' +
+    // blockquote 修复：主题CSS可能设为 display:flex 导致子元素水平排列，恢复为 block
+    '#write blockquote { display: block; }\n' +
+    '#write blockquote p { margin: 0.5em 0; }\n' +
+    '#write blockquote p:first-child { margin-top: 0; }\n' +
+    '#write blockquote p:last-child { margin-bottom: 0; }\n' +
+    // 代码块圆点修复：确保 padding-top 足够容纳三色圆点（top:14px + height:10px + 间距 = 至少36px）
+    '#write pre { padding-top: 40px; }\n';
 
   return allCSS;
 }
@@ -1777,8 +1864,8 @@ async function fetchThemeCSS() {
 
   // 导出兼容：添加通用代码块样式兜底（确保无 md-fences 类时也正常显示）
   css += '\n\n/* export compat: generic code block styles */\n' +
-    '#write pre { background: var(--code-bg, #f5f2f1); color: var(--code-text, #7b6c71); border: 1px solid rgba(var(--accent-rgb, 232,133,155), 0.18); border-radius: 16px; padding: 3.2em 1.4em 1.4em; margin: 2em 0; overflow: auto; font-family: var(--font-mono, monospace); font-size: 14.5px; line-height: 1.6; position: relative; }\n' +
-    '#write pre::before { content: ""; position: absolute; top: 14px; left: 14px; width: 10px; height: 10px; border-radius: 50%; background: var(--code-dot-red, #d87070); box-shadow: 18px 0 0 var(--code-dot-yellow, #d8c870), 36px 0 0 var(--code-dot-green, #70c888); z-index: 2; }\n' +
+    '#write pre { background: var(--code-bg, #f5f2f1); color: var(--code-text, #7b6c71); border: 1px solid rgba(var(--accent-rgb, 232,133,155), 0.18); border-radius: 16px; padding: 1.4em; margin: 2em 0; overflow: auto; font-family: var(--font-mono, monospace); font-size: 14.5px; line-height: 1.6; position: relative; }\n' +
+    '#write pre::before { content: ""; display: block; width: 64px; height: 10px; margin-bottom: 12px; border-radius: 0; background: radial-gradient(circle at 5px 5px, var(--code-dot-red, #d87070) 5px, transparent 5.5px), radial-gradient(circle at 23px 5px, var(--code-dot-yellow, #d8c870) 5px, transparent 5.5px), radial-gradient(circle at 41px 5px, var(--code-dot-green, #70c888) 5px, transparent 5.5px); background-size: 64px 10px; background-repeat: no-repeat; }\n' +
     '#write pre code { background: transparent; padding: 0; color: var(--code-ink, #443a3e); font-weight: normal; border: none; }';
 
   // 附加兼容层
@@ -1968,8 +2055,8 @@ function getSafeCSS() {
     '#write tr:last-child td { border-bottom: 0; }',
     '#write tr:nth-child(even) td { background: rgba(232, 133, 155, 0.02); }',
     '#write code { font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace; font-size: 0.88em; padding: 0.2em 0.45em; border-radius: 7px; background: rgba(232, 133, 155, 0.14); color: #e8859b; font-weight: 600; border: 1px solid rgba(232, 133, 155, 0.32); }',
-    '#write pre { background: #f5f2f1; color: #7b6c71; border: 1px solid rgba(232, 133, 155, 0.18); border-radius: 16px; padding: 3.2em 1.4em 1.4em; margin: 2em 0; overflow: auto; box-shadow: 0 18px 50px rgba(68, 58, 62, 0.12); font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace; font-size: 14.5px; line-height: 1.6; position: relative; }',
-    '#write pre::before { content: ""; position: absolute; top: 14px; left: 14px; width: 10px; height: 10px; border-radius: 50%; background: #d87070; box-shadow: 18px 0 0 #d8c870, 36px 0 0 #70c888; z-index: 2; }',
+    '#write pre { background: #f5f2f1; color: #7b6c71; border: 1px solid rgba(232, 133, 155, 0.18); border-radius: 16px; padding: 1.4em; margin: 2em 0; overflow: auto; box-shadow: 0 18px 50px rgba(68, 58, 62, 0.12); font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace; font-size: 14.5px; line-height: 1.6; position: relative; }',
+    '#write pre::before { content: ""; display: block; width: 64px; height: 10px; margin-bottom: 12px; border-radius: 0; background: radial-gradient(circle at 5px 5px, #d87070 5px, transparent 5.5px), radial-gradient(circle at 23px 5px, #d8c870 5px, transparent 5.5px), radial-gradient(circle at 41px 5px, #70c888 5px, transparent 5.5px); background-size: 64px 10px; background-repeat: no-repeat; }',
     '#write pre code { background: transparent; padding: 0; color: #443a3e; font-weight: normal; border: none; }',
     '#write img { max-width: 100%; height: auto; border-radius: 14px; box-shadow: 0 10px 30px rgba(68, 58, 62, 0.06); display: block; margin: 1.5em auto; }',
     '#write mark { background: linear-gradient(120deg, rgba(232, 133, 155, 0.25), rgba(232, 133, 155, 0.12)); color: inherit; padding: 0.12em 0.26em; border-radius: 9px; border: 1px solid rgba(232, 133, 155, 0.32); box-shadow: 0 10px 26px rgba(232, 133, 155, 0.18); }',
@@ -2091,8 +2178,8 @@ function getDarkSafeCSS() {
     '#write tr:last-child td { border-bottom: 0; }',
     '#write tr:nth-child(even) td { background: rgba(255, 170, 200, 0.03); }',
     '#write code { font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace; font-size: 0.88em; padding: 0.2em 0.45em; border-radius: 7px; background: rgba(255, 170, 200, 0.18); color: #f0adc8; font-weight: 600; border: 1px solid rgba(255, 170, 200, 0.30); }',
-    '#write pre { background: #3c383a; color: #e4dce0; border: 1px solid rgba(255, 170, 200, 0.15); border-radius: 16px; padding: 3.2em 1.4em 1.4em; margin: 2em 0; overflow: auto; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25); font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace; font-size: 14.5px; line-height: 1.6; position: relative; }',
-    '#write pre::before { content: ""; position: absolute; top: 14px; left: 14px; width: 10px; height: 10px; border-radius: 50%; background: #d87070; box-shadow: 18px 0 0 #d8c870, 36px 0 0 #70c888; z-index: 2; }',
+    '#write pre { background: #3c383a; color: #e4dce0; border: 1px solid rgba(255, 170, 200, 0.15); border-radius: 16px; padding: 1.4em; margin: 2em 0; overflow: auto; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25); font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace; font-size: 14.5px; line-height: 1.6; position: relative; }',
+    '#write pre::before { content: ""; display: block; width: 64px; height: 10px; margin-bottom: 12px; border-radius: 0; background: radial-gradient(circle at 5px 5px, #d87070 5px, transparent 5.5px), radial-gradient(circle at 23px 5px, #d8c870 5px, transparent 5.5px), radial-gradient(circle at 41px 5px, #70c888 5px, transparent 5.5px); background-size: 64px 10px; background-repeat: no-repeat; }',
     '#write pre code { background: transparent; padding: 0; color: #fff5f8; font-weight: normal; border: none; }',
     '#write img { max-width: 100%; height: auto; border-radius: 14px; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25); display: block; margin: 1.5em auto; }',
     '#write mark { background: linear-gradient(120deg, rgba(255, 170, 200, 0.30), rgba(255, 170, 200, 0.15)); color: inherit; padding: 0.12em 0.26em; border-radius: 9px; border: 1px solid rgba(255, 170, 200, 0.30); }',
