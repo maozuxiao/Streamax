@@ -234,11 +234,10 @@ a {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-a:hover {
-    color: #0d1413;
-    background: var(--ai-primary);
-    border-bottom-color: transparent;
-    border-radius: 5px;
+#write a:hover {
+    color: var(--ai-primary-hover);
+    background: transparent;
+    border-bottom-style: solid;
 }
 
 /* =========================================================

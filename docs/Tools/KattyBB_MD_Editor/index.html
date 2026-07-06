@@ -307,7 +307,7 @@ body {
 /* 为预览区适配 bloom-petal.css 的各元素样式 */
 .markdown-body p { margin: 1.1em 0; }
 .markdown-body a { color: var(--accent); text-decoration: none; transition: color 0.2s ease; border-bottom: 1px solid transparent; }
-.markdown-body a:hover { border-bottom-color: var(--accent); }
+.markdown-body a:hover { border-bottom-color: var(--accent); background: transparent; }
 .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
   color: var(--text); font-weight: 800; line-height: 1.25; margin: var(--space-2xl) 0 var(--space-md); letter-spacing: -0.015em; position: relative;
 }
@@ -1588,6 +1588,7 @@ function getThemeWordCSS() {
     '#write { max-width: 100%; padding: 20px; }',
     '#write p { margin: 1.1em 0; }',
     '#write a { color: ' + accent + '; text-decoration: underline; }',
+    '#write a:hover { background: transparent; }',
     '#write h1, #write h2, #write h3, #write h4, #write h5, #write h6 { color: ' + text + '; font-weight: bold; margin: 1.5em 0 0.5em; }',
     '#write h1 { font-size: 2em; border-bottom: 2px solid ' + semiBorder + '; padding-bottom: 0.3em; }',
     '#write h2 { font-size: 1.5em; border-bottom: 2px solid ' + semiBorder + '; padding-bottom: 0.2em; }',
@@ -2031,7 +2032,7 @@ function getSafeCSS() {
     '}',
     '#write p { margin: 1.1em 0; }',
     '#write a { color: #e8859b; text-decoration: none; border-bottom: 1px solid transparent; }',
-    '#write a:hover { border-bottom-color: #e8859b; }',
+    '#write a:hover { border-bottom-color: #e8859b; background: transparent; }',
     '#write h1, #write h2, #write h3, #write h4, #write h5, #write h6 { color: #443a3e; font-weight: 800; line-height: 1.25; margin: 48px 0 16px; letter-spacing: -0.015em; position: relative; }',
     '#write h1 { font-size: 2.25em; letter-spacing: -0.02em; border-bottom: 1px solid rgba(232, 133, 155, 0.3); padding-bottom: 0.3em; }',
     '#write h2 { font-size: 1.68em; border-bottom: 1px solid rgba(232, 133, 155, 0.22); padding-bottom: 0.24em; color: rgba(68, 58, 62, 0.9); }',
@@ -2154,7 +2155,7 @@ function getDarkSafeCSS() {
     '}',
     '#write p { margin: 1.1em 0; color: #fff5f8; }',
     '#write a { color: #f0adc8; text-decoration: none; border-bottom: 1px solid transparent; }',
-    '#write a:hover { color: #f5bcd2; border-bottom-color: rgba(255, 170, 200, 0.55); }',
+    '#write a:hover { color: #f5bcd2; border-bottom-color: rgba(255, 170, 200, 0.55); background: transparent; }',
     '#write h1, #write h2, #write h3, #write h4, #write h5, #write h6 { color: #fff5f8; font-weight: 800; line-height: 1.35; margin: 24px 0 16px; letter-spacing: -0.02em; position: relative; }',
     '#write h1 { font-size: 2.35em; border-bottom: 1px solid rgba(255, 170, 200, 0.32); padding-bottom: 0.35em; text-shadow: 0 10px 36px rgba(0, 0, 0, 0.35); }',
     '#write h2 { font-size: 1.82em; border-bottom: 1px solid rgba(255, 170, 200, 0.24); padding-bottom: 0.3em; color: rgba(228, 220, 224, 0.92); }',
