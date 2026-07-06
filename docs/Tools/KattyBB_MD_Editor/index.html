@@ -612,7 +612,7 @@ body {
       </svg>
     </button>
     <div class="theme-dropdown" id="themeDropdown">
-      <div class="theme-group-label">Bloom 系列</div>
+      <div class="theme-group-label" id="themeGroupBloom">Bloom 系列</div>
       <div class="theme-option" data-theme="bloom-petal" onclick="selectTheme('bloom-petal')">
         <span class="theme-dot" style="background: #e8859b;"></span>
         Bloom Petal
@@ -645,7 +645,7 @@ body {
         <span class="theme-dot" style="background: #7cb87c;"></span>
         Bloom Verdant
       </div>
-      <div class="theme-group-label">其他主题</div>
+      <div class="theme-group-label" id="themeGroupOther">其他主题</div>
       <div class="theme-option" data-theme="animal-island" onclick="selectTheme('animal-island')">
         <span class="theme-dot" style="background: #e6a23c;"></span>
         Animal Island
@@ -655,15 +655,15 @@ body {
         Everforest
       </div>
       <div class="theme-mode-toggle">
-        <span class="mode-label">显示模式</span>
+        <span class="mode-label" id="themeModeLabel">显示模式</span>
         <div style="display: flex; gap: 4px;">
           <button class="theme-mode-btn" id="lightModeBtn" onclick="setThemeMode('light')">
             <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M10 3v1m0 12v1m9-7h-1M2 10H1m15.07-6.07-.71.71M4.64 15.36l-.71.71m12.14 0-.71-.71M4.64 4.64l-.71-.71" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="10" r="4" stroke="currentColor" stroke-width="1.5"/></svg>
-            日间
+            <span id="lightModeLabel">日间</span>
           </button>
           <button class="theme-mode-btn" id="darkModeBtn" onclick="setThemeMode('dark')">
             <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M17.3 11.05A7.5 7.5 0 0 1 8.95 2.7a7.5 7.5 0 1 0 8.35 8.35z" fill="currentColor"/></svg>
-            夜间
+            <span id="darkModeLabel">夜间</span>
           </button>
         </div>
       </div>
@@ -671,7 +671,7 @@ body {
   </div>
   <button class="btn primary" onclick="document.getElementById('fileInput').click()" title="打开本地 .md 文件">
     <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M3 4.5C3 3.67 3.67 3 4.5 3h5.79a2 2 0 0 1 1.42.59l4.71 4.7A2 2 0 0 1 17 9.71V15.5c0 .83-.67 1.5-1.5 1.5h-11C3.67 17 3 16.33 3 15.5v-11Z" fill="currentColor" opacity="0.3"/><path d="M8 3v3.5C8 7.33 8.67 8 9.5 8H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    打开文件
+    <span id="openFileLabel">打开文件</span>
   </button>
   <input type="file" id="fileInput" accept=".md,.markdown,.txt,.text">
   <span class="filename" id="fileName">未打开文件</span>
@@ -680,19 +680,19 @@ body {
 
   <button class="btn" onclick="exportHTML()" title="导出为 HTML 文件">
     <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M10 2v10m0 0 3.5-3.5M10 12 6.5 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 14v2.5C3 17.33 3.67 18 4.5 18h11c.83 0 1.5-.67 1.5-1.5V14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    导出 HTML
+    <span id="exportHTMLLabel">导出 HTML</span>
   </button>
   <button class="btn" onclick="printPreview()" title="打印 / 导出 PDF">
     <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M6 2h8a1 1 0 0 1 1 1v3H5V3a1 1 0 0 1 1-1ZM4 9h12a1 1 0 0 1 1 1v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="13" r="1" fill="currentColor"/><path d="M5 16v1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-    打印 / PDF
+    <span id="printPDFLabel">打印 / PDF</span>
   </button>
   <button class="btn" onclick="exportWord()" title="导出为 Word 文件">
     <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><text x="3" y="15" font-size="14" font-weight="bold" fill="currentColor" font-family="sans-serif">W</text></svg>
-    导出 Word
+    <span id="exportWordLabel">导出 Word</span>
   </button>
   <button class="btn" onclick="saveMarkdown()" title="保存为 .md 文件">
     <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M4 2h8.5L16 5.5V17a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 2v4h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    保存 .md
+    <span id="saveMDLabel">保存 .md</span>
   </button>
 
   <div class="separator"></div>
@@ -711,15 +711,17 @@ body {
 
   <button class="btn toggle active" id="syncScrollBtn" onclick="toggleSyncScroll()" title="同步滚动">
     <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M10 3v14M3 10h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M6 7l-3 3 3 3M14 7l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    同步滚动
+    <span id="syncScrollLabel">同步滚动</span>
   </button>
 
   <div class="separator"></div>
 
   <button class="btn" onclick="clearEditor()" title="清空编辑器内容">
     <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5 5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-    清空
+    <span id="clearBtnText">清空</span>
   </button>
+
+  <button class="btn" id="langSwitchBtn" onclick="setLang(_currentLang === 'zh' ? 'en' : 'zh')" title="切换语言">中</button>
 
   <div class="toolbar-logo" title="KattyBB Markdown Editor">
     <svg width="24" height="24" viewBox="0 0 1024 1024" fill="currentColor"><path d="M20.48 327.76192a163.84 163.84 0 0 1 163.84-163.84h655.36a163.84 163.84 0 0 1 163.84 163.84v327.68a163.84 163.84 0 0 1-163.84 163.84H184.32a163.84 163.84 0 0 1-163.84-163.84v-327.68z m163.84-81.92a81.92 81.92 0 0 0-81.92 81.92v327.68a81.92 81.92 0 0 0 81.92 81.92h655.36a81.92 81.92 0 0 0 81.92-81.92v-327.68a81.92 81.92 0 0 0-81.92-81.92H184.32z m68.97664 84.00896a40.96 40.96 0 0 1 45.71136 14.336L389.12 464.24064l90.112-120.13568a40.96 40.96 0 0 1 73.728 24.576v245.76a40.96 40.96 0 0 1-81.92 0v-122.88l-49.152 65.536a41.04192 41.04192 0 0 1-65.536 0l-49.152-65.536v122.88a40.96 40.96 0 1 1-81.92 0v-245.76a40.96 40.96 0 0 1 28.01664-38.87104zM757.76 368.76288a40.96 40.96 0 0 0-81.92 0v146.8416l-12.00128-12.00128a40.96 40.96 0 0 0-57.91744 57.91744l81.92 81.92a40.96 40.96 0 0 0 57.91744 0l81.92-81.92a40.96 40.96 0 0 0-57.91744-57.91744l-12.00128 12.00128V368.72192z"/></svg>
@@ -745,7 +747,7 @@ body {
         <path d="M6 15a9 9 0 0 0 9-9"></path>
       </svg>
       <div class="toc-float-panel" id="tocFloatPanel">
-        <div class="toc-float-header">目录</div>
+        <div class="toc-float-header" id="tocFloatHeader">目录</div>
         <div class="toc-float-content" id="tocFloatContent"></div>
       </div>
     </div>
@@ -771,6 +773,207 @@ var statusLeft = document.getElementById('statusLeft');
 var statusRight = document.getElementById('statusRight');
 var toastEl = document.getElementById('toast');
 var themeLink = document.getElementById('theme-link');
+
+// ===== 国际化 (i18n) =====
+var i18n = {
+  zh: {
+    // 按钮标题 / tooltip
+    openFile: '打开本地 .md 文件',
+    exportHTML: '导出为 HTML 文件',
+    printPDF: '打印 / 导出 PDF',
+    exportWord: '导出为 Word 文件',
+    saveMD: '保存为 .md 文件',
+    // 按钮文本
+    openFileBtn: '打开文件',
+    exportHTMLBtn: '导出 HTML',
+    printPDFBtn: '打印 / PDF',
+    exportWordBtn: '导出 Word',
+    saveMDBtn: '保存 .md',
+    syncScrollBtn: '同步滚动',
+    viewEditorOnly: '仅编辑',
+    viewSplit: '编辑+预览',
+    viewPreviewOnly: '仅预览',
+    syncScroll: '同步滚动',
+    syncScrollOn: '同步滚动已开启',
+    syncScrollOff: '同步滚动已关闭',
+    clearEditor: '清空编辑器内容',
+    clearBtn: '清空',
+    logoTitle: 'KattyBB Markdown Editor',
+    tocTitle: '目录',
+    // 编辑器
+    editorPlaceholder: '在此输入 Markdown 内容，或点击「打开文件」加载本地 .md 文件...',
+    // 状态 / 文件名
+    noFileOpen: '未打开文件',
+    unnamed: '未命名',
+    statusWords: '字数',
+    statusLines: '行数',
+    // Toast 消息
+    fileOpened: '文件已打开',
+    fileReadError: '读取文件失败',
+    themeSwitched: '已切换主题',
+    darkMode: '已切换到夜间模式',
+    lightMode: '已切换到日间模式',
+    contentCleared: '内容已清空',
+    noContent: '编辑器中没有内容',
+    htmlExported: 'HTML 文件已导出',
+    wordExported: 'Word 文件已导出',
+    mdSaved: '.md 文件已保存',
+    dropFileHint: '请拖入 .md 或 .txt 文件',
+    autoSaved: '内容已自动保存到本地',
+    // 语言切换
+    langSwitch: '切换语言',
+    langZh: '中文',
+    langEn: 'English',
+    langSwitched: '已切换为中文',
+    // 状态栏 / 主题菜单
+    statusReady: '就绪',
+    statusAutoSave: '内容自动保存中',
+    themeGroupBloom: 'Bloom 系列',
+    themeGroupOther: '其他主题',
+    themeModeLabel: '显示模式',
+    lightModeLabel: '日间',
+    darkModeLabel: '夜间'
+  },
+  en: {
+    openFile: 'Open local .md file',
+    exportHTML: 'Export as HTML',
+    printPDF: 'Print / Export PDF',
+    exportWord: 'Export as Word',
+    saveMD: 'Save as .md file',
+    openFileBtn: 'Open File',
+    exportHTMLBtn: 'Export HTML',
+    printPDFBtn: 'Print / PDF',
+    exportWordBtn: 'Export Word',
+    saveMDBtn: 'Save .md',
+    syncScrollBtn: 'Sync Scroll',
+    viewEditorOnly: 'Editor Only',
+    viewSplit: 'Editor + Preview',
+    viewPreviewOnly: 'Preview Only',
+    syncScroll: 'Sync Scroll',
+    syncScrollOn: 'Sync scroll enabled',
+    syncScrollOff: 'Sync scroll disabled',
+    clearEditor: 'Clear editor',
+    clearBtn: 'Clear',
+    logoTitle: 'KattyBB Markdown Editor',
+    tocTitle: 'Table of Contents',
+    editorPlaceholder: 'Enter Markdown here, or click "Open File" to load a local .md file...',
+    noFileOpen: 'No file open',
+    unnamed: 'Untitled',
+    statusWords: 'Words',
+    statusLines: 'Lines',
+    fileOpened: 'File opened',
+    fileReadError: 'Failed to read file',
+    themeSwitched: 'Theme switched',
+    darkMode: 'Switched to dark mode',
+    lightMode: 'Switched to light mode',
+    contentCleared: 'Content cleared',
+    noContent: 'Editor is empty',
+    htmlExported: 'HTML file exported',
+    wordExported: 'Word file exported',
+    mdSaved: '.md file saved',
+    dropFileHint: 'Please drop a .md or .txt file',
+    autoSaved: 'Content auto-saved locally',
+    // 语言切换
+    langSwitch: 'Switch Language',
+    langZh: '中文',
+    langEn: 'English',
+    langSwitched: 'Switched to English',
+    // 状态栏 / 主题菜单
+    statusReady: 'Ready',
+    statusAutoSave: 'Auto-saving',
+    themeGroupBloom: 'Bloom Series',
+    themeGroupOther: 'Other Themes',
+    themeModeLabel: 'Display Mode',
+    lightModeLabel: 'Light',
+    darkModeLabel: 'Dark'
+  }
+};
+
+var _currentLang = localStorage.getItem('kattybb-lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en');
+
+function t(key) {
+  return (i18n[_currentLang] && i18n[_currentLang][key]) || i18n.zh[key] || key;
+}
+
+function setLang(lang) {
+  if (lang !== 'zh' && lang !== 'en') return;
+  _currentLang = lang;
+  localStorage.setItem('kattybb-lang', lang);
+  applyLang();
+  showToast(t('langSwitched'));
+}
+
+function applyLang() {
+  // 更新按钮 title
+  document.querySelector('button[onclick*="fileInput"]').title = t('openFile');
+  document.querySelector('button[onclick="exportHTML()"]').title = t('exportHTML');
+  document.querySelector('button[onclick="printPreview()"]').title = t('printPDF');
+  document.querySelector('button[onclick="exportWord()"]').title = t('exportWord');
+  document.querySelector('button[onclick="saveMarkdown()"]').title = t('saveMD');
+  document.getElementById('viewModeEditor').title = t('viewEditorOnly');
+  document.getElementById('viewModeSplit').title = t('viewSplit');
+  document.getElementById('viewModePreview').title = t('viewPreviewOnly');
+  document.getElementById('syncScrollBtn').title = t('syncScroll');
+  document.querySelector('button[onclick="clearEditor()"]').title = t('clearEditor');
+  document.querySelector('.toolbar-logo').title = t('logoTitle');
+  document.getElementById('tocFloatBtn').title = t('tocTitle');
+  var tocFloatHeader = document.getElementById('tocFloatHeader');
+  if (tocFloatHeader) tocFloatHeader.textContent = t('tocTitle');
+  // 更新编辑器 placeholder
+  editor.placeholder = t('editorPlaceholder');
+  // 更新文件名（如果是默认值）
+  if (fileNameEl.textContent === '未打开文件' || fileNameEl.textContent === 'No file open') {
+    fileNameEl.textContent = t('noFileOpen');
+  }
+  if (fileNameEl.textContent === '未命名' || fileNameEl.textContent === 'Untitled') {
+    fileNameEl.textContent = t('unnamed');
+  }
+  // 更新状态栏
+  updateStatus();
+  // 更新清空按钮文字
+  var clearBtnText = document.getElementById('clearBtnText');
+  if (clearBtnText) clearBtnText.textContent = t('clearBtn');
+  // 更新主题下拉菜单中的静态文本
+  var themeGroupBloom = document.getElementById('themeGroupBloom');
+  if (themeGroupBloom) themeGroupBloom.textContent = t('themeGroupBloom');
+  var themeGroupOther = document.getElementById('themeGroupOther');
+  if (themeGroupOther) themeGroupOther.textContent = t('themeGroupOther');
+  var themeModeLabel = document.getElementById('themeModeLabel');
+  if (themeModeLabel) themeModeLabel.textContent = t('themeModeLabel');
+  var lightModeLabel = document.getElementById('lightModeLabel');
+  if (lightModeLabel) lightModeLabel.textContent = t('lightModeLabel');
+  var darkModeLabel = document.getElementById('darkModeLabel');
+  if (darkModeLabel) darkModeLabel.textContent = t('darkModeLabel');
+  // 更新主要按钮文本
+  var openFileLabel = document.getElementById('openFileLabel');
+  if (openFileLabel) openFileLabel.textContent = t('openFileBtn');
+  var exportHTMLLabel = document.getElementById('exportHTMLLabel');
+  if (exportHTMLLabel) exportHTMLLabel.textContent = t('exportHTMLBtn');
+  var printPDFLabel = document.getElementById('printPDFLabel');
+  if (printPDFLabel) printPDFLabel.textContent = t('printPDFBtn');
+  var exportWordLabel = document.getElementById('exportWordLabel');
+  if (exportWordLabel) exportWordLabel.textContent = t('exportWordBtn');
+  var saveMDLabel = document.getElementById('saveMDLabel');
+  if (saveMDLabel) saveMDLabel.textContent = t('saveMDBtn');
+  var syncScrollLabel = document.getElementById('syncScrollLabel');
+  if (syncScrollLabel) syncScrollLabel.textContent = t('syncScrollBtn');
+  // 更新状态栏左侧
+  if (statusLeft) {
+    if (['就绪','Ready'].indexOf(statusLeft.textContent) !== -1) {
+      statusLeft.textContent = t('statusReady');
+    } else if (['内容自动保存中','Auto-saving'].indexOf(statusLeft.textContent) !== -1) {
+      statusLeft.textContent = t('statusAutoSave');
+    }
+  }
+  // 更新语言切换按钮
+  var langBtn = document.getElementById('langSwitchBtn');
+  if (langBtn) {
+    langBtn.title = t('langSwitch');
+    langBtn.textContent = _currentLang === 'zh' ? '中' : 'En';
+  }
+  // 更新 html lang 属性
+  document.documentElement.lang = _currentLang === 'zh' ? 'zh-CN' : 'en';
+}
 
 // 主题配置
 var themeList = {
@@ -879,9 +1082,9 @@ const savedContent = localStorage.getItem('bloom-editor-content');
 const savedFileName = localStorage.getItem('bloom-editor-filename');
 if (savedContent) {
   editor.value = savedContent;
-  fileNameEl.textContent = savedFileName || '未命名';
-  // 如果恢复的文件名不是未命名/未打开，说明之前打开过本地文件
-  if (savedFileName && savedFileName !== '未命名' && savedFileName !== '未打开文件') {
+  fileNameEl.textContent = savedFileName || t('unnamed');
+  // 如果恢复的文件名不是未命名/未打开，说明之前打开过本地文件（兼容中英文历史数据）
+  if (savedFileName && ['未命名','未打开文件','Untitled','No file open'].indexOf(savedFileName) === -1) {
     window._openedFileName = savedFileName.replace(/\.(md|markdown|txt|text)$/i, '');
   }
 }
@@ -907,9 +1110,9 @@ fileInput.addEventListener('change', (e) => {
     saveToStorage();
     updatePreview();
     updateStatus();
-    showToast('文件已打开: ' + file.name);
+    showToast(t('fileOpened') + ': ' + file.name);
   };
-  reader.onerror = () => showToast('读取文件失败');
+  reader.onerror = () => showToast(t('fileReadError'));
   reader.readAsText(file);
   fileInput.value = '';
 });
@@ -940,7 +1143,7 @@ function selectTheme(themeName) {
   localStorage.setItem('kattybb-theme-name', themeName);
   applyTheme();
   updateThemeUI();
-  showToast('已切换主题: ' + themeList[themeName].name);
+  showToast(t('themeSwitched') + ': ' + themeList[themeName].name);
   document.getElementById('themeSelector').classList.remove('open');
 }
 
@@ -950,7 +1153,7 @@ function setThemeMode(mode) {
   localStorage.setItem('kattybb-theme-mode', mode);
   applyTheme();
   updateThemeUI();
-  showToast(mode === 'dark' ? '已切换到夜间模式' : '已切换到日间模式');
+  showToast(mode === 'dark' ? t('darkMode') : t('lightMode'));
 }
 
 // ===== 应用主题 =====
@@ -1181,7 +1384,7 @@ function updateStatus() {
   const text = editor.value;
   const chars = text.length;
   const lines = text.split('\n').length;
-  statusRight.textContent = '字数: ' + chars + ' | 行数: ' + lines;
+  statusRight.textContent = t('statusWords') + ': ' + chars + ' | ' + t('statusLines') + ': ' + lines;
 }
 
 // ===== Toast 通知 =====
@@ -1195,12 +1398,12 @@ function showToast(msg) {
 function clearEditor() {
   if (editor.value.trim() === '') return;
   editor.value = '';
-  fileNameEl.textContent = '未打开文件';
+  fileNameEl.textContent = t('noFileOpen');
   window._openedFileName = '';
   saveToStorage();
   updatePreview();
   updateStatus();
-  showToast('内容已清空');
+  showToast(t('contentCleared'));
 }
 
 /**
@@ -1254,7 +1457,7 @@ function getExportExtraCSS() {
 // ===== 导出 HTML =====
 async function exportHTML() {
   var content = editor.value.trim();
-  if (!content) { showToast('编辑器中没有内容'); return; }
+  if (!content) { showToast(t('noContent')); return; }
 
   var cssContent = await collectAllStyles();
   // 直接使用预览区已渲染的 HTML（包含 mermaid SVG、代码高亮等）
@@ -1262,13 +1465,13 @@ async function exportHTML() {
   var htmlDoc = '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>' + fileNameEl.textContent + '<\/title>\n<style>\n' + cssContent + '\n<\/style>\n<\/head>\n<body>\n<div id="write" class="markdown-body">\n' + htmlContent + '\n<\/div>\n<\/body>\n<\/html>';
 
   downloadBlob(htmlDoc, getExportName('.html'), 'text/html;charset=utf-8');
-  showToast('HTML 文件已导出');
+  showToast(t('htmlExported'));
 }
 
 // ===== 打印 / 导出 PDF =====
 async function printPreview() {
   var content = editor.value.trim();
-  if (!content) { showToast('编辑器中没有内容'); return; }
+  if (!content) { showToast(t('noContent')); return; }
 
   var cssContent = await collectAllStyles();
   // 直接使用预览区已渲染的 HTML
@@ -1284,7 +1487,7 @@ async function printPreview() {
 // ===== 导出 Word =====
 async function exportWord() {
   var content = editor.value.trim();
-  if (!content) { showToast('编辑器中没有内容'); return; }
+  if (!content) { showToast(t('noContent')); return; }
 
   // 使用预览区已渲染的 HTML，并将 mermaid SVG 转为 PNG 图片（Word 不支持 SVG）
   var htmlContent = await convertMermaidToPng(preview);
@@ -1296,7 +1499,7 @@ async function exportWord() {
 
   var blob = new Blob(['\ufeff', wordDoc], { type: 'application/msword' });
   downloadBlob(blob, getExportName('.doc'), 'application/msword');
-  showToast('Word 文件已导出');
+  showToast(t('wordExported'));
 }
 
 /**
@@ -1615,9 +1818,9 @@ function getThemeWordCSS() {
 // ===== 保存为 .md 文件 =====
 function saveMarkdown() {
   var content = editor.value;
-  if (!content.trim()) { showToast('编辑器中没有内容'); return; }
+  if (!content.trim()) { showToast(t('noContent')); return; }
   downloadBlob(content, getExportName('.md'), 'text/markdown;charset=utf-8');
-  showToast('.md 文件已保存');
+  showToast(t('mdSaved'));
 }
 
 // ===== 辅助函数 =====
@@ -1751,9 +1954,9 @@ function getExportName(ext) {
     name = window._openedFileName;
   }
   // 规则2：未命名/未打开文件，从 Markdown 内容提取标题
-  else if (fileNameEl.textContent === '未命名' || fileNameEl.textContent === '未打开文件') {
+  else if (fileNameEl.textContent === t('unnamed') || fileNameEl.textContent === t('noFileOpen')) {
     name = extractTitleFromMarkdown(editor.value);
-    if (!name) name = '未命名';
+    if (!name) name = t('unnamed');
   }
   // 兜底：使用当前显示的文件名（去掉扩展名）
   else {
@@ -2236,10 +2439,10 @@ function toggleSyncScroll() {
   var btn = document.getElementById('syncScrollBtn');
   if (_syncScroll) {
     btn.classList.add('active');
-    showToast('同步滚动已开启');
+    showToast(t('syncScrollOn'));
   } else {
     btn.classList.remove('active');
-    showToast('同步滚动已关闭');
+    showToast(t('syncScrollOff'));
   }
 }
 
@@ -2487,11 +2690,11 @@ editor.addEventListener('drop', function(e) {
       saveToStorage();
       updatePreview();
       updateStatus();
-      showToast('文件已打开: ' + file.name);
+      showToast(t('fileOpened') + ': ' + file.name);
     };
     reader.readAsText(file);
   } else {
-    showToast('请拖入 .md 或 .txt 文件');
+    showToast(t('dropFileHint'));
   }
 });
 
@@ -2500,7 +2703,7 @@ document.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') {
     e.preventDefault();
     saveToStorage();
-    showToast('内容已自动保存到本地');
+    showToast(t('autoSaved'));
   }
 });
 
@@ -2514,7 +2717,8 @@ if (!_syncScroll) {
 }
 // 应用视图模式（任务8）
 applyViewMode();
-statusLeft.textContent = '内容自动保存中';
+statusLeft.textContent = t('statusAutoSave');
+applyLang();
 </script>
 </body>
 </html>
