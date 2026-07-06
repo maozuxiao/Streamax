@@ -811,12 +811,14 @@ renderer.code = function(code, lang) {
     if (codeLang === 'mermaid') {
       return '<div class="mermaid">' + codeText + '</div>';
     }
-    return originalCodeRenderer.call(this, code);
+    var originalHtml = originalCodeRenderer.call(this, code);
+    return originalHtml.replace('<pre><code', '<pre class="md-fences" mdtype="fences"><code').replace('</code></pre>', '</code></pre>');
   }
   if (lang === 'mermaid') {
     return '<div class="mermaid">' + code + '</div>';
   }
-  return originalCodeRenderer.call(this, code, lang);
+  var originalHtml = originalCodeRenderer.call(this, code, lang);
+  return originalHtml.replace('<pre><code', '<pre class="md-fences" mdtype="fences"><code').replace('</code></pre>', '</code></pre>');
 };
 
 // 给标题添加 id 用于 TOC 跳转（任务6）
@@ -1581,6 +1583,12 @@ async function fetchThemeCSS() {
   if (!css) {
     css = _currentThemeMode === 'dark' ? getDarkSafeCSS() : getSafeCSS();
   }
+
+  // 导出兼容：添加通用代码块样式兜底（确保无 md-fences 类时也正常显示）
+  css += '\n\n/* export compat: generic code block styles */\n' +
+    '#write pre { background: var(--code-bg, #f5f2f1); color: var(--code-text, #7b6c71); border: 1px solid rgba(var(--accent-rgb, 232,133,155), 0.18); border-radius: 16px; padding: 3.2em 1.4em 1.4em; margin: 2em 0; overflow: auto; font-family: var(--font-mono, monospace); font-size: 14.5px; line-height: 1.6; position: relative; }\n' +
+    '#write pre::before { content: ""; position: absolute; top: 14px; left: 14px; width: 10px; height: 10px; border-radius: 50%; background: var(--code-dot-red, #d87070); box-shadow: 18px 0 0 var(--code-dot-yellow, #d8c870), 36px 0 0 var(--code-dot-green, #70c888); z-index: 2; }\n' +
+    '#write pre code { background: transparent; padding: 0; color: var(--code-ink, #443a3e); font-weight: normal; border: none; }';
 
   // 附加兼容层
   var compatStyle = document.getElementById('themeCompat');
