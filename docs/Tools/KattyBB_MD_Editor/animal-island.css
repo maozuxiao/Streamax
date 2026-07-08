@@ -632,6 +632,50 @@ button.primary:hover {
     box-shadow: 0 4px 0 0 var(--ai-primary-active);
 }
 
+/* View mode toggle — 保持与其他主题一致的图标尺寸与样式 */
+.view-mode-group {
+    display: inline-flex;
+    gap: 2px;
+}
+.view-mode-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: var(--ai-bg-soft, #fff8e6);
+    border: 2px solid var(--ai-border-light);
+    border-radius: 0;
+    box-shadow: 0 3px 0 0 var(--ai-shadow-button);
+    color: var(--ai-text-main);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.view-mode-btn:first-child { border-radius: var(--ai-radius-sm) 0 0 var(--ai-radius-sm); }
+.view-mode-btn:last-child { border-radius: 0 var(--ai-radius-sm) var(--ai-radius-sm) 0; }
+.view-mode-btn:not(:first-child):not(:last-child) { border-radius: 0; border-left: none; }
+.view-mode-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+.view-mode-btn.active {
+    background: var(--ai-primary);
+    color: white;
+    border-color: var(--ai-primary-active);
+    box-shadow: 0 3px 0 0 var(--ai-primary-active);
+}
+.view-mode-btn:hover:not(.active) {
+    background: var(--ai-bg-paper, #fff8e6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 0 0 var(--ai-shadow-button);
+}
+.view-mode-btn:active:not(.active) {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 0 var(--ai-shadow-button);
+}
+
 /* =========================================================
    Footer / status bar
    ========================================================= */
