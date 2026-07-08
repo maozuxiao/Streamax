@@ -289,6 +289,12 @@ body {
   min-width: 0;
 }
 
+.preview-panel.drag-over {
+  outline: 2px dashed var(--accent, #e8859b);
+  outline-offset: -4px;
+  background: var(--accent-soft, rgba(232, 133, 155, 0.08));
+}
+
 /* 将 bloom-petal.css 的 #write 样式适配到预览区 */
 .preview-panel .markdown-body {
   max-width: 860px;
@@ -2666,6 +2672,24 @@ editor.addEventListener('keydown', function(e) {
 });
 
 // ===== 拖放文件支持 =====
+function loadDroppedFile(file) {
+  var reader = new FileReader();
+  reader.onload = function(event) {
+    editor.value = event.target.result;
+    fileNameEl.textContent = file.name;
+    window._openedFileName = file.name.replace(/\.(md|markdown|txt|text)$/i, '');
+    saveToStorage();
+    updatePreview();
+    updateStatus();
+    showToast(t('fileOpened') + ': ' + file.name);
+  };
+  reader.onerror = function() {
+    showToast(t('fileReadError'));
+  };
+  reader.readAsText(file);
+}
+
+// 编辑器面板拖放
 editor.addEventListener('dragover', function(e) {
   e.preventDefault();
   e.stopPropagation();
@@ -2682,17 +2706,46 @@ editor.addEventListener('drop', function(e) {
 
   var file = e.dataTransfer.files[0];
   if (file && (file.name.endsWith('.md') || file.name.endsWith('.markdown') || file.name.endsWith('.txt'))) {
-    var reader = new FileReader();
-    reader.onload = function(event) {
-      editor.value = event.target.result;
-      fileNameEl.textContent = file.name;
-      window._openedFileName = file.name.replace(/\.(md|markdown|txt|text)$/i, '');
-      saveToStorage();
-      updatePreview();
-      updateStatus();
-      showToast(t('fileOpened') + ': ' + file.name);
-    };
-    reader.readAsText(file);
+    loadDroppedFile(file);
+  } else {
+    showToast(t('dropFileHint'));
+  }
+});
+
+// 预览面板拖放（支持仅预览模式）
+var _previewDragCounter = 0;
+previewPanel.addEventListener('dragenter', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  _previewDragCounter++;
+  previewPanel.classList.add('drag-over');
+});
+
+previewPanel.addEventListener('dragleave', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  _previewDragCounter--;
+  if (_previewDragCounter <= 0) {
+    _previewDragCounter = 0;
+    previewPanel.classList.remove('drag-over');
+  }
+});
+
+previewPanel.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect = 'copy';
+});
+
+previewPanel.addEventListener('drop', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  _previewDragCounter = 0;
+  previewPanel.classList.remove('drag-over');
+
+  var file = e.dataTransfer.files[0];
+  if (file && (file.name.endsWith('.md') || file.name.endsWith('.markdown') || file.name.endsWith('.txt'))) {
+    loadDroppedFile(file);
   } else {
     showToast(t('dropFileHint'));
   }
