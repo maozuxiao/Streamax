@@ -285,6 +285,7 @@ body {
 .preview-panel {
   flex: 1;
   overflow-y: auto;
+  overflow-x: auto;
   background: var(--bg);
   min-width: 0;
 }
@@ -602,6 +603,25 @@ body {
   .toolbar, .statusbar, .editor-panel, .divider { display: none !important; }
   .preview-panel { overflow: visible !important; }
   .markdown-body { border: none !important; box-shadow: none !important; background: white !important; }
+}
+
+/* 表格溢出修复 */
+#write {
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+.table-scroll-wrapper {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.table-scroll-wrapper table {
+  width: auto;
+  min-width: 100%;
+}
+#write td,
+#write th {
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 </style>
 </head>
@@ -1009,6 +1029,15 @@ if (window.mermaid) {
   mermaid.initialize({ startOnLoad: false, theme: 'default' });
 }
 
+/**
+ * HTML 转义函数
+ */
+function escapeHtml(text) {
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(text));
+  return div.innerHTML;
+}
+
 // ===== 自定义 marked renderer（任务6/9）=====
 var renderer = new marked.Renderer();
 var originalCodeRenderer = renderer.code;
@@ -1020,17 +1049,15 @@ renderer.code = function(code, lang) {
   if (typeof code === 'object' && code !== null) {
     codeText = code.text || '';
     codeLang = code.lang || '';
-    if (codeLang === 'mermaid') {
-      return '<div class="mermaid" data-mermaid-src="' + encodeURIComponent(codeText) + '">' + codeText + '</div>';
-    }
-    var originalHtml = originalCodeRenderer.call(this, code);
-    return originalHtml.replace('<pre><code', '<pre class="md-fences" mdtype="fences"><code').replace('</code></pre>', '</code></pre>');
+  } else {
+    codeText = code || '';
+    codeLang = lang || '';
   }
-  if (lang === 'mermaid') {
-    return '<div class="mermaid" data-mermaid-src="' + encodeURIComponent(code) + '">' + code + '</div>';
+  if (codeLang === 'mermaid') {
+    return '<div class="mermaid" data-mermaid-src="' + encodeURIComponent(codeText) + '">' + codeText + '</div>';
   }
-  var originalHtml = originalCodeRenderer.call(this, code, lang);
-  return originalHtml.replace('<pre><code', '<pre class="md-fences" mdtype="fences"><code').replace('</code></pre>', '</code></pre>');
+  var langClass = codeLang ? ' class="language-' + codeLang + '"' : '';
+  return '<pre class="md-fences" mdtype="fences"><code' + langClass + '>' + escapeHtml(codeText) + '</code></pre>\n';
 };
 
 // 给标题添加 id 用于 TOC 跳转（任务6）
@@ -1087,9 +1114,128 @@ renderer.link = function(token) {
   return out;
 };
 
+renderer.table = function(token) {
+  var header = '', body = '', row = '', cell, i, j;
+  var headerTokens = token.header || [];
+  var rowsTokens = token.rows || [];
+  for (i = 0; i < headerTokens.length; i++) {
+    row += this.tablecell(headerTokens[i]);
+  }
+  header += this.tablerow({text: row});
+  for (i = 0; i < rowsTokens.length; i++) {
+    var rowTokens = rowsTokens[i];
+    row = '';
+    for (j = 0; j < rowTokens.length; j++) {
+      row += this.tablecell(rowTokens[j]);
+    }
+    body += this.tablerow({text: row});
+  }
+  if (body) {
+    body = '<tbody>' + body + '</tbody>';
+  }
+  return '<div class="table-scroll-wrapper"><table>\n<thead>\n' + header + '</thead>\n' + body + '\n</table>\n</div>';
+};
+
+// 从文本中提取标题，排除 fenced/indented 代码块内的内容
+function extractHeadings(text) {
+  var lines = text.split('\n');
+  var result = [];
+  var inFencedBlock = false;
+  var fenceChar = '';
+
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    var fenceMatch = line.match(/^(```+|~~~+)/);
+    if (fenceMatch) {
+      if (!inFencedBlock) {
+        inFencedBlock = true;
+        fenceChar = fenceMatch[1];
+      } else if (line.trim() === fenceChar) {
+        inFencedBlock = false;
+        fenceChar = '';
+      }
+      continue;
+    }
+
+    if (!inFencedBlock && !line.match(/^( {4}|\t)/)) {
+      var headingMatch = line.match(/^#{1,6}\s+.+$/);
+      if (headingMatch) {
+        result.push(line);
+      }
+    }
+  }
+
+  return result.length > 0 ? result : null;
+}
+
+// 处理 ==高亮== —— 跳过代码块（fenced/indented）和行内代码（反引号）内的内容
+function processHighlight(text) {
+  var lines = text.split('\n');
+  var result = [];
+  var inFencedBlock = false;
+  var fenceChar = '';
+  var inInlineCode = false;
+
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+
+    if (inFencedBlock) {
+      var fenceMatch = line.match(/^(```+|~~~+)/);
+      if (fenceMatch && line.trim() === fenceChar) {
+        inFencedBlock = false;
+        fenceChar = '';
+      }
+      result.push(line);
+      continue;
+    }
+
+    var fenceStart = line.match(/^(```+|~~~+)/);
+    if (fenceStart) {
+      inFencedBlock = true;
+      fenceChar = fenceStart[1];
+      result.push(line);
+      continue;
+    }
+
+    if (line.match(/^( {4}|\t)/)) {
+      result.push(line);
+      continue;
+    }
+
+    var processedLine = '';
+    for (var j = 0; j < line.length; j++) {
+      var char = line[j];
+      if (char === '`') {
+        inInlineCode = !inInlineCode;
+        processedLine += char;
+        continue;
+      }
+
+      if (!inInlineCode && char === '=' && j + 1 < line.length && line[j + 1] === '=') {
+        var nextContentStart = j + 2;
+        var contentEnd = line.indexOf('==', nextContentStart);
+        if (contentEnd !== -1) {
+          var content = line.substring(nextContentStart, contentEnd);
+          if (content.length > 0) {
+            processedLine += '<mark>' + content + '</mark>';
+            j = contentEnd + 1;
+            continue;
+          }
+        }
+      }
+
+      processedLine += char;
+    }
+
+    result.push(processedLine);
+  }
+
+  return result.join('\n');
+}
+
 // 生成 TOC HTML（任务6）
 function generateTOC(fullText) {
-  var headings = fullText.match(/^#{1,6}\s+.+$/gm);
+  var headings = extractHeadings(fullText);
   if (!headings) return '<div class="toc"></div>';
 
   var tocHtml = '<div class="toc"><ul>';
@@ -1125,8 +1271,8 @@ function preprocessMarkdown(text) {
     return '](' + '#' + slug + ')';
   });
 
-  // 处理 ==高亮==（任务6）
-  text = text.replace(/==([^=]+)==/g, '<mark>$1</mark>');
+  // 处理 ==高亮==（任务6）—— 跳过代码块内的内容
+  text = processHighlight(text);
 
   return text;
 }
@@ -1333,11 +1479,9 @@ function updateThemeUI() {
 function updatePreview() {
   var processed = preprocessMarkdown(editor.value);
   preview.innerHTML = marked.parse(processed, { renderer: renderer });
-  // 渲染 Mermaid（任务9）
   if (window.mermaid) {
     mermaid.run({ nodes: preview.querySelectorAll('.mermaid') });
   }
-  // 更新悬浮目录
   updateTocFloat();
 }
 
@@ -1350,7 +1494,7 @@ function updatePreview() {
 function updateTocFloat() {
   var btn = document.getElementById('tocFloatBtn');
   var content = document.getElementById('tocFloatContent');
-  var headings = editor.value.match(/^#{1,6}\s+.+$/gm);
+  var headings = extractHeadings(editor.value);
 
   if (!headings || headings.length === 0) {
     btn.classList.add('hidden');
@@ -1550,7 +1694,8 @@ async function printPreview() {
   var htmlContent = preview.innerHTML;
 
   var printWin = window.open('', '_blank');
-  printWin.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + fileNameEl.textContent + '<\/title><style>' + cssContent + 'body{margin:0;padding:0;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><div id="write" class="markdown-body">' + htmlContent + '<\/div><script>window.onafterprint=function(){window.close();};<\/script></body></html>');
+  var printTitle = fileNameEl.textContent.replace(/\.md$/i, '');
+  printWin.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + printTitle + '<\/title><style>' + cssContent + 'body{margin:0;padding:0;}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><div id="write" class="markdown-body">' + htmlContent + '<\/div><script>window.onafterprint=function(){window.close();};<\/script></body></html>');
   printWin.document.close();
   printWin.focus();
   setTimeout(function() { printWin.print(); }, 500);
@@ -1723,15 +1868,6 @@ async function convertMermaidToPng(container) {
  */
 function buildFallbackCodeBlock(code) {
   return '<pre style="background:#f5f2f1;border:1px solid #ddd;border-radius:8px;padding:16px;margin:1.5em 0;overflow:auto;font-family:Consolas,monospace;font-size:14px;line-height:1.6;white-space:pre-wrap;"><code>' + escapeHtml(code) + '</code></pre>';
-}
-
-/**
- * HTML 转义函数
- */
-function escapeHtml(text) {
-  var div = document.createElement('div');
-  div.appendChild(document.createTextNode(text));
-  return div.innerHTML;
 }
 
 /**
@@ -2047,9 +2183,9 @@ function extractTitleFromMarkdown(text) {
 function getExportName(ext) {
   var name;
 
-  // 规则1：优先使用本地打开的文件名（不含扩展名）
+  // 规则1：优先使用本地打开的文件名（去掉扩展名）
   if (window._openedFileName) {
-    name = window._openedFileName;
+    name = window._openedFileName.replace(/\.(md|markdown|txt|text)$/i, '');
   }
   // 规则2：未命名/未打开文件，从 Markdown 内容提取标题
   else if (fileNameEl.textContent === t('unnamed') || fileNameEl.textContent === t('noFileOpen')) {
@@ -2551,21 +2687,28 @@ function toggleSyncScroll() {
 function getEditorHeadings() {
   var lines = editor.value.split('\n');
   var headings = [];
+  var inFencedBlock = false;
+  var fenceChar = '';
   for (var i = 0; i < lines.length; i++) {
-    var m = lines[i].match(/^(#{1,6})\s+(.+)$/);
+    var line = lines[i];
+    var fenceMatch = line.match(/^(```+|~~~+)/);
+    if (fenceMatch) {
+      if (!inFencedBlock) {
+        inFencedBlock = true;
+        fenceChar = fenceMatch[1];
+      } else if (line.trim() === fenceChar) {
+        inFencedBlock = false;
+        fenceChar = '';
+      }
+      continue;
+    }
+    if (inFencedBlock || line.match(/^( {4}|\t)/)) continue;
+    var m = line.match(/^(#{1,6})\s+(.+)$/);
     if (m) {
       headings.push({ line: i, level: m[1].length, text: m[2].replace(/[#]+$/, '').trim() });
     }
   }
   return headings;
-}
-
-/**
- * 获取编辑器中指定行号对应的 scrollTop
- */
-function getEditorScrollTopAtLine(line) {
-  var lineHeight = parseFloat(getComputedStyle(editor).lineHeight) || 24;
-  return line * lineHeight;
 }
 
 /**
@@ -2596,7 +2739,6 @@ function syncEditorToPreview() {
   var pHeadings = getPreviewHeadings();
 
   if (eHeadings.length === 0 || pHeadings.length === 0) {
-    // 无标题时回退到简单比例映射
     var maxEditor = editor.scrollHeight - editor.clientHeight;
     var ratio = maxEditor > 0 ? editor.scrollTop / maxEditor : 0;
     var maxPreview = previewPanel.scrollHeight - previewPanel.clientHeight;
@@ -2607,7 +2749,6 @@ function syncEditorToPreview() {
   var currentScroll = editor.scrollTop;
   var currentLine = currentScroll / (parseFloat(getComputedStyle(editor).lineHeight) || 24);
 
-  // 找到编辑器当前所在的标题区间
   var eIdx = -1;
   for (var i = eHeadings.length - 1; i >= 0; i--) {
     if (eHeadings[i].line <= currentLine) {
@@ -2617,7 +2758,6 @@ function syncEditorToPreview() {
   }
 
   if (eIdx < 0) {
-    // 在第一个标题之前，按比例映射到预览区第一个标题之前
     var firstELine = eHeadings[0].line;
     var firstPTop = pHeadings.length > 0 ? pHeadings[0].top : 0;
     var ratio = firstELine > 0 ? currentLine / firstELine : 0;
@@ -2625,15 +2765,12 @@ function syncEditorToPreview() {
     return;
   }
 
-  // 在编辑器中的标题区间：[eHeadings[eIdx].line, eHeadings[eIdx+1].line)
   var eStart = eHeadings[eIdx].line;
   var eEnd = (eIdx + 1 < eHeadings.length) ? eHeadings[eIdx + 1].line : editor.value.split('\n').length;
 
-  // 对应的预览区标题区间
   var pStart = (eIdx < pHeadings.length) ? pHeadings[eIdx].top : (previewPanel.scrollHeight - previewPanel.clientHeight);
   var pEnd = (eIdx + 1 < pHeadings.length) ? pHeadings[eIdx + 1].top : (previewPanel.scrollHeight - previewPanel.clientHeight);
 
-  // 按比例映射
   var eRatio = (eEnd > eStart) ? (currentLine - eStart) / (eEnd - eStart) : 0;
   eRatio = Math.max(0, Math.min(1, eRatio));
   previewPanel.scrollTop = pStart + eRatio * (pEnd - pStart);
@@ -2656,7 +2793,6 @@ function syncPreviewToEditor() {
 
   var currentScroll = previewPanel.scrollTop;
 
-  // 找到预览区当前所在的标题区间
   var pIdx = -1;
   for (var i = pHeadings.length - 1; i >= 0; i--) {
     if (pHeadings[i].top <= currentScroll + 10) {
@@ -2674,15 +2810,12 @@ function syncPreviewToEditor() {
     return;
   }
 
-  // 在预览区中的标题区间：[pHeadings[pIdx].top, pHeadings[pIdx+1].top)
   var pStart = pHeadings[pIdx].top;
   var pEnd = (pIdx + 1 < pHeadings.length) ? pHeadings[pIdx + 1].top : (previewPanel.scrollHeight - previewPanel.clientHeight);
 
-  // 对应的编辑器标题区间
   var eStartLine = (pIdx < eHeadings.length) ? eHeadings[pIdx].line : 0;
   var eEndLine = (pIdx + 1 < eHeadings.length) ? eHeadings[pIdx + 1].line : editor.value.split('\n').length;
 
-  // 按比例映射
   var pRatio = (pEnd > pStart) ? (currentScroll - pStart) / (pEnd - pStart) : 0;
   pRatio = Math.max(0, Math.min(1, pRatio));
   var targetLine = eStartLine + pRatio * (eEndLine - eStartLine);
