@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="bloom-petal.css" id="theme-link">
 <script src="marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script src="https://derdere.github.io/site-pet/site-pet.js"></script>
 <style>
 /* ===== 编辑器界面布局 ===== */
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -749,6 +750,11 @@ body {
 
   <button class="btn" id="langSwitchBtn" onclick="setLang(_currentLang === 'zh' ? 'en' : 'zh')" title="切换语言">中</button>
 
+  <button class="btn active" id="petToggleBtn" onclick="togglePet()" title="隐藏宠物">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"/></svg>
+    <span id="petToggleLabel">宠物</span>
+  </button>
+
   <div class="toolbar-logo" title="KattyBB Markdown Editor">
     <svg width="24" height="24" viewBox="0 0 1024 1024" fill="currentColor"><path d="M20.48 327.76192a163.84 163.84 0 0 1 163.84-163.84h655.36a163.84 163.84 0 0 1 163.84 163.84v327.68a163.84 163.84 0 0 1-163.84 163.84H184.32a163.84 163.84 0 0 1-163.84-163.84v-327.68z m163.84-81.92a81.92 81.92 0 0 0-81.92 81.92v327.68a81.92 81.92 0 0 0 81.92 81.92h655.36a81.92 81.92 0 0 0 81.92-81.92v-327.68a81.92 81.92 0 0 0-81.92-81.92H184.32z m68.97664 84.00896a40.96 40.96 0 0 1 45.71136 14.336L389.12 464.24064l90.112-120.13568a40.96 40.96 0 0 1 73.728 24.576v245.76a40.96 40.96 0 0 1-81.92 0v-122.88l-49.152 65.536a41.04192 41.04192 0 0 1-65.536 0l-49.152-65.536v122.88a40.96 40.96 0 1 1-81.92 0v-245.76a40.96 40.96 0 0 1 28.01664-38.87104zM757.76 368.76288a40.96 40.96 0 0 0-81.92 0v146.8416l-12.00128-12.00128a40.96 40.96 0 0 0-57.91744 57.91744l81.92 81.92a40.96 40.96 0 0 0 57.91744 0l81.92-81.92a40.96 40.96 0 0 0-57.91744-57.91744l-12.00128 12.00128V368.72192z"/></svg>
   </div>
@@ -824,6 +830,9 @@ var i18n = {
     syncScrollOff: '同步滚动已关闭',
     clearEditor: '清空编辑器内容',
     clearBtn: '清空',
+    petShow: '显示宠物',
+    petHide: '隐藏宠物',
+    petToggleLabel: '宠物',
     logoTitle: 'KattyBB Markdown Editor',
     tocTitle: '目录',
     // 编辑器
@@ -880,6 +889,9 @@ var i18n = {
     syncScrollOff: 'Sync scroll disabled',
     clearEditor: 'Clear editor',
     clearBtn: 'Clear',
+    petShow: 'Show Pet',
+    petHide: 'Hide Pet',
+    petToggleLabel: 'Pet',
     logoTitle: 'KattyBB Markdown Editor',
     tocTitle: 'Table of Contents',
     editorPlaceholder: 'Enter Markdown here, or click "Open File" to load a local .md file...',
@@ -996,6 +1008,13 @@ function applyLang() {
   if (langBtn) {
     langBtn.title = t('langSwitch');
     langBtn.textContent = _currentLang === 'zh' ? '中' : 'En';
+  }
+  // 更新宠物切换按钮
+  var petBtn = document.getElementById('petToggleBtn');
+  if (petBtn) {
+    var petLabel = document.getElementById('petToggleLabel');
+    if (petLabel) petLabel.textContent = t('petToggleLabel');
+    petBtn.title = _petVisible === false ? t('petShow') : t('petHide');
   }
   // 更新 html lang 属性
   document.documentElement.lang = _currentLang === 'zh' ? 'zh-CN' : 'en';
@@ -2997,6 +3016,37 @@ if (!_syncScroll) {
 applyViewMode();
 statusLeft.textContent = t('statusAutoSave');
 applyLang();
+
+// ===== Site Pet =====
+var _petEle = null;
+var _petVisible = localStorage.getItem('kattybb-pet-visible') !== 'false';
+
+function togglePet() {
+  var btn = document.getElementById('petToggleBtn');
+  if (!_petEle) {
+    if (typeof createSitePet === 'function') {
+      _petEle = createSitePet('example');
+    }
+    _petVisible = true;
+  } else {
+    _petVisible = !_petVisible;
+    _petEle.style.display = _petVisible ? 'block' : 'none';
+  }
+  localStorage.setItem('kattybb-pet-visible', _petVisible);
+  if (btn) {
+    btn.classList.toggle('active', _petVisible);
+    btn.title = _petVisible ? t('petHide') : t('petShow');
+  }
+}
+
+if (typeof createSitePet === 'function') {
+  if (_petVisible) {
+    _petEle = createSitePet('example');
+  } else {
+    var petBtn = document.getElementById('petToggleBtn');
+    if (petBtn) petBtn.classList.remove('active');
+  }
+}
 </script>
 </body>
 </html>
