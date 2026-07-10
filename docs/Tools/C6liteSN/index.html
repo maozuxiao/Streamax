@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>C6 Lite S/N 批次查询工具</title>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<title>C6 Lite S/N Batch Lookup</title>
 <style>
   :root {
     --bg: #f5f7fa;
@@ -15,17 +14,11 @@
     --text: #1e293b;
     --text-secondary: #64748b;
     --border: #e2e8f0;
-    --success: #16a34a;
-    --success-bg: #f0fdf4;
-    --success-border: #bbf7d0;
     --error: #dc2626;
     --error-bg: #fef2f2;
     --error-border: #fecaca;
     --warning: #d97706;
-    --warning-bg: #fffbeb;
-    --warning-border: #fde68a;
     --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05);
     --radius: 10px;
   }
 
@@ -39,28 +32,12 @@
     padding: 16px;
   }
 
-  .container {
-    max-width: 800px;
-    margin: 0 auto;
-  }
+  .container { max-width: 800px; margin: 0 auto; }
 
-  /* Header */
-  .header {
-    text-align: center;
-    margin-bottom: 24px;
-  }
-  .header h1 {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 6px;
-  }
-  .header p {
-    font-size: 14px;
-    color: var(--text-secondary);
-  }
+  .header { text-align: center; margin-bottom: 24px; }
+  .header h1 { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .header p { font-size: 14px; color: var(--text-secondary); }
 
-  /* Search Card */
   .search-card {
     background: var(--card-bg);
     border-radius: var(--radius);
@@ -68,42 +45,46 @@
     padding: 24px;
     margin-bottom: 20px;
   }
+  .search-label { display: block; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .search-hint { font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.6; }
 
-  .search-label {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 8px;
-  }
-  .search-hint {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 12px;
-    line-height: 1.6;
-  }
+  .input-row { display: flex; gap: 10px; align-items: stretch; }
 
-  .input-row {
-    display: flex;
-    gap: 10px;
-    align-items: stretch;
-  }
-
-  #snInput {
+  .input-wrap {
     flex: 1;
-    padding: 12px 16px;
+    display: flex;
+    align-items: center;
     border: 2px solid var(--border);
     border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fff;
+  }
+  .input-wrap:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+  }
+  .wp-prefix {
+    padding: 12px 2px 12px 14px;
+    font-size: 16px;
+    font-family: "SF Mono", "Consolas", "Courier New", monospace;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 1px;
+    user-select: none;
+    pointer-events: none;
+  }
+  #snInput {
+    flex: 1;
+    padding: 12px 14px 12px 0;
+    border: none;
     font-size: 16px;
     font-family: "SF Mono", "Consolas", "Courier New", monospace;
     letter-spacing: 1px;
-    transition: border-color 0.2s, box-shadow 0.2s;
     outline: none;
     text-transform: uppercase;
-  }
-  #snInput:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    background: transparent;
+    min-width: 0;
   }
   #snInput::placeholder {
     color: #cbd5e1;
@@ -126,114 +107,16 @@
     gap: 6px;
   }
   .btn:active { transform: scale(0.97); }
-
-  .btn-primary {
-    background: var(--primary);
-    color: #fff;
-  }
+  .btn-primary { background: var(--primary); color: #fff; }
   .btn-primary:hover { background: var(--primary-hover); }
-
-  .btn-scan {
-    background: var(--success-bg);
-    color: var(--success);
-    border: 1.5px solid var(--success-border);
-  }
-  .btn-scan:hover { background: #dcfce7; }
-
-  .btn-scan.active {
-    background: var(--success);
-    color: #fff;
-  }
-
   .btn-clear {
     background: #f1f5f9;
     color: #64748b;
     border: 1.5px solid var(--border);
   }
-  .btn-clear:hover {
-    background: #e2e8f0;
-    color: #475569;
-  }
+  .btn-clear:hover { background: #e2e8f0; color: #475569; }
 
-  .input-meta {
-    margin-top: 8px;
-    font-size: 12px;
-    color: var(--text-secondary);
-    min-height: 18px;
-  }
-  .input-meta .truncated {
-    color: var(--warning);
-    font-weight: 500;
-  }
-
-  /* Scanner modal */
-  .scanner-overlay {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.85);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-  }
-  .scanner-overlay.active { display: flex; }
-
-  .scanner-box {
-    background: #fff;
-    border-radius: var(--radius);
-    padding: 20px;
-    width: 100%;
-    max-width: 480px;
-  }
-  .scanner-box h3 {
-    font-size: 16px;
-    margin-bottom: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .scanner-box h3 button {
-    background: none;
-    border: none;
-    font-size: 22px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    line-height: 1;
-  }
-  #qr-reader {
-    width: 100%;
-    border-radius: 8px;
-    overflow: hidden;
-    position: relative;
-  }
-  #qr-reader::after {
-    content: '';
-    position: absolute;
-    left: 5%; right: 5%;
-    top: 50%;
-    height: 2px;
-    background: rgba(220, 38, 38, 0.6);
-    box-shadow: 0 0 4px rgba(220, 38, 38, 0.4);
-    animation: scanLine 2s ease-in-out infinite;
-    pointer-events: none;
-    z-index: 10;
-    border-radius: 1px;
-  }
-  @keyframes scanLine {
-    0%, 100% { top: 35%; opacity: 0.3; }
-    50% { top: 65%; opacity: 1; }
-  }
-  #qr-reader video {
-    width: 100% !important;
-    border-radius: 8px;
-  }
-  .scanner-hint {
-    margin-top: 10px;
-    font-size: 13px;
-    color: var(--text-secondary);
-    text-align: center;
-  }
+  .input-meta { margin-top: 8px; font-size: 12px; color: var(--text-secondary); min-height: 18px; }
 
   /* Result */
   .result-card {
@@ -245,7 +128,6 @@
     display: none;
   }
   .result-card.visible { display: block; }
-
   .result-header {
     padding: 16px 24px;
     background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
@@ -259,22 +141,11 @@
     border-radius: 50%;
     background: var(--primary);
     display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-    color: #fff;
-    flex-shrink: 0;
+    font-size: 20px; color: #fff; flex-shrink: 0;
   }
-  .result-header .title-block {
-    flex: 1;
-  }
-  .result-header .title-block h2 {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text);
-  }
-  .result-header .title-block .subtitle {
-    font-size: 13px;
-    color: var(--text-secondary);
-  }
+  .result-header .title-block { flex: 1; }
+  .result-header .title-block h2 { font-size: 18px; font-weight: 700; color: var(--text); }
+  .result-header .title-block .subtitle { font-size: 13px; color: var(--text-secondary); }
 
   .hw-badge {
     display: inline-flex;
@@ -285,72 +156,22 @@
     font-size: 14px;
     font-weight: 700;
   }
-  .hw-badge.v2 {
-    background: #fef3c7;
-    color: #92400e;
-    border: 1.5px solid #fcd34d;
-  }
-  .hw-badge.v1 {
-    background: #e0e7ff;
-    color: #3730a3;
-    border: 1.5px solid #a5b4fc;
-  }
+  .hw-badge.v2 { background: #fef3c7; color: #92400e; border: 1.5px solid #fcd34d; }
+  .hw-badge.v1 { background: #e0e7ff; color: #3730a3; border: 1.5px solid #a5b4fc; }
 
-  .result-body {
-    padding: 0;
-  }
-  .result-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .result-table tr {
-    border-bottom: 1px solid var(--border);
-  }
+  .result-body { padding: 0; }
+  .result-table { width: 100%; border-collapse: collapse; }
+  .result-table tr { border-bottom: 1px solid var(--border); }
   .result-table tr:last-child { border-bottom: none; }
-  .result-table td {
-    padding: 12px 24px;
-    font-size: 14px;
-    vertical-align: top;
-  }
-  .result-table td.label {
-    width: 140px;
-    color: var(--text-secondary);
-    font-weight: 500;
-    white-space: nowrap;
-  }
-  .result-table td.value {
-    color: var(--text);
-    font-weight: 500;
-    word-break: break-all;
-  }
-  .result-table td.value.mono {
-    font-family: "SF Mono", "Consolas", "Courier New", monospace;
-    letter-spacing: 0.5px;
-  }
+  .result-table td { padding: 12px 24px; font-size: 14px; vertical-align: top; }
+  .result-table td.label { width: 150px; color: var(--text-secondary); font-weight: 500; white-space: nowrap; }
+  .result-table td.value { color: var(--text); font-weight: 500; word-break: break-all; }
+  .result-table td.value.mono { font-family: "SF Mono", "Consolas", "Courier New", monospace; letter-spacing: 0.5px; }
 
-  .description-box {
-    padding: 12px 24px 16px;
-  }
-  .description-box .label {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-weight: 500;
-    margin-bottom: 8px;
-  }
-  .description-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .desc-tag {
-    display: inline-block;
-    padding: 3px 10px;
-    background: #f1f5f9;
-    border-radius: 6px;
-    font-size: 12px;
-    color: #475569;
-    font-weight: 500;
-  }
+  .description-box { padding: 12px 24px 16px; }
+  .description-box .desc-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; margin-bottom: 8px; }
+  .description-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .desc-tag { display: inline-block; padding: 3px 10px; background: #f1f5f9; border-radius: 6px; font-size: 12px; color: #475569; font-weight: 500; }
 
   /* No result */
   .no-result {
@@ -362,20 +183,9 @@
     display: none;
   }
   .no-result.visible { display: block; }
-  .no-result .icon {
-    font-size: 36px;
-    margin-bottom: 10px;
-  }
-  .no-result h3 {
-    font-size: 16px;
-    color: var(--error);
-    margin-bottom: 6px;
-  }
-  .no-result p {
-    font-size: 14px;
-    color: var(--text-secondary);
-    line-height: 1.6;
-  }
+  .no-result .icon { font-size: 36px; margin-bottom: 10px; }
+  .no-result h3 { font-size: 16px; color: var(--error); margin-bottom: 6px; }
+  .no-result p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
   .no-result .searched-key {
     margin-top: 10px;
     font-family: "SF Mono", "Consolas", monospace;
@@ -396,17 +206,8 @@
     display: none;
   }
   .history-card.visible { display: block; }
-  .history-card h3 {
-    padding: 16px 24px 12px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    border-bottom: 1px solid var(--border);
-  }
-  .history-list {
-    max-height: 280px;
-    overflow-y: auto;
-  }
+  .history-card h3 { padding: 16px 24px 12px; font-size: 14px; font-weight: 600; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
+  .history-list { max-height: 280px; overflow-y: auto; }
   .history-item {
     padding: 12px 24px;
     display: flex;
@@ -418,49 +219,17 @@
   }
   .history-item:last-child { border-bottom: none; }
   .history-item:hover { background: #f8fafc; }
-  .history-item .left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .history-item .sn {
-    font-family: "SF Mono", "Consolas", monospace;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-  }
-  .history-item .time {
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
-  .history-item .hw-tag {
-    font-size: 12px;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-weight: 600;
-  }
+  .history-item .left { display: flex; align-items: center; gap: 10px; }
+  .history-item .sn { font-family: "SF Mono", "Consolas", monospace; font-size: 13px; font-weight: 600; color: var(--text); }
+  .history-item .time { font-size: 12px; color: var(--text-secondary); }
+  .history-item .hw-tag { font-size: 12px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
   .hw-tag.v2 { background: #fef3c7; color: #92400e; }
   .hw-tag.v1 { background: #e0e7ff; color: #3730a3; }
-  .history-clear {
-    padding: 8px 24px 12px;
-    text-align: right;
-  }
-  .history-clear button {
-    background: none;
-    border: none;
-    font-size: 12px;
-    color: var(--error);
-    cursor: pointer;
-  }
+  .history-clear { padding: 8px 24px 12px; text-align: right; }
+  .history-clear button { background: none; border: none; font-size: 12px; color: var(--error); cursor: pointer; }
   .history-clear button:hover { text-decoration: underline; }
 
-  /* Data count badge */
-  .data-badge {
-    display: inline-block;
-    margin-top: 4px;
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
+  .data-badge { display: inline-block; margin-top: 4px; font-size: 12px; color: var(--text-secondary); }
 
   @media (max-width: 600px) {
     .input-row { flex-direction: column; }
@@ -472,37 +241,31 @@
 </head>
 <body>
 <div class="container">
-  <!-- Header -->
   <div class="header">
-    <h1>C6 Lite S/N 批次查询工具</h1>
-    <p>通过 S/N 前 10 位（Batch No.）查询对应硬件版本及订单信息</p>
-    <div class="data-badge">已加载 <span id="dataCount">0</span> 条工单数据</div>
+    <h1 data-i18n="title">C6 Lite S/N 批次查询工具</h1>
+    <p data-i18n="subtitle">通过 S/N 前 10 位（Batch No.）查询对应硬件版本及订单信息</p>
+    <div class="data-badge"><span data-i18n="records">已加载</span> <span id="dataCount">0</span> <span data-i18n="recordsSuffix">条工单数据</span></div>
   </div>
 
-  <!-- Search Card -->
   <div class="search-card">
-    <label class="search-label" for="snInput">S/N 或 Batch No.</label>
-    <p class="search-hint">
-      支持三种输入方式：<br>
-      1. 直接输入 S/N 前 10 位（Batch No. 工单号）<br>
-      2. 输入完整 S/N 序列号，系统自动截取前 10 位查询<br>
-      3. 点击「扫码」调用摄像头扫描条形码
-    </p>
+    <label class="search-label" for="snInput" data-i18n="label">输入 Batch No. 后 8 位</label>
+    <p class="search-hint" data-i18n="hint">已自动填充前缀 WP，只需输入后 8 位（如 26050086）</p>
     <div class="input-row">
-      <input type="text" id="snInput" placeholder="如 WP26050086 或完整 S/N" autocomplete="off" spellcheck="false">
-      <button class="btn btn-primary" id="searchBtn" onclick="doSearch()">查询</button>
-      <button class="btn btn-clear" id="clearBtn" onclick="clearInput()">✕ 清除</button>
-      <button class="btn btn-scan" id="scanBtn" onclick="toggleScanner()">📷 扫码</button>
+      <div class="input-wrap">
+        <span class="wp-prefix">WP</span>
+        <input type="text" id="snInput" placeholder="26050086" maxlength="8" autocomplete="off" spellcheck="false">
+      </div>
+      <button class="btn btn-primary" id="searchBtn" onclick="doSearch()" data-i18n="searchBtn">查询</button>
+      <button class="btn btn-clear" id="clearBtn" onclick="clearInput()" data-i18n="clearBtn">✕ 清除</button>
     </div>
     <div class="input-meta" id="inputMeta"></div>
   </div>
 
-  <!-- Result Card -->
   <div class="result-card" id="resultCard">
     <div class="result-header">
       <div class="icon">✓</div>
       <div class="title-block">
-        <h2 id="resultTitle">查询结果</h2>
+        <h2 id="resultTitle"></h2>
         <div class="subtitle" id="resultSubtitle"></div>
       </div>
       <div class="hw-badge" id="hwBadge"></div>
@@ -510,120 +273,195 @@
     <div class="result-body">
       <table class="result-table">
         <tr><td class="label">PI NO.</td><td class="value mono" id="r-pi"></td></tr>
-        <tr><td class="label">Shipping Date</td><td class="value" id="r-date"></td></tr>
-        <tr><td class="label">Year / Month</td><td class="value" id="r-ym"></td></tr>
-        <tr><td class="label">Client</td><td class="value" id="r-client"></td></tr>
-        <tr><td class="label">Part Number</td><td class="value mono" id="r-part"></td></tr>
-        <tr><td class="label">Model on Label</td><td class="value" id="r-model"></td></tr>
-        <tr><td class="label">Batch No.</td><td class="value mono" id="r-batch"></td></tr>
-        <tr><td class="label">Shipping No.</td><td class="value mono" id="r-ship"></td></tr>
-        <tr><td class="label">Qty</td><td class="value" id="r-qty"></td></tr>
+        <tr><td class="label" data-i18n="shippingDate">Shipping Date</td><td class="value" id="r-date"></td></tr>
+        <tr><td class="label" data-i18n="yearMonth">Year / Month</td><td class="value" id="r-ym"></td></tr>
+        <tr><td class="label" data-i18n="client">Client</td><td class="value" id="r-client"></td></tr>
+        <tr><td class="label" data-i18n="partNumber">Part Number</td><td class="value mono" id="r-part"></td></tr>
+        <tr><td class="label" data-i18n="modelLabel">Model on Label</td><td class="value" id="r-model"></td></tr>
+        <tr><td class="label" data-i18n="batchNo">Batch No.</td><td class="value mono" id="r-batch"></td></tr>
+        <tr><td class="label" data-i18n="shippingNo">Shipping No.</td><td class="value mono" id="r-ship"></td></tr>
+        <tr><td class="label" data-i18n="qty">Qty</td><td class="value" id="r-qty"></td></tr>
       </table>
       <div class="description-box">
-        <div class="label">Description（产品配置详情）</div>
+        <div class="desc-label" data-i18n="descLabel">Description（产品配置详情）</div>
         <div class="description-tags" id="r-desc-tags"></div>
       </div>
     </div>
   </div>
 
-  <!-- No Result -->
   <div class="no-result" id="noResult">
     <div class="icon">🔍</div>
-    <h3>未找到匹配记录</h3>
-    <p>请检查输入的 S/N 是否正确，或联系管理员确认数据是否需要更新。</p>
+    <h3 data-i18n="notFoundTitle">未找到匹配记录</h3>
+    <p data-i18n="notFoundMsg">请检查输入的 S/N 是否正确，或联系管理员确认数据是否需要更新。</p>
     <div class="searched-key" id="searchedKey"></div>
   </div>
 
-  <!-- History -->
   <div class="history-card" id="historyCard">
-    <h3>最近查询记录</h3>
+    <h3 data-i18n="historyTitle">最近查询记录</h3>
     <div class="history-list" id="historyList"></div>
     <div class="history-clear">
-      <button onclick="clearHistory()">清空记录</button>
-    </div>
-  </div>
-</div>
-
-<!-- Scanner Overlay -->
-<div class="scanner-overlay" id="scannerOverlay">
-  <div class="scanner-box">
-    <h3>
-      <span>📷 条形码扫描</span>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button id="cameraSwitchBtn" onclick="switchCamera()" style="font-size:18px;background:#f1f5f9;border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;" title="切换前后摄像头">🔄</button>
-        <button onclick="closeScanner()">✕</button>
-      </div>
-    </h3>
-    <div id="qr-reader"></div>
-    <p class="scanner-hint">将条形码对准摄像头，识别后自动填入</p>
-    <div style="margin-top:10px;text-align:center;">
-      <button class="btn btn-primary" onclick="manualInputFromScanner()" style="font-size:13px;padding:8px 16px;">✏ 手动输入 S/N</button>
+      <button onclick="clearHistory()" data-i18n="clearHistory">清空记录</button>
     </div>
   </div>
 </div>
 
 <script>
-// ====== Load Data from external JSON ======
+// ====== i18n ======
+const I18N = {
+  zh: {
+    title: 'C6 Lite S/N 批次查询工具',
+    subtitle: '通过 S/N 前 10 位（Batch No.）查询对应硬件版本及订单信息',
+    records: '已加载',
+    recordsSuffix: '条工单数据',
+    loading: '加载中...',
+    loadFailed: '加载失败',
+    label: '输入 Batch No. 后 8 位',
+    hint: '已自动填充前缀 WP，只需输入后 8 位（如 26050086）',
+    searchBtn: '查询',
+    clearBtn: '✕ 清除',
+    shippingDate: 'Shipping Date',
+    yearMonth: 'Year / Month',
+    client: 'Client',
+    partNumber: 'Part Number',
+    modelLabel: 'Model on Label',
+    batchNo: 'Batch No.',
+    shippingNo: 'Shipping No.',
+    qty: 'Qty',
+    descLabel: 'Description（产品配置详情）',
+    notFoundTitle: '未找到匹配记录',
+    notFoundMsg: '请检查输入的 S/N 是否正确，或联系管理员确认数据是否需要更新。',
+    historyTitle: '最近查询记录',
+    clearHistory: '清空记录',
+    searchKeyLabel: '查询关键字: ',
+    dataNotReady: '数据尚未加载完成，请稍后再试...',
+    inputRequired: '请输入 Batch No.',
+    truncated: '已自动补充为完整 Batch No.: ',
+    noInput: '当前输入: ',
+    foundN: ' 条匹配记录',
+    piPrefix: 'PI: ',
+    monthSuffix: ' 月',
+    multiWarning: '⚠ 共匹配 '
+  },
+  en: {
+    title: 'C6 Lite S/N Batch Lookup',
+    subtitle: 'Look up hardware version & order info by Batch No. (first 10 digits of S/N)',
+    records: '',
+    recordsSuffix: ' records loaded',
+    loading: 'Loading...',
+    loadFailed: 'Load failed',
+    label: 'Enter last 8 digits of Batch No.',
+    hint: 'Prefix "WP" is auto-filled. Enter last 8 digits (e.g. 26050086)',
+    searchBtn: 'Search',
+    clearBtn: '✕ Clear',
+    shippingDate: 'Shipping Date',
+    yearMonth: 'Year / Month',
+    client: 'Client',
+    partNumber: 'Part Number',
+    modelLabel: 'Model on Label',
+    batchNo: 'Batch No.',
+    shippingNo: 'Shipping No.',
+    qty: 'Qty',
+    descLabel: 'Description',
+    notFoundTitle: 'No Matching Record Found',
+    notFoundMsg: 'Please verify the Batch No. or contact the administrator to update the data.',
+    historyTitle: 'Recent Searches',
+    clearHistory: 'Clear History',
+    searchKeyLabel: 'Search key: ',
+    dataNotReady: 'Data is still loading, please wait...',
+    inputRequired: 'Please enter a Batch No.',
+    truncated: 'Full Batch No.: ',
+    noInput: 'Current input: ',
+    foundN: ' matching record(s)',
+    piPrefix: 'PI: ',
+    monthSuffix: '',
+    multiWarning: '⚠ '
+  }
+};
+
+let locale = 'zh';
+let T = I18N.zh;
+
+function detectLocale() {
+  let lang = (navigator.language || navigator.userLanguage || 'zh-CN').toLowerCase();
+  if (lang.startsWith('zh')) return 'zh';
+  return 'en';
+}
+
+function setLocale(loc) {
+  locale = loc;
+  T = I18N[loc];
+  document.documentElement.lang = loc === 'zh' ? 'zh-CN' : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    let key = el.getAttribute('data-i18n');
+    if (T[key] !== undefined) {
+      el.textContent = T[key];
+    }
+  });
+  // Update dynamic text after locale change
+  if (dataLoaded) {
+    updateDataCount();
+  }
+  renderHistory();
+}
+
+function updateDataCount() {
+  let countEl = document.getElementById('dataCount');
+  if (locale === 'en') {
+    countEl.parentElement.innerHTML = '<span id="dataCount">' + BATCH_DATA.length + '</span> records loaded';
+  } else {
+    countEl.parentElement.innerHTML = '已加载 <span id="dataCount">' + BATCH_DATA.length + '</span> 条工单数据';
+  }
+}
+
+// ====== Load Data ======
 let BATCH_DATA = [];
 let dataLoaded = false;
 
 function loadData() {
-  const countEl = document.getElementById('dataCount');
-  countEl.textContent = '加载中...';
+  let countEl = document.getElementById('dataCount');
+  countEl.textContent = T.loading;
 
   fetch('./data.json')
     .then(response => {
-      if (!response.ok) throw new Error('数据加载失败 (HTTP ' + response.status + ')');
+      if (!response.ok) throw new Error('HTTP ' + response.status);
       return response.json();
     })
     .then(data => {
       BATCH_DATA = data;
       dataLoaded = true;
-      countEl.textContent = BATCH_DATA.length;
+      updateDataCount();
       renderHistory();
     })
     .catch(err => {
-      console.error('数据加载失败:', err);
-      countEl.textContent = '加载失败';
+      console.error('Data load failed:', err);
+      countEl.textContent = T.loadFailed;
       countEl.style.color = '#dc2626';
-      alert('工单数据加载失败: ' + err.message + '\n请确保 data.json 与 index.html 在同一目录下。');
+      alert('Data load failed: ' + err.message + '\nPlease ensure data.json is in the same directory as index.html.');
     });
 }
 
 // ====== Search Logic ======
-function searchByBatchNo(input) {
-  if (!input) return [];
-  // Clean input: remove whitespace
-  let cleaned = input.trim().toUpperCase();
-  // Take first 10 characters as the search key
-  let searchKey = cleaned.substring(0, 10);
-
+function searchByBatchNo(fullKey) {
+  if (!fullKey) return [];
+  let searchKey = fullKey.trim().toUpperCase();
   let results = [];
 
   for (let row of BATCH_DATA) {
     let batchNo = (row['Batch No.--工单'] || '').toUpperCase().trim();
     let shipNo = (row['Shipping No.'] || '').toUpperCase().trim();
 
-    // Match strategy:
-    // 1. Exact match: searchKey === batchNo
-    // 2. Prefix match: searchKey starts with batchNo (input is longer S/N, batchNo is prefix)
-    // 3. Prefix match: batchNo starts with searchKey (input is shorter, batchNo contains it)
-    // Also try Shipping No. for flexibility
     let matched = false;
-
-    if (batchNo && (searchKey === batchNo || searchKey.startsWith(batchNo) || batchNo.startsWith(searchKey))) {
+    if (batchNo && (searchKey === batchNo || batchNo.startsWith(searchKey) || searchKey.startsWith(batchNo))) {
       matched = true;
     }
-    if (!matched && shipNo && (searchKey === shipNo || searchKey.startsWith(shipNo) || shipNo.startsWith(searchKey))) {
+    if (!matched && shipNo && (searchKey === shipNo || shipNo.startsWith(searchKey) || searchKey.startsWith(shipNo))) {
       matched = true;
     }
 
-    if (matched) {
-      results.push(row);
-    }
+    if (matched) results.push(row);
   }
 
-  // Deduplicate by Batch No. + Shipping No. (handle duplicate batch numbers with different shipping dates)
+  // Deduplicate
   let seen = new Set();
   let uniqueResults = [];
   for (let r of results) {
@@ -637,45 +475,44 @@ function searchByBatchNo(input) {
   return uniqueResults;
 }
 
-function displayResult(results, originalInput) {
-  const resultCard = document.getElementById('resultCard');
-  const noResult = document.getElementById('noResult');
-  let searchKey = originalInput.trim().toUpperCase().substring(0, 10);
+function displayResult(results, fullBatchNo) {
+  let resultCard = document.getElementById('resultCard');
+  let noResult = document.getElementById('noResult');
 
   if (results.length === 0) {
     resultCard.classList.remove('visible');
     noResult.classList.add('visible');
-    document.getElementById('searchedKey').textContent = '查询关键字: ' + searchKey;
+    document.getElementById('searchedKey').textContent = T.searchKeyLabel + fullBatchNo;
     return;
   }
 
   noResult.classList.remove('visible');
   resultCard.classList.add('visible');
 
-  // If multiple results, show all; for now show the first (most relevant) but note multiple
   let row = results[0];
   let hw = row['Corresponding hardware version'] || '';
   let isV2 = hw.includes('2.0');
   let batchNo = row['Batch No.--工单'] || '';
 
-  // Header
   document.getElementById('resultTitle').textContent = batchNo;
   let subtitleParts = [];
   if (results.length > 1) {
-    subtitleParts.push('找到 ' + results.length + ' 条匹配记录');
+    subtitleParts.push(T.foundN.replace('{n}', results.length));
+    // Force translation
+    if (subtitleParts[0] === T.foundN) {
+      subtitleParts[0] = (locale === 'en' ? '' : '找到 ') + results.length + (locale === 'en' ? ' matching record(s)' : ' 条匹配记录');
+    }
   }
-  subtitleParts.push('PI: ' + row['PI NO.']);
+  subtitleParts.push(T.piPrefix + row['PI NO.']);
   document.getElementById('resultSubtitle').textContent = subtitleParts.join(' · ');
 
-  // HW badge
   let hwBadge = document.getElementById('hwBadge');
   hwBadge.textContent = hw;
   hwBadge.className = 'hw-badge ' + (isV2 ? 'v2' : 'v1');
 
-  // Fields
   document.getElementById('r-pi').textContent = row['PI NO.'] || '-';
   document.getElementById('r-date').textContent = row['Shipping date'] || '-';
-  document.getElementById('r-ym').textContent = (row['Year'] || '-') + ' / ' + (row['Month'] || '-') + ' 月';
+  document.getElementById('r-ym').textContent = (row['Year'] || '-') + ' / ' + (row['Month'] || '-') + (locale === 'zh' ? ' 月' : '');
   document.getElementById('r-client').textContent = row['Client'] || '-';
   document.getElementById('r-part').textContent = row['Part numbers'] || '-';
   document.getElementById('r-model').textContent = row['Model on Lable'] || '-';
@@ -683,32 +520,24 @@ function displayResult(results, originalInput) {
   document.getElementById('r-ship').textContent = row['Shipping No.'] || '-';
   document.getElementById('r-qty').textContent = row['Qty'] || '-';
 
-  // Description tags
   let desc = row['Description'] || '';
   let descParts = desc.split('|').filter(p => p.trim());
   let tagsHtml = descParts.map(p => '<span class="desc-tag">' + escapeHtml(p.trim()) + '</span>').join('');
   document.getElementById('r-desc-tags').innerHTML = tagsHtml;
 
-  // If multiple results, append additional info
+  // Remove old warning if any
+  let warnDiv = document.getElementById('multiWarn');
+  if (warnDiv) warnDiv.remove();
+
   if (results.length > 1) {
-    let extraHtml = '<div style="margin-top:12px;padding:10px;background:#fffbeb;border-radius:6px;font-size:13px;color:#92400e;">';
-    extraHtml += '⚠ 共匹配 ' + results.length + ' 条记录，当前显示第一条。其他匹配的 Batch No.: ';
+    let extraHtml = '<div id="multiWarn" style="margin-top:12px;padding:10px;background:#fffbeb;border-radius:6px;font-size:13px;color:#92400e;">';
+    extraHtml += (locale === 'en' ? '⚠ ' + results.length + ' matching records found. Showing first. Other Batch No.: ' : '⚠ 共匹配 ' + results.length + ' 条记录，当前显示第一条。其他匹配的 Batch No.: ');
     extraHtml += results.slice(1).map(r => r['Batch No.--工单']).join(', ');
     extraHtml += '</div>';
-    let existing = document.getElementById('r-desc-tags');
-    let warnDiv = document.getElementById('multiWarn');
-    if (warnDiv) warnDiv.remove();
-    warnDiv = document.createElement('div');
-    warnDiv.id = 'multiWarn';
-    warnDiv.innerHTML = extraHtml;
-    existing.parentElement.appendChild(warnDiv);
-  } else {
-    let warnDiv = document.getElementById('multiWarn');
-    if (warnDiv) warnDiv.remove();
+    document.getElementById('r-desc-tags').insertAdjacentHTML('afterend', extraHtml);
   }
 
-  // Add to history
-  addToHistory(originalInput.trim().toUpperCase(), hw, batchNo);
+  addToHistory(fullBatchNo, hw, batchNo);
 }
 
 function escapeHtml(str) {
@@ -720,36 +549,31 @@ function escapeHtml(str) {
 // ====== Search Actions ======
 function doSearch() {
   if (!dataLoaded) {
-    showInputMeta('数据尚未加载完成，请稍后再试...', 'error');
+    showInputMeta(T.dataNotReady, 'error');
     return;
   }
 
-  let input = document.getElementById('snInput').value;
-  if (!input.trim()) {
-    showInputMeta('请输入 S/N 或 Batch No.', 'error');
+  let input = document.getElementById('snInput').value.trim();
+  if (!input) {
+    showInputMeta(T.inputRequired, 'error');
     return;
   }
 
-  let cleaned = input.trim().toUpperCase();
-  let searchKey = cleaned.substring(0, 10);
-  let results = searchByBatchNo(cleaned);
+  let fullBatchNo = 'WP' + input.toUpperCase();
+  let results = searchByBatchNo(fullBatchNo);
 
-  if (cleaned.length > 10) {
-    showInputMeta('已自动截取前 10 位: ' + searchKey, 'truncated');
-  } else if (cleaned.length < 10) {
-    showInputMeta('提示: Batch No. 通常为 10 位（如 WP26050086），当前输入 ' + cleaned.length + ' 位', 'info');
-  } else {
-    showInputMeta('查询关键字: ' + searchKey, 'info');
+  if (input.length === 8) {
+    showInputMeta(T.searchKeyLabel + fullBatchNo, 'info');
+  } else if (input.length > 0) {
+    showInputMeta(T.truncated + fullBatchNo + ' (' + fullBatchNo.length + (locale === 'en' ? ' digits' : ' 位') + ')', 'info');
   }
 
-  displayResult(results, input);
+  displayResult(results, fullBatchNo);
 }
 
 function showInputMeta(msg, type) {
   let el = document.getElementById('inputMeta');
-  if (type === 'truncated') {
-    el.innerHTML = '<span class="truncated">' + msg + '</span>';
-  } else if (type === 'error') {
+  if (type === 'error') {
     el.innerHTML = '<span style="color:var(--error);">' + msg + '</span>';
   } else {
     el.innerHTML = '<span>' + msg + '</span>';
@@ -772,183 +596,16 @@ document.getElementById('snInput').addEventListener('keydown', function(e) {
   }
 });
 
-// Real-time input meta
+// Real-time input hint
 document.getElementById('snInput').addEventListener('input', function(e) {
   let val = e.target.value.trim().toUpperCase();
-  if (val.length > 10) {
-    showInputMeta('输入 ' + val.length + ' 位，将截取前 10 位查询: ' + val.substring(0, 10), 'truncated');
-  } else if (val.length > 0) {
-    showInputMeta('当前输入: ' + val + ' (' + val.length + ' 位)', 'info');
+  if (val.length > 0) {
+    let full = 'WP' + val;
+    showInputMeta(T.noInput + full);
   } else {
     showInputMeta('', '');
   }
 });
-
-// ====== Scanner ======
-let html5QrCode = null;
-let scannerActive = false;
-let allCameras = [];
-let currentCameraIndex = 0;
-
-// Classify cameras as back (rear) vs front
-function classifyCameras(cameras) {
-  let rear = [], front = [];
-  for (let cam of cameras) {
-    let label = (cam.label || '').toLowerCase();
-    if (label.includes('back') || label.includes('rear') || label.includes('后') || label.includes('环境')) {
-      rear.push(cam);
-    } else if (label.includes('front') || label.includes('前') || label.includes('user')) {
-      front.push(cam);
-    } else {
-      // Unknown: put in rear-first ordered list
-      rear.push(cam);
-    }
-  }
-  // Return: rear cameras first, then front
-  return [...rear, ...front];
-}
-
-function switchCamera() {
-  if (!allCameras || allCameras.length < 2) {
-    alert('未检测到多个摄像头，无法切换');
-    return;
-  }
-
-  // Stop current scanner
-  if (html5QrCode && scannerActive) {
-    html5QrCode.stop().then(() => {
-      // Cycle to next camera
-      currentCameraIndex = (currentCameraIndex + 1) % allCameras.length;
-      startCameraWithId(allCameras[currentCameraIndex].id);
-    }).catch(err => {
-      console.error('Stop camera failed', err);
-    });
-  }
-}
-
-function startCameraWithId(cameraId) {
-  const config = {
-    fps: 15,
-    qrbox: { width: 300, height: 200 },
-    aspectRatio: 1.333,
-    videoConstraints: {
-      facingMode: "environment",
-      width: { ideal: 1920 },
-      height: { ideal: 1080 }
-    },
-    formatsToSupport: [
-      Html5QrcodeSupportedFormats.CODE_128,
-      Html5QrcodeSupportedFormats.CODE_39,
-      Html5QrcodeSupportedFormats.CODE_93,
-      Html5QrcodeSupportedFormats.EAN_13,
-      Html5QrcodeSupportedFormats.EAN_8,
-      Html5QrcodeSupportedFormats.UPC_A,
-      Html5QrcodeSupportedFormats.UPC_E,
-      Html5QrcodeSupportedFormats.QR_CODE,
-      Html5QrcodeSupportedFormats.ITF,
-      Html5QrcodeSupportedFormats.CODABAR
-    ]
-  };
-
-  html5QrCode.start(
-    cameraId,
-    config,
-    onScanSuccess,
-    function(errorMessage) {
-      // Per-frame error, ignore
-    }
-  ).then(() => {
-    scannerActive = true;
-    updateCameraSwitchLabel();
-  }).catch(err => {
-    alert("摄像头启动失败: " + err);
-    closeScanner();
-  });
-}
-
-function updateCameraSwitchLabel() {
-  let btn = document.getElementById('cameraSwitchBtn');
-  if (allCameras.length >= 2) {
-    let name = (allCameras[currentCameraIndex].label || '').toLowerCase();
-    if (name.includes('front') || name.includes('前') || name.includes('user')) {
-      btn.textContent = '🤳';
-    } else {
-      btn.textContent = '📷';
-    }
-    btn.style.opacity = '1';
-  } else {
-    btn.textContent = '🔄';
-    btn.style.opacity = '0.4';
-  }
-}
-
-function toggleScanner() {
-  if (scannerActive) {
-    closeScanner();
-  } else {
-    openScanner();
-  }
-}
-
-function openScanner() {
-  document.getElementById('scannerOverlay').classList.add('active');
-  document.getElementById('scanBtn').classList.add('active');
-  document.getElementById('scanBtn').innerHTML = '⏹ 关闭';
-
-  html5QrCode = new Html5Qrcode("qr-reader");
-
-  Html5Qrcode.getCameras().then(cameras => {
-    if (!cameras || cameras.length === 0) {
-      alert("未检测到摄像头设备");
-      closeScanner();
-      return;
-    }
-
-    // Classify: rear cameras first, then front
-    allCameras = classifyCameras(cameras);
-    currentCameraIndex = 0; // Default to first (rear) camera
-
-    updateCameraSwitchLabel();
-    startCameraWithId(allCameras[0].id);
-  }).catch(err => {
-    alert("无法访问摄像头: " + err + "\n请确保使用 HTTPS 或 localhost 访问，并授权摄像头权限。");
-    closeScanner();
-  });
-}
-
-function onScanSuccess(decodedText, decodedResult) {
-  // Fill the input and search
-  document.getElementById('snInput').value = decodedText;
-  closeScanner();
-  doSearch();
-}
-
-function manualInputFromScanner() {
-  let val = prompt('请输入 S/N 或 Batch No.（可查看条形码下方的印刷文字）：');
-  if (val !== null && val.trim() !== '') {
-    document.getElementById('snInput').value = val.trim();
-    closeScanner();
-    doSearch();
-  }
-}
-
-function closeScanner() {
-  document.getElementById('scannerOverlay').classList.remove('active');
-  document.getElementById('scanBtn').classList.remove('active');
-  document.getElementById('scanBtn').innerHTML = '📷 扫码';
-
-  if (html5QrCode && scannerActive) {
-    html5QrCode.stop().then(() => {
-      html5QrCode.clear();
-      html5QrCode = null;
-    }).catch(() => {
-      html5QrCode = null;
-    });
-    scannerActive = false;
-  }
-  allCameras = [];
-  currentCameraIndex = 0;
-}
 
 // ====== History ======
 function getHistory() {
@@ -961,16 +618,13 @@ function getHistory() {
 
 function addToHistory(input, hw, batchNo) {
   let history = getHistory();
-  // Remove if same batchNo exists
   history = history.filter(h => h.batchNo !== batchNo);
-  // Add to front
   history.unshift({
     input: input.substring(0, 20),
     hw: hw,
     batchNo: batchNo,
-    time: new Date().toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+    time: new Date().toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
   });
-  // Keep max 20
   history = history.slice(0, 20);
   localStorage.setItem('c6lite_sn_history', JSON.stringify(history));
   renderHistory();
@@ -989,7 +643,7 @@ function renderHistory() {
   card.classList.add('visible');
   list.innerHTML = history.map(h => {
     let isV2 = h.hw.includes('2.0');
-    return '<div class="history-item" onclick="document.getElementById(\'snInput\').value=\'' + h.input + '\';doSearch();">' +
+    return '<div class="history-item" onclick="document.getElementById(\'snInput\').value=\'' + h.input.replace(/^WP/, '') + '\';doSearch();">' +
       '<div class="left">' +
         '<span class="sn">' + escapeHtml(h.input) + '</span>' +
         '<span class="time">' + h.time + '</span>' +
@@ -1005,6 +659,8 @@ function clearHistory() {
 }
 
 // ====== Init ======
+locale = detectLocale();
+setLocale(locale);
 loadData();
 </script>
 </body>
