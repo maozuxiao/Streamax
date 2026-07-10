@@ -145,6 +145,16 @@
     color: #fff;
   }
 
+  .btn-clear {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1.5px solid var(--border);
+  }
+  .btn-clear:hover {
+    background: #e2e8f0;
+    color: #475569;
+  }
+
   .input-meta {
     margin-top: 8px;
     font-size: 12px;
@@ -447,7 +457,7 @@
   <!-- Header -->
   <div class="header">
     <h1>C6 Lite S/N 批次查询工具</h1>
-    <p>通过 S/N 前 12 位（Batch No.）查询对应硬件版本及订单信息</p>
+    <p>通过 S/N 前 10 位（Batch No.）查询对应硬件版本及订单信息</p>
     <div class="data-badge">已加载 <span id="dataCount">0</span> 条工单数据</div>
   </div>
 
@@ -456,13 +466,14 @@
     <label class="search-label" for="snInput">S/N 或 Batch No.</label>
     <p class="search-hint">
       支持三种输入方式：<br>
-      1. 直接输入 S/N 前 12 位（Batch No. 工单号）<br>
-      2. 输入完整 S/N 序列号，系统自动截取前 12 位查询<br>
+      1. 直接输入 S/N 前 10 位（Batch No. 工单号）<br>
+      2. 输入完整 S/N 序列号，系统自动截取前 10 位查询<br>
       3. 点击「扫码」调用摄像头扫描条形码
     </p>
     <div class="input-row">
       <input type="text" id="snInput" placeholder="如 WP26050086 或完整 S/N" autocomplete="off" spellcheck="false">
       <button class="btn btn-primary" id="searchBtn" onclick="doSearch()">查询</button>
+      <button class="btn btn-clear" id="clearBtn" onclick="clearInput()">✕ 清除</button>
       <button class="btn btn-scan" id="scanBtn" onclick="toggleScanner()">📷 扫码</button>
     </div>
     <div class="input-meta" id="inputMeta"></div>
@@ -520,7 +531,10 @@
   <div class="scanner-box">
     <h3>
       <span>📷 条形码扫描</span>
-      <button onclick="closeScanner()">✕</button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="cameraSwitchBtn" onclick="switchCamera()" style="font-size:18px;background:#f1f5f9;border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;" title="切换前后摄像头">🔄</button>
+        <button onclick="closeScanner()">✕</button>
+      </div>
     </h3>
     <div id="qr-reader"></div>
     <p class="scanner-hint">将条形码对准摄像头，识别后自动填入</p>
@@ -528,41 +542,40 @@
 </div>
 
 <script>
-// ====== Data from Excel ======
-const BATCH_DATA = [
-  {"PI NO.":"260317073","Shipping date":"2026-06-23","Year":"2026","Month":"6","Client":"3914","Part numbers":"5154022100167","Description":"C6 Lite2.0|V1.0|一体|双目|亚欧版|E0001|内置GPS模块（惯导）|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|对内MIPI|内置DSC|1080P|2.2mm|带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|无SD卡|锐明英文LOGO|通用|GD单片机|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"500","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"WP26050086","Shipping No.":"CH260615052"},
-  {"PI NO.":"260317072","Shipping date":"2026-06-23","Year":"2026","Month":"6","Client":"3914","Part numbers":"5154022100167","Description":"C6 Lite2.0|V1.0|一体|双目|亚欧版|E0001|内置GPS模块（惯导）|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|对内MIPI|内置DSC|1080P|2.2mm|带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|无SD卡|锐明英文LOGO|通用|GD单片机|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"500","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"WP26050089","Shipping No.":"CH260615047"},
-  {"PI NO.":"260216001","Shipping date":"2026-05-13","Year":"2026","Month":"5","Client":"3914","Part numbers":"5154022100064","Description":"C6 Lite2.0|V1.0|一体|单目|亚欧版|E0001|内置GPS模块|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|无对内|外置AHD|N|N|不带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|无SD卡|锐明英文LOGO|通用|N|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"100","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"WP26030097","Shipping No.":"CH260427079"},
-  {"PI NO.":"260216002","Shipping date":"2026-04-23","Year":"2026","Month":"4","Client":"3914","Part numbers":"5154022100064","Description":"C6 Lite2.0|V1.0|一体|单目|亚欧版|E0001|内置GPS模块|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|无对内|外置AHD|N|N|不带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|无SD卡|锐明英文LOGO|通用|N|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"100","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"WP26030094","Shipping No.":"CH260417018"},
-  {"PI NO.":"251219092","Shipping date":"2026-03-30","Year":"2026","Month":"3","Client":"3914","Part numbers":"5154022100063","Description":"C6 Lite2.0|V1.0|一体|双目|亚欧版|E0001|内置GPS模块|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|对内MIPI|内置DSC|1080P|2.2mm|带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|无SD卡|锐明英文LOGO|通用|N|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"200","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"WP26020091","Shipping No.":"CH260325011"},
-  {"PI NO.":"251015007","Shipping date":"2025-12-19","Year":"2025","Month":"12","Client":"3914","Part numbers":"5154022100063","Description":"C6 Lite2.0|V1.0|一体|双目|亚欧版|E0001|内置GPS模块|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|对内MIPI|内置DSC|1080P|2.2mm|带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|无SD卡|锐明英文LOGO|通用|N|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"300","Model on Lable":"C6 Lite2.0","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"WP25110290","Shipping No.":"CH251218012"},
-  {"PI NO.":"250109130","Shipping date":"2025-04-12","Year":"2025","Month":"4","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"150","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP25020306","Shipping No.":"CH250326113"},
-  {"PI NO.":"250219112","Shipping date":"2025-04-03","Year":"2025","Month":"4","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"200","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP25020313","Shipping No.":"CH250325012"},
-  {"PI NO.":"250219111","Shipping date":"2025-03-31","Year":"2025","Month":"3","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"400","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP25020316","Shipping No.":"CH250325009"},
-  {"PI NO.":"250109130","Shipping date":"2025-03-27","Year":"2025","Month":"3","Client":"3914","Part numbers":"5154022100064","Description":"C6 Lite2.0|V1.0|一体|单目|亚欧版|E0001|内置GPS模块|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|无对内|外置AHD|N|N|不带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|无SD卡|锐明英文LOGO|通用|N|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"50","Model on Lable":"C6 Lite2.0","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"WP25020305","Shipping No.":"CH250321060"},
-  {"PI NO.":"241125112","Shipping date":"2024-12-18","Year":"2024","Month":"12","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"200","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP24100157","Shipping No.":"CH241213017"},
-  {"PI NO.":"241024116","Shipping date":"2024-12-18","Year":"2024","Month":"12","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"200","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP24110185","Shipping No.":"CH241213017"},
-  {"PI NO.":"240826117","Shipping date":"2024-09-30","Year":"2024","Month":"9","Client":"3914","Part numbers":"5154022100010","Description":"C6 Lite|2.0|V1.0|一体|双目|亚欧版|E0001|内置GPS模块|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|对内MIPI|内置DSC|1080P|2.2mm|带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|2张128G|锐明英文LOGO|通用|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"2","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"ZP24090117","Shipping No.":"CH240924083"},
-  {"PI NO.":"240826117","Shipping date":"2024-09-30","Year":"2024","Month":"9","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"300","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP24090140","Shipping No.":"CH240924083"},
-  {"PI NO.":"240813030","Shipping date":"2024-09-26","Year":"2024","Month":"9","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"100","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP24070195","Shipping No.":"CH240924015"},
-  {"PI NO.":"240813030","Shipping date":"2024-09-14","Year":"2024","Month":"9","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"100","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP24070195","Shipping No.":"CH240910077"},
-  {"PI NO.":"240507103","Shipping date":"2024-06-28","Year":"2024","Month":"6","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"200","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP24050349","Shipping No.":"CH240626072"},
-  {"PI NO.":"240123110","Shipping date":"2024-04-07","Year":"2024","Month":"4","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"500","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP24020204","Shipping No.":"CH240326004"},
-  {"PI NO.":"230809086","Shipping date":"2023-10-19","Year":"2023","Month":"10","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"500","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP23090115","Shipping No.":"CH231013011"},
-  {"PI NO.":"230613111","Shipping date":"2023-09-27","Year":"2023","Month":"9","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"250","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP23070117","Shipping No.":"CH230926005"},
-  {"PI NO.":"230512101","Shipping date":"2023-07-18","Year":"2023","Month":"7","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"150","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP23060031","Shipping No.":"CH230713020"},
-  {"PI NO.":"230526169","Shipping date":"2023-06-16","Year":"2023","Month":"6","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"500","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP23060022","Shipping No.":"CH230614006"},
-  {"PI NO.":"230411104","Shipping date":"2023-06-16","Year":"2023","Month":"6","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"10","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP23050073","Shipping No.":"CH230614006"},
-  {"PI NO.":"221107055","Shipping date":"2023-01-06","Year":"2023","Month":"1","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"10","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP22110097","Shipping No.":"CH230104032"}
-];
+// ====== Load Data from external JSON ======
+let BATCH_DATA = [];
+let dataLoaded = false;
+
+function loadData() {
+  const countEl = document.getElementById('dataCount');
+  countEl.textContent = '加载中...';
+
+  fetch('./data.json')
+    .then(response => {
+      if (!response.ok) throw new Error('数据加载失败 (HTTP ' + response.status + ')');
+      return response.json();
+    })
+    .then(data => {
+      BATCH_DATA = data;
+      dataLoaded = true;
+      countEl.textContent = BATCH_DATA.length;
+      renderHistory();
+    })
+    .catch(err => {
+      console.error('数据加载失败:', err);
+      countEl.textContent = '加载失败';
+      countEl.style.color = '#dc2626';
+      alert('工单数据加载失败: ' + err.message + '\n请确保 data.json 与 index.html 在同一目录下。');
+    });
+}
 
 // ====== Search Logic ======
 function searchByBatchNo(input) {
   if (!input) return [];
   // Clean input: remove whitespace
   let cleaned = input.trim().toUpperCase();
-  // Take first 12 characters as the search key
-  let searchKey = cleaned.substring(0, 12);
+  // Take first 10 characters as the search key
+  let searchKey = cleaned.substring(0, 10);
 
   let results = [];
 
@@ -606,7 +619,7 @@ function searchByBatchNo(input) {
 function displayResult(results, originalInput) {
   const resultCard = document.getElementById('resultCard');
   const noResult = document.getElementById('noResult');
-  let searchKey = originalInput.trim().toUpperCase().substring(0, 12);
+  let searchKey = originalInput.trim().toUpperCase().substring(0, 10);
 
   if (results.length === 0) {
     resultCard.classList.remove('visible');
@@ -685,6 +698,11 @@ function escapeHtml(str) {
 
 // ====== Search Actions ======
 function doSearch() {
+  if (!dataLoaded) {
+    showInputMeta('数据尚未加载完成，请稍后再试...', 'error');
+    return;
+  }
+
   let input = document.getElementById('snInput').value;
   if (!input.trim()) {
     showInputMeta('请输入 S/N 或 Batch No.', 'error');
@@ -692,11 +710,11 @@ function doSearch() {
   }
 
   let cleaned = input.trim().toUpperCase();
-  let searchKey = cleaned.substring(0, 12);
+  let searchKey = cleaned.substring(0, 10);
   let results = searchByBatchNo(cleaned);
 
-  if (cleaned.length > 12) {
-    showInputMeta('已自动截取前 12 位: ' + searchKey, 'truncated');
+  if (cleaned.length > 10) {
+    showInputMeta('已自动截取前 10 位: ' + searchKey, 'truncated');
   } else if (cleaned.length < 10) {
     showInputMeta('提示: Batch No. 通常为 10 位（如 WP26050086），当前输入 ' + cleaned.length + ' 位', 'info');
   } else {
@@ -717,6 +735,14 @@ function showInputMeta(msg, type) {
   }
 }
 
+function clearInput() {
+  document.getElementById('snInput').value = '';
+  document.getElementById('snInput').focus();
+  showInputMeta('', '');
+  document.getElementById('resultCard').classList.remove('visible');
+  document.getElementById('noResult').classList.remove('visible');
+}
+
 // Enter key to search
 document.getElementById('snInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
@@ -728,8 +754,8 @@ document.getElementById('snInput').addEventListener('keydown', function(e) {
 // Real-time input meta
 document.getElementById('snInput').addEventListener('input', function(e) {
   let val = e.target.value.trim().toUpperCase();
-  if (val.length > 12) {
-    showInputMeta('输入 ' + val.length + ' 位，将截取前 12 位查询: ' + val.substring(0, 12), 'truncated');
+  if (val.length > 10) {
+    showInputMeta('输入 ' + val.length + ' 位，将截取前 10 位查询: ' + val.substring(0, 10), 'truncated');
   } else if (val.length > 0) {
     showInputMeta('当前输入: ' + val + ' (' + val.length + ' 位)', 'info');
   } else {
@@ -740,23 +766,46 @@ document.getElementById('snInput').addEventListener('input', function(e) {
 // ====== Scanner ======
 let html5QrCode = null;
 let scannerActive = false;
+let allCameras = [];
+let currentCameraIndex = 0;
 
-function toggleScanner() {
-  if (scannerActive) {
-    closeScanner();
-  } else {
-    openScanner();
+// Classify cameras as back (rear) vs front
+function classifyCameras(cameras) {
+  let rear = [], front = [];
+  for (let cam of cameras) {
+    let label = (cam.label || '').toLowerCase();
+    if (label.includes('back') || label.includes('rear') || label.includes('后') || label.includes('环境')) {
+      rear.push(cam);
+    } else if (label.includes('front') || label.includes('前') || label.includes('user')) {
+      front.push(cam);
+    } else {
+      // Unknown: put in rear-first ordered list
+      rear.push(cam);
+    }
+  }
+  // Return: rear cameras first, then front
+  return [...rear, ...front];
+}
+
+function switchCamera() {
+  if (!allCameras || allCameras.length < 2) {
+    alert('未检测到多个摄像头，无法切换');
+    return;
+  }
+
+  // Stop current scanner
+  if (html5QrCode && scannerActive) {
+    html5QrCode.stop().then(() => {
+      // Cycle to next camera
+      currentCameraIndex = (currentCameraIndex + 1) % allCameras.length;
+      startCameraWithId(allCameras[currentCameraIndex].id);
+    }).catch(err => {
+      console.error('Stop camera failed', err);
+    });
   }
 }
 
-function openScanner() {
-  document.getElementById('scannerOverlay').classList.add('active');
-  document.getElementById('scanBtn').classList.add('active');
-  document.getElementById('scanBtn').innerHTML = '⏹ 关闭';
-
-  html5QrCode = new Html5Qrcode("qr-reader");
-
-  // Try to start camera with back camera preferred
+function startCameraWithId(cameraId) {
   const config = {
     fps: 10,
     qrbox: { width: 250, height: 150 },
@@ -775,6 +824,53 @@ function openScanner() {
     ]
   };
 
+  html5QrCode.start(
+    cameraId,
+    config,
+    onScanSuccess,
+    function(errorMessage) {
+      // Per-frame error, ignore
+    }
+  ).then(() => {
+    scannerActive = true;
+    updateCameraSwitchLabel();
+  }).catch(err => {
+    alert("摄像头启动失败: " + err);
+    closeScanner();
+  });
+}
+
+function updateCameraSwitchLabel() {
+  let btn = document.getElementById('cameraSwitchBtn');
+  if (allCameras.length >= 2) {
+    let name = (allCameras[currentCameraIndex].label || '').toLowerCase();
+    if (name.includes('front') || name.includes('前') || name.includes('user')) {
+      btn.textContent = '🤳';
+    } else {
+      btn.textContent = '📷';
+    }
+    btn.style.opacity = '1';
+  } else {
+    btn.textContent = '🔄';
+    btn.style.opacity = '0.4';
+  }
+}
+
+function toggleScanner() {
+  if (scannerActive) {
+    closeScanner();
+  } else {
+    openScanner();
+  }
+}
+
+function openScanner() {
+  document.getElementById('scannerOverlay').classList.add('active');
+  document.getElementById('scanBtn').classList.add('active');
+  document.getElementById('scanBtn').innerHTML = '⏹ 关闭';
+
+  html5QrCode = new Html5Qrcode("qr-reader");
+
   Html5Qrcode.getCameras().then(cameras => {
     if (!cameras || cameras.length === 0) {
       alert("未检测到摄像头设备");
@@ -782,28 +878,12 @@ function openScanner() {
       return;
     }
 
-    // Prefer back/rear camera
-    let cameraId = cameras[0].id;
-    for (let cam of cameras) {
-      if (cam.label && (cam.label.toLowerCase().includes('back') || cam.label.toLowerCase().includes('rear') || cam.label.toLowerCase().includes('环境'))) {
-        cameraId = cam.id;
-        break;
-      }
-    }
+    // Classify: rear cameras first, then front
+    allCameras = classifyCameras(cameras);
+    currentCameraIndex = 0; // Default to first (rear) camera
 
-    html5QrCode.start(
-      cameraId,
-      config,
-      onScanSuccess,
-      function(errorMessage) {
-        // Per-frame error, ignore
-      }
-    ).catch(err => {
-      alert("摄像头启动失败: " + err);
-      closeScanner();
-    });
-
-    scannerActive = true;
+    updateCameraSwitchLabel();
+    startCameraWithId(allCameras[0].id);
   }).catch(err => {
     alert("无法访问摄像头: " + err + "\n请确保使用 HTTPS 或 localhost 访问，并授权摄像头权限。");
     closeScanner();
@@ -831,6 +911,8 @@ function closeScanner() {
     });
     scannerActive = false;
   }
+  allCameras = [];
+  currentCameraIndex = 0;
 }
 
 // ====== History ======
@@ -888,8 +970,7 @@ function clearHistory() {
 }
 
 // ====== Init ======
-document.getElementById('dataCount').textContent = BATCH_DATA.length;
-renderHistory();
+loadData();
 </script>
 </body>
 </html>
