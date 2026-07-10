@@ -647,7 +647,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: var(--surface-1, #faf8f3);
+  background: var(--surface-1, var(--surface, #faf8f3));
   border-bottom: 1px solid var(--border, rgba(0,0,0,0.08));
   cursor: move;
   user-select: none;
@@ -684,6 +684,40 @@ body {
   color: var(--accent, #e8859b);
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   font-weight: 600;
+}
+.note-header-actions .note-clear-text-btn {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  background: transparent !important;
+  color: #9f927d !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  font-weight: normal !important;
+  line-height: 1 !important;
+}
+.note-header-actions .note-clear-text-btn:hover {
+  background: #efe9d6 !important;
+  color: #19c8b9 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+.note-header-actions .note-clear-text-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  fill: currentColor !important;
+  display: block !important;
 }
 .note-close-btn {
   width: 24px;
@@ -882,6 +916,14 @@ body {
   background: var(--accent, #e8859b);
   border-radius: 50%;
   border: 2px solid var(--bg, #fff);
+}
+.note-fg-default {
+  position: relative;
+  overflow: hidden;
+}
+.note-color-transparent {
+  position: relative;
+  overflow: hidden;
 }
 .note-color-divider {
   height: 1px;
@@ -1289,6 +1331,9 @@ body {
             <button class="note-mode-tab active" data-mode="rich" onclick="switchNoteMode('rich')" id="noteTabRich">富文本</button>
             <button class="note-mode-tab" data-mode="text" onclick="switchNoteMode('text')" id="noteTabText">纯文本</button>
           </div>
+          <button class="note-clear-text-btn" id="noteClearTextBtn" onclick="noteClear()" title="清空笔记" style="display:none;">
+            <svg width="16" height="16" viewBox="0 0 1024 1024" fill="currentColor"><path d="M814.29 136.567H207.664c-55.752 0-101.274 13.3-101.274 56.776v26.086h808.663v-26.086c0.511-42.965-45.011-56.776-100.763-56.776"/><path d="M723.245 191.808l-19.948-140.66c-3.58-27.62-29.667-50.125-57.287-50.125H376.456c-28.132 0-53.707 22.505-57.799 50.126l-19.948 141.17c-3.58 27.621 15.856 22.506 43.477 22.506h337.07c28.133-0.511 47.57 4.604 43.989-23.017z m-360.6-28.643L377.99 51.66h265.463l15.344 111.505H362.645zM831.17 282.342H190.785c-36.827 0-64.959 30.177-61.378 67.005l55.24 607.648c3.58 36.827 36.316 67.005 73.655 67.005h505.35c36.828 0 70.074-30.178 73.655-67.005l55.24-607.137c3.58-36.827-24.04-67.516-61.378-67.516zM376.456 953.415H245.514l-43.476-592.816h174.418v592.816z m221.474 0H423.512V360.599H597.93v592.816z m177.487 0H646.01V360.599h172.883l-43.476 592.816z"/></svg>
+          </button>
           <button class="note-close-btn" onclick="toggleNotePanel()" title="关闭">×</button>
         </div>
       </div>
@@ -1327,6 +1372,9 @@ body {
             </button>
             <div class="note-color-panel" id="noteFgColorPanel">
               <div class="note-color-grid">
+                <button class="note-color-item note-fg-default" data-color="default" id="noteFgDefaultBtn" title="默认颜色" style="background:linear-gradient(to bottom right, #000 49.5%, #fff 50.5%);border:1px solid var(--border,rgba(0,0,0,0.15));">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--text,#333);"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
                 <button class="note-color-item" data-color="#000000" style="background:#000000;"></button>
                 <button class="note-color-item" data-color="#333333" style="background:#333333;"></button>
                 <button class="note-color-item" data-color="#666666" style="background:#666666;"></button>
@@ -1362,6 +1410,9 @@ body {
             </button>
             <div class="note-color-panel" id="noteBgColorPanel">
               <div class="note-color-grid">
+                <button class="note-color-item note-color-transparent" data-color="transparent" id="noteBgTransparentBtn" title="透明" style="background:linear-gradient(to bottom right, #fff 49.5%, #ccc 50.5%);border:1px solid var(--border,rgba(0,0,0,0.15));">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--text,#333);"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
                 <button class="note-color-item" data-color="#fff59d" style="background:#fff59d;"></button>
                 <button class="note-color-item" data-color="#ffe066" style="background:#ffe066;"></button>
                 <button class="note-color-item" data-color="#ffd43b" style="background:#ffd43b;"></button>
@@ -1402,8 +1453,8 @@ body {
         <span class="note-sep"></span>
         <div class="note-toolbar-group">
           <button onclick="noteLink()" title="插入链接">🔗</button>
-          <button onclick="noteClear()" title="清空笔记">
-            <svg width="16" height="16" viewBox="0 0 1024 1024" fill="currentColor"><path d="M814.29 136.567H207.664c-55.752 0-101.274 13.3-101.274 56.776v26.086h808.663v-26.086c0.511-42.965-45.011-56.776-100.763-56.776"></path><path d="M723.245 191.808l-19.948-140.66c-3.58-27.62-29.667-50.125-57.287-50.125H376.456c-28.132 0-53.707 22.505-57.799 50.126l-19.948 141.17c-3.58 27.621 15.856 22.506 43.477 22.506h337.07c28.133-0.511 47.57 4.604 43.989-23.017z m-360.6-28.643L377.99 51.66h265.463l15.344 111.505H362.645zM831.17 282.342H190.785c-36.827 0-64.959 30.177-61.378 67.005l55.24 607.648c3.58 36.827 36.316 67.005 73.655 67.005h505.35c36.828 0 70.074-30.178 73.655-67.005l55.24-607.137c3.58-36.827-24.04-67.516-61.378-67.516zM376.456 953.415H245.514l-43.476-592.816h174.418v592.816z m221.474 0H423.512V360.599H597.93v592.816z m177.487 0H646.01V360.599h172.883l-43.476 592.816z"></path></svg>
+          <button onclick="noteRemoveFormat()" title="清除格式" id="noteRemoveFormatBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>
           </button>
         </div>
       </div>
@@ -1524,6 +1575,9 @@ var i18n = {
     noteOutdent: '减少缩进',
     noteIndent: '增加缩进',
     noteLink: '插入链接',
+    noteRemoveFormat: '清除格式',
+    noteDefaultColor: '默认颜色',
+    noteTransparentColor: '透明',
     noteClear: '清空笔记',
     noteHeading: '标题',
     noteHeadingH1: 'H1',
@@ -1623,6 +1677,9 @@ var i18n = {
     noteOutdent: 'Decrease Indent',
     noteIndent: 'Increase Indent',
     noteLink: 'Insert Link',
+    noteRemoveFormat: 'Clear Formatting',
+    noteDefaultColor: 'Default Color',
+    noteTransparentColor: 'Transparent',
     noteClear: 'Clear Note',
     noteHeading: 'Heading',
     noteHeadingH1: 'Heading 1',
@@ -1822,8 +1879,14 @@ function applyLang() {
   if (indentBtn) indentBtn.title = t('noteIndent');
   var linkBtn = document.querySelector('#noteToolbar button[onclick="noteLink()"]');
   if (linkBtn) linkBtn.title = t('noteLink');
-  var clearBtn = document.querySelector('#noteToolbar button[onclick="noteClear()"]');
-  if (clearBtn) clearBtn.title = t('noteClear');
+  var removeFormatBtn = document.getElementById('noteRemoveFormatBtn');
+  if (removeFormatBtn) removeFormatBtn.title = t('noteRemoveFormat');
+  var fgDefaultBtn = document.getElementById('noteFgDefaultBtn');
+  if (fgDefaultBtn) fgDefaultBtn.title = t('noteDefaultColor');
+  var bgTransparentBtn = document.getElementById('noteBgTransparentBtn');
+  if (bgTransparentBtn) bgTransparentBtn.title = t('noteTransparentColor');
+  var clearTextBtn = document.getElementById('noteClearTextBtn');
+  if (clearTextBtn) clearTextBtn.title = t('noteClear');
   // 更新其他颜色按钮文本
   var fgOtherBtn = document.getElementById('noteFgOtherBtn');
   if (fgOtherBtn) fgOtherBtn.textContent = t('noteOtherColor');
@@ -2323,6 +2386,33 @@ function updateThemeUI() {
   } else {
     darkBtn.classList.add('active');
     lightBtn.classList.remove('active');
+  }
+
+  // 夜间模式下高亮颜色按钮反色处理（黑色线条→白色）
+  var highlightPaths = document.querySelectorAll('#noteBgColorToggle svg path[fill="#262626"]');
+  var newFill = _currentThemeMode === 'dark' ? '#e0e0e0' : '#262626';
+  highlightPaths.forEach(function(p) { p.setAttribute('fill', newFill); });
+
+  // 夜间模式下字体颜色按钮的A字母颜色调整
+  var fgAPath = document.querySelector('#noteFgColorToggle svg path[fill="#727272"]');
+  if (fgAPath) fgAPath.setAttribute('fill', _currentThemeMode === 'dark' ? '#cccccc' : '#727272');
+
+  // 更新默认颜色和透明按钮的渐变背景
+  var fgDefaultBtn = document.getElementById('noteFgDefaultBtn');
+  if (fgDefaultBtn) {
+    if (_currentThemeMode === 'dark') {
+      fgDefaultBtn.style.background = 'linear-gradient(to bottom right, #666 49.5%, #fff 50.5%)';
+    } else {
+      fgDefaultBtn.style.background = 'linear-gradient(to bottom right, #000 49.5%, #fff 50.5%)';
+    }
+  }
+  var bgTransparentBtn = document.getElementById('noteBgTransparentBtn');
+  if (bgTransparentBtn) {
+    if (_currentThemeMode === 'dark') {
+      bgTransparentBtn.style.background = 'linear-gradient(to bottom right, #444 49.5%, #888 50.5%)';
+    } else {
+      bgTransparentBtn.style.background = 'linear-gradient(to bottom right, #fff 49.5%, #ccc 50.5%)';
+    }
   }
 }
 
@@ -3847,6 +3937,8 @@ var _noteSaveTimer = null;
 var _noteFgColor = '#e8859b';
 var _noteBgColor = '#fff59d';
 var _noteRichHtmlCache = '';
+var _noteLinkSavedRange = null;
+var _noteEditorScrollTop = 0;
 
 function initNotePanel() {
   _notePanel = document.getElementById('notePanel');
@@ -3944,6 +4036,9 @@ function initColorPickers() {
     item.addEventListener('click', function(e) {
       e.stopPropagation();
       var color = this.dataset.color;
+      if (color === 'default') {
+        color = _currentThemeMode === 'dark' ? '#ffffff' : '#000000';
+      }
       noteSetFgColor(color);
       fgPicker.querySelectorAll('.note-color-item').forEach(function(i) { i.classList.remove('selected'); });
       this.classList.add('selected');
@@ -3954,6 +4049,13 @@ function initColorPickers() {
     item.addEventListener('click', function(e) {
       e.stopPropagation();
       var color = this.dataset.color;
+      if (color === 'transparent') {
+        noteRemoveBgColor();
+        bgPicker.querySelectorAll('.note-color-item').forEach(function(i) { i.classList.remove('selected'); });
+        this.classList.add('selected');
+        bgPicker.classList.remove('open');
+        return;
+      }
       noteSetBgColor(color);
       bgPicker.querySelectorAll('.note-color-item').forEach(function(i) { i.classList.remove('selected'); });
       this.classList.add('selected');
@@ -4033,6 +4135,93 @@ function noteSetBgColor(color) {
   if (code) code.value = color;
 }
 
+function noteRemoveBgColor() {
+  _noteEditor.focus();
+  document.execCommand('hiliteColor', false, 'transparent');
+  _noteEditor.focus();
+  noteAutoSave();
+}
+
+function noteRemoveFormat() {
+  _noteEditor.focus();
+  
+  var sel = window.getSelection();
+  if (sel.rangeCount === 0) return;
+  
+  var range = sel.getRangeAt(0);
+  if (range.collapsed) return;
+  
+  var container = range.commonAncestorContainer;
+  if (container.nodeType === 3) container = container.parentNode;
+  
+  var walker = document.createTreeWalker(
+    container,
+    NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: function(node) {
+        if (node.nodeType === 3) {
+          return NodeFilter.FILTER_ACCEPT;
+        }
+        var rects = range.getClientRects();
+        for (var i = 0; i < rects.length; i++) {
+          var nodeRect = node.getBoundingClientRect();
+          if (nodeRect.width > 0 && nodeRect.height > 0 &&
+              rects[i].left < nodeRect.right && 
+              rects[i].right > nodeRect.left &&
+              rects[i].top < nodeRect.bottom &&
+              rects[i].bottom > nodeRect.top) {
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        }
+        return NodeFilter.FILTER_REJECT;
+      }
+    }
+  );
+  
+  var nodesToProcess = [];
+  while (walker.nextNode()) {
+    nodesToProcess.push(walker.currentNode);
+  }
+  
+  var formatTags = ['b', 'strong', 'i', 'em', 'u', 's', 'strike', 'mark', 'font', 
+                    'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+  
+  for (var i = nodesToProcess.length - 1; i >= 0; i--) {
+    var node = nodesToProcess[i];
+    if (node.nodeType === 1) {
+      var tagName = node.tagName.toLowerCase();
+      if (formatTags.indexOf(tagName) >= 0) {
+        unwrapNode(node);
+      } else {
+        if (node.hasAttribute('style')) {
+          node.removeAttribute('style');
+        }
+        if (node.hasAttribute('id')) {
+          node.removeAttribute('id');
+        }
+        if (node.hasAttribute('class')) {
+          node.removeAttribute('class');
+        }
+      }
+    }
+  }
+  
+  document.execCommand('removeFormat', false, null);
+  _noteEditor.focus();
+  noteAutoSave();
+}
+
+function unwrapNode(node) {
+  var parent = node.parentNode;
+  if (!parent) return;
+  
+  while (node.firstChild) {
+    parent.insertBefore(node.firstChild, node);
+  }
+  
+  parent.removeChild(node);
+}
+
 function makeNoteDraggable() {
   var header = document.getElementById('noteHeader');
   var panel = _notePanel;
@@ -4040,7 +4229,7 @@ function makeNoteDraggable() {
   var startX, startY, startLeft, startTop;
 
   header.addEventListener('mousedown', function(e) {
-    if (e.target.closest('button') || e.target.closest('.note-mode-switch')) return;
+    if (e.target.closest('button') || e.target.closest('.note-mode-switch') || e.target.closest('.note-clear-text-btn')) return;
     isDragging = true;
     startX = e.clientX;
     startY = e.clientY;
@@ -4178,14 +4367,17 @@ function updateNoteModeUI() {
   tabs.forEach(function(tab) {
     tab.classList.toggle('active', tab.dataset.mode === _noteMode);
   });
+  var clearTextBtn = document.getElementById('noteClearTextBtn');
   if (_noteMode === 'rich') {
     _noteToolbar.style.display = 'flex';
     _noteEditor.style.display = 'block';
     _noteTextarea.style.display = 'none';
+    if (clearTextBtn) clearTextBtn.style.display = 'none';
   } else {
     _noteToolbar.style.display = 'none';
     _noteEditor.style.display = 'none';
     _noteTextarea.style.display = 'block';
+    if (clearTextBtn) clearTextBtn.style.display = 'inline-flex';
   }
 }
 
@@ -4257,8 +4449,13 @@ function noteLink() {
   var urlInput = document.getElementById('noteLinkUrl');
   var sel = window.getSelection();
   var selectedText = '';
+  // 保存滚动位置
+  _noteEditorScrollTop = _noteEditor.scrollTop;
   if (sel.rangeCount > 0) {
-    selectedText = sel.getRangeAt(0).toString();
+    _noteLinkSavedRange = sel.getRangeAt(0).cloneRange();
+    selectedText = _noteLinkSavedRange.toString();
+  } else {
+    _noteLinkSavedRange = null;
   }
   titleInput.value = selectedText;
   urlInput.value = 'https://';
@@ -4275,18 +4472,45 @@ function insertNoteLink() {
   var url = document.getElementById('noteLinkUrl').value.trim();
   closeNoteLinkModal();
   if (!url) return;
+  
   _noteEditor.focus();
-  document.execCommand('createLink', false, url);
-  var links = _noteEditor.querySelectorAll('a');
-  if (links.length > 0) {
-    var lastLink = links[links.length - 1];
-    if (title) {
-      lastLink.textContent = title;
-    } else if (!lastLink.textContent.trim()) {
-      lastLink.textContent = url;
+  
+  if (_noteLinkSavedRange) {
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(_noteLinkSavedRange);
+    
+    // 直接创建链接元素
+    var link = document.createElement('a');
+    link.href = url;
+    link.textContent = title || url;
+    link.target = '_blank';
+    
+    // 删除选区内容并插入链接
+    _noteLinkSavedRange.deleteContents();
+    _noteLinkSavedRange.insertNode(link);
+    
+    // 将光标移到链接后面
+    var newRange = document.createRange();
+    newRange.setStartAfter(link);
+    newRange.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+  } else {
+    // 没有保存选区时，使用 execCommand 创建链接
+    document.execCommand('createLink', false, url);
+    var links = _noteEditor.querySelectorAll('a');
+    if (links.length > 0) {
+      var lastLink = links[links.length - 1];
+      lastLink.textContent = title || url;
+      lastLink.target = '_blank';
     }
   }
-  _noteEditor.focus();
+  
+  // 恢复滚动位置
+  _noteEditor.scrollTop = _noteEditorScrollTop;
+  
+  _noteLinkSavedRange = null;
   noteAutoSave();
 }
 
@@ -4344,6 +4568,7 @@ if (!_syncScroll) {
 // 应用视图模式（任务8）
 applyViewMode();
 initNotePanel();
+updateThemeUI(); // 再次调用以更新笔记面板的夜间模式样式
 statusLeft.textContent = t('statusAutoSave');
 applyLang();
 
