@@ -3891,10 +3891,7 @@ function initNotePanel() {
   if (savedTop) {
     _notePanel.style.top = savedTop + 'px';
   } else {
-    var parentRect = _notePanel.parentElement.getBoundingClientRect();
-    var panelHeight = _notePanel.offsetHeight;
-    var centeredTop = Math.max(60, (parentRect.height - panelHeight) / 2);
-    _notePanel.style.top = centeredTop + 'px';
+    _notePanel.style.top = '60px';
   }
 }
 
