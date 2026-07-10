@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C6 Lite S/N 批次查询工具</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --card-bg: #ffffff;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-light: #dbeafe;
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --success: #16a34a;
+    --success-bg: #f0fdf4;
+    --success-border: #bbf7d0;
+    --error: #dc2626;
+    --error-bg: #fef2f2;
+    --error-border: #fecaca;
+    --warning: #d97706;
+    --warning-bg: #fffbeb;
+    --warning-border: #fde68a;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05);
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .header p {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  /* Search Card */
+  .search-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .search-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .search-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.6;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  #snInput {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: "SF Mono", "Consolas", "Courier New", monospace;
+    letter-spacing: 1px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    text-transform: uppercase;
+  }
+  #snInput:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+  }
+  #snInput::placeholder {
+    color: #cbd5e1;
+    text-transform: none;
+    letter-spacing: 0;
+    font-family: inherit;
+  }
+
+  .btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--primary-hover); }
+
+  .btn-scan {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1.5px solid var(--success-border);
+  }
+  .btn-scan:hover { background: #dcfce7; }
+
+  .btn-scan.active {
+    background: var(--success);
+    color: #fff;
+  }
+
+  .input-meta {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    min-height: 18px;
+  }
+  .input-meta .truncated {
+    color: var(--warning);
+    font-weight: 500;
+  }
+
+  /* Scanner modal */
+  .scanner-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+  .scanner-overlay.active { display: flex; }
+
+  .scanner-box {
+    background: #fff;
+    border-radius: var(--radius);
+    padding: 20px;
+    width: 100%;
+    max-width: 480px;
+  }
+  .scanner-box h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .scanner-box h3 button {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    line-height: 1;
+  }
+  #qr-reader {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  #qr-reader video {
+    width: 100% !important;
+    border-radius: 8px;
+  }
+  .scanner-hint {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+
+  /* Result */
+  .result-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .result-card.visible { display: block; }
+
+  .result-header {
+    padding: 16px 24px;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .result-header .icon {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .result-header .title-block {
+    flex: 1;
+  }
+  .result-header .title-block h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .result-header .title-block .subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .hw-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .hw-badge.v2 {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1.5px solid #fcd34d;
+  }
+  .hw-badge.v1 {
+    background: #e0e7ff;
+    color: #3730a3;
+    border: 1.5px solid #a5b4fc;
+  }
+
+  .result-body {
+    padding: 0;
+  }
+  .result-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .result-table tr {
+    border-bottom: 1px solid var(--border);
+  }
+  .result-table tr:last-child { border-bottom: none; }
+  .result-table td {
+    padding: 12px 24px;
+    font-size: 14px;
+    vertical-align: top;
+  }
+  .result-table td.label {
+    width: 140px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .result-table td.value {
+    color: var(--text);
+    font-weight: 500;
+    word-break: break-all;
+  }
+  .result-table td.value.mono {
+    font-family: "SF Mono", "Consolas", "Courier New", monospace;
+    letter-spacing: 0.5px;
+  }
+
+  .description-box {
+    padding: 12px 24px 16px;
+  }
+  .description-box .label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .description-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .desc-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #475569;
+    font-weight: 500;
+  }
+
+  /* No result */
+  .no-result {
+    background: var(--error-bg);
+    border: 1.5px solid var(--error-border);
+    border-radius: var(--radius);
+    padding: 32px 24px;
+    text-align: center;
+    display: none;
+  }
+  .no-result.visible { display: block; }
+  .no-result .icon {
+    font-size: 36px;
+    margin-bottom: 10px;
+  }
+  .no-result h3 {
+    font-size: 16px;
+    color: var(--error);
+    margin-bottom: 6px;
+  }
+  .no-result p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  .no-result .searched-key {
+    margin-top: 10px;
+    font-family: "SF Mono", "Consolas", monospace;
+    font-size: 13px;
+    background: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    display: inline-block;
+    border: 1px solid var(--border);
+  }
+
+  /* History */
+  .history-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: none;
+  }
+  .history-card.visible { display: block; }
+  .history-card h3 {
+    padding: 16px 24px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+  }
+  .history-list {
+    max-height: 280px;
+    overflow-y: auto;
+  }
+  .history-item {
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-item:hover { background: #f8fafc; }
+  .history-item .left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .history-item .sn {
+    font-family: "SF Mono", "Consolas", monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .history-item .time {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .history-item .hw-tag {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .hw-tag.v2 { background: #fef3c7; color: #92400e; }
+  .hw-tag.v1 { background: #e0e7ff; color: #3730a3; }
+  .history-clear {
+    padding: 8px 24px 12px;
+    text-align: right;
+  }
+  .history-clear button {
+    background: none;
+    border: none;
+    font-size: 12px;
+    color: var(--error);
+    cursor: pointer;
+  }
+  .history-clear button:hover { text-decoration: underline; }
+
+  /* Data count badge */
+  .data-badge {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  @media (max-width: 600px) {
+    .input-row { flex-direction: column; }
+    .btn { width: 100%; justify-content: center; }
+    .result-table td.label { width: 100px; }
+    .header h1 { font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <h1>C6 Lite S/N 批次查询工具</h1>
+    <p>通过 S/N 前 12 位（Batch No.）查询对应硬件版本及订单信息</p>
+    <div class="data-badge">已加载 <span id="dataCount">0</span> 条工单数据</div>
+  </div>
+
+  <!-- Search Card -->
+  <div class="search-card">
+    <label class="search-label" for="snInput">S/N 或 Batch No.</label>
+    <p class="search-hint">
+      支持三种输入方式：<br>
+      1. 直接输入 S/N 前 12 位（Batch No. 工单号）<br>
+      2. 输入完整 S/N 序列号，系统自动截取前 12 位查询<br>
+      3. 点击「扫码」调用摄像头扫描条形码
+    </p>
+    <div class="input-row">
+      <input type="text" id="snInput" placeholder="如 WP26050086 或完整 S/N" autocomplete="off" spellcheck="false">
+      <button class="btn btn-primary" id="searchBtn" onclick="doSearch()">查询</button>
+      <button class="btn btn-scan" id="scanBtn" onclick="toggleScanner()">📷 扫码</button>
+    </div>
+    <div class="input-meta" id="inputMeta"></div>
+  </div>
+
+  <!-- Result Card -->
+  <div class="result-card" id="resultCard">
+    <div class="result-header">
+      <div class="icon">✓</div>
+      <div class="title-block">
+        <h2 id="resultTitle">查询结果</h2>
+        <div class="subtitle" id="resultSubtitle"></div>
+      </div>
+      <div class="hw-badge" id="hwBadge"></div>
+    </div>
+    <div class="result-body">
+      <table class="result-table">
+        <tr><td class="label">PI NO.</td><td class="value mono" id="r-pi"></td></tr>
+        <tr><td class="label">Shipping Date</td><td class="value" id="r-date"></td></tr>
+        <tr><td class="label">Year / Month</td><td class="value" id="r-ym"></td></tr>
+        <tr><td class="label">Client</td><td class="value" id="r-client"></td></tr>
+        <tr><td class="label">Part Number</td><td class="value mono" id="r-part"></td></tr>
+        <tr><td class="label">Model on Label</td><td class="value" id="r-model"></td></tr>
+        <tr><td class="label">Batch No.</td><td class="value mono" id="r-batch"></td></tr>
+        <tr><td class="label">Shipping No.</td><td class="value mono" id="r-ship"></td></tr>
+        <tr><td class="label">Qty</td><td class="value" id="r-qty"></td></tr>
+      </table>
+      <div class="description-box">
+        <div class="label">Description（产品配置详情）</div>
+        <div class="description-tags" id="r-desc-tags"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Result -->
+  <div class="no-result" id="noResult">
+    <div class="icon">🔍</div>
+    <h3>未找到匹配记录</h3>
+    <p>请检查输入的 S/N 是否正确，或联系管理员确认数据是否需要更新。</p>
+    <div class="searched-key" id="searchedKey"></div>
+  </div>
+
+  <!-- History -->
+  <div class="history-card" id="historyCard">
+    <h3>最近查询记录</h3>
+    <div class="history-list" id="historyList"></div>
+    <div class="history-clear">
+      <button onclick="clearHistory()">清空记录</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scanner Overlay -->
+<div class="scanner-overlay" id="scannerOverlay">
+  <div class="scanner-box">
+    <h3>
+      <span>📷 条形码扫描</span>
+      <button onclick="closeScanner()">✕</button>
+    </h3>
+    <div id="qr-reader"></div>
+    <p class="scanner-hint">将条形码对准摄像头，识别后自动填入</p>
+  </div>
+</div>
+
+<script>
+// ====== Data from Excel ======
+const BATCH_DATA = [
+  {"PI NO.":"260317073","Shipping date":"2026-06-23","Year":"2026","Month":"6","Client":"3914","Part numbers":"5154022100167","Description":"C6 Lite2.0|V1.0|一体|双目|亚欧版|E0001|内置GPS模块（惯导）|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|对内MIPI|内置DSC|1080P|2.2mm|带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|无SD卡|锐明英文LOGO|通用|GD单片机|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"500","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"WP26050086","Shipping No.":"CH260615052"},
+  {"PI NO.":"260317072","Shipping date":"2026-06-23","Year":"2026","Month":"6","Client":"3914","Part numbers":"5154022100167","Description":"C6 Lite2.0|V1.0|一体|双目|亚欧版|E0001|内置GPS模块（惯导）|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|对内MIPI|内置DSC|1080P|2.2mm|带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|无SD卡|锐明英文LOGO|通用|GD单片机|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"500","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"WP26050089","Shipping No.":"CH260615047"},
+  {"PI NO.":"260216001","Shipping date":"2026-05-13","Year":"2026","Month":"5","Client":"3914","Part numbers":"5154022100064","Description":"C6 Lite2.0|V1.0|一体|单目|亚欧版|E0001|内置GPS模块|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|无对内|外置AHD|N|N|不带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|无SD卡|锐明英文LOGO|通用|N|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"100","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"WP26030097","Shipping No.":"CH260427079"},
+  {"PI NO.":"260216002","Shipping date":"2026-04-23","Year":"2026","Month":"4","Client":"3914","Part numbers":"5154022100064","Description":"C6 Lite2.0|V1.0|一体|单目|亚欧版|E0001|内置GPS模块|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|无对内|外置AHD|N|N|不带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|无SD卡|锐明英文LOGO|通用|N|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"100","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"WP26030094","Shipping No.":"CH260417018"},
+  {"PI NO.":"251219092","Shipping date":"2026-03-30","Year":"2026","Month":"3","Client":"3914","Part numbers":"5154022100063","Description":"C6 Lite2.0|V1.0|一体|双目|亚欧版|E0001|内置GPS模块|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|对内MIPI|内置DSC|1080P|2.2mm|带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|无SD卡|锐明英文LOGO|通用|N|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"200","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"WP26020091","Shipping No.":"CH260325011"},
+  {"PI NO.":"251015007","Shipping date":"2025-12-19","Year":"2025","Month":"12","Client":"3914","Part numbers":"5154022100063","Description":"C6 Lite2.0|V1.0|一体|双目|亚欧版|E0001|内置GPS模块|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|对内MIPI|内置DSC|1080P|2.2mm|带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|无SD卡|锐明英文LOGO|通用|N|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"300","Model on Lable":"C6 Lite2.0","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"WP25110290","Shipping No.":"CH251218012"},
+  {"PI NO.":"250109130","Shipping date":"2025-04-12","Year":"2025","Month":"4","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"150","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP25020306","Shipping No.":"CH250326113"},
+  {"PI NO.":"250219112","Shipping date":"2025-04-03","Year":"2025","Month":"4","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"200","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP25020313","Shipping No.":"CH250325012"},
+  {"PI NO.":"250219111","Shipping date":"2025-03-31","Year":"2025","Month":"3","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"400","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP25020316","Shipping No.":"CH250325009"},
+  {"PI NO.":"250109130","Shipping date":"2025-03-27","Year":"2025","Month":"3","Client":"3914","Part numbers":"5154022100064","Description":"C6 Lite2.0|V1.0|一体|单目|亚欧版|E0001|内置GPS模块|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|无对内|外置AHD|N|N|不带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|无SD卡|锐明英文LOGO|通用|N|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"50","Model on Lable":"C6 Lite2.0","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"WP25020305","Shipping No.":"CH250321060"},
+  {"PI NO.":"241125112","Shipping date":"2024-12-18","Year":"2024","Month":"12","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"200","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP24100157","Shipping No.":"CH241213017"},
+  {"PI NO.":"241024116","Shipping date":"2024-12-18","Year":"2024","Month":"12","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"200","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP24110185","Shipping No.":"CH241213017"},
+  {"PI NO.":"240826117","Shipping date":"2024-09-30","Year":"2024","Month":"9","Client":"3914","Part numbers":"5154022100010","Description":"C6 Lite|2.0|V1.0|一体|双目|亚欧版|E0001|内置GPS模块|带4G(EC25-EC)|带WIFI|带蓝牙|带六轴|对内MIPI|内置DSC|1080P|2.2mm|带红外|带音频|对外MIPI|1080P|4mm|支持2路 Micro SD卡|2张128G|锐明英文LOGO|通用|带电源散线|RS232版本|带独立包装|非虚拟格式","Qty":"2","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite2.0","Batch No.--工单":"ZP24090117","Shipping No.":"CH240924083"},
+  {"PI NO.":"240826117","Shipping date":"2024-09-30","Year":"2024","Month":"9","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"300","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP24090140","Shipping No.":"CH240924083"},
+  {"PI NO.":"240813030","Shipping date":"2024-09-26","Year":"2024","Month":"9","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"100","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP24070195","Shipping No.":"CH240924015"},
+  {"PI NO.":"240813030","Shipping date":"2024-09-14","Year":"2024","Month":"9","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"100","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP24070195","Shipping No.":"CH240910077"},
+  {"PI NO.":"240507103","Shipping date":"2024-06-28","Year":"2024","Month":"6","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"200","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP24050349","Shipping No.":"CH240626072"},
+  {"PI NO.":"240123110","Shipping date":"2024-04-07","Year":"2024","Month":"4","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"500","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP24020204","Shipping No.":"CH240326004"},
+  {"PI NO.":"230809086","Shipping date":"2023-10-19","Year":"2023","Month":"10","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"500","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP23090115","Shipping No.":"CH231013011"},
+  {"PI NO.":"230613111","Shipping date":"2023-09-27","Year":"2023","Month":"9","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"250","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP23070117","Shipping No.":"CH230926005"},
+  {"PI NO.":"230512101","Shipping date":"2023-07-18","Year":"2023","Month":"7","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"150","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP23060031","Shipping No.":"CH230713020"},
+  {"PI NO.":"230526169","Shipping date":"2023-06-16","Year":"2023","Month":"6","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"500","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP23060022","Shipping No.":"CH230614006"},
+  {"PI NO.":"230411104","Shipping date":"2023-06-16","Year":"2023","Month":"6","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"10","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP23050073","Shipping No.":"CH230614006"},
+  {"PI NO.":"221107055","Shipping date":"2023-01-06","Year":"2023","Month":"1","Client":"3914","Part numbers":"5130022100016","Description":"C6 Lite|1.0|232424021225361311521002|E0001|双路|无扩展网络接口|内置GPS模块|带WIFI|带蓝牙|带六轴|带4G(EC25-EC)|对内IPC|无分体|1080P|2.2mm|带红外|带音频|对外IPC|1080P|2.6MM|支持2路 Micro SD卡|锐明英文LOGO|通用|不带SD卡|带散线|GD单片机|带独立包装|非虚拟格式","Qty":"10","Model on Lable":"C6 Lite","Corresponding hardware version":"C6 Lite","Batch No.--工单":"WP22110097","Shipping No.":"CH230104032"}
+];
+
+// ====== Search Logic ======
+function searchByBatchNo(input) {
+  if (!input) return [];
+  // Clean input: remove whitespace
+  let cleaned = input.trim().toUpperCase();
+  // Take first 12 characters as the search key
+  let searchKey = cleaned.substring(0, 12);
+
+  let results = [];
+
+  for (let row of BATCH_DATA) {
+    let batchNo = (row['Batch No.--工单'] || '').toUpperCase().trim();
+    let shipNo = (row['Shipping No.'] || '').toUpperCase().trim();
+
+    // Match strategy:
+    // 1. Exact match: searchKey === batchNo
+    // 2. Prefix match: searchKey starts with batchNo (input is longer S/N, batchNo is prefix)
+    // 3. Prefix match: batchNo starts with searchKey (input is shorter, batchNo contains it)
+    // Also try Shipping No. for flexibility
+    let matched = false;
+
+    if (batchNo && (searchKey === batchNo || searchKey.startsWith(batchNo) || batchNo.startsWith(searchKey))) {
+      matched = true;
+    }
+    if (!matched && shipNo && (searchKey === shipNo || searchKey.startsWith(shipNo) || shipNo.startsWith(searchKey))) {
+      matched = true;
+    }
+
+    if (matched) {
+      results.push(row);
+    }
+  }
+
+  // Deduplicate by Batch No. + Shipping No. (handle duplicate batch numbers with different shipping dates)
+  let seen = new Set();
+  let uniqueResults = [];
+  for (let r of results) {
+    let key = r['Batch No.--工单'] + '|' + r['Shipping No.'] + '|' + r['Shipping date'];
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueResults.push(r);
+    }
+  }
+
+  return uniqueResults;
+}
+
+function displayResult(results, originalInput) {
+  const resultCard = document.getElementById('resultCard');
+  const noResult = document.getElementById('noResult');
+  let searchKey = originalInput.trim().toUpperCase().substring(0, 12);
+
+  if (results.length === 0) {
+    resultCard.classList.remove('visible');
+    noResult.classList.add('visible');
+    document.getElementById('searchedKey').textContent = '查询关键字: ' + searchKey;
+    return;
+  }
+
+  noResult.classList.remove('visible');
+  resultCard.classList.add('visible');
+
+  // If multiple results, show all; for now show the first (most relevant) but note multiple
+  let row = results[0];
+  let hw = row['Corresponding hardware version'] || '';
+  let isV2 = hw.includes('2.0');
+  let batchNo = row['Batch No.--工单'] || '';
+
+  // Header
+  document.getElementById('resultTitle').textContent = batchNo;
+  let subtitleParts = [];
+  if (results.length > 1) {
+    subtitleParts.push('找到 ' + results.length + ' 条匹配记录');
+  }
+  subtitleParts.push('PI: ' + row['PI NO.']);
+  document.getElementById('resultSubtitle').textContent = subtitleParts.join(' · ');
+
+  // HW badge
+  let hwBadge = document.getElementById('hwBadge');
+  hwBadge.textContent = hw;
+  hwBadge.className = 'hw-badge ' + (isV2 ? 'v2' : 'v1');
+
+  // Fields
+  document.getElementById('r-pi').textContent = row['PI NO.'] || '-';
+  document.getElementById('r-date').textContent = row['Shipping date'] || '-';
+  document.getElementById('r-ym').textContent = (row['Year'] || '-') + ' / ' + (row['Month'] || '-') + ' 月';
+  document.getElementById('r-client').textContent = row['Client'] || '-';
+  document.getElementById('r-part').textContent = row['Part numbers'] || '-';
+  document.getElementById('r-model').textContent = row['Model on Lable'] || '-';
+  document.getElementById('r-batch').textContent = row['Batch No.--工单'] || '-';
+  document.getElementById('r-ship').textContent = row['Shipping No.'] || '-';
+  document.getElementById('r-qty').textContent = row['Qty'] || '-';
+
+  // Description tags
+  let desc = row['Description'] || '';
+  let descParts = desc.split('|').filter(p => p.trim());
+  let tagsHtml = descParts.map(p => '<span class="desc-tag">' + escapeHtml(p.trim()) + '</span>').join('');
+  document.getElementById('r-desc-tags').innerHTML = tagsHtml;
+
+  // If multiple results, append additional info
+  if (results.length > 1) {
+    let extraHtml = '<div style="margin-top:12px;padding:10px;background:#fffbeb;border-radius:6px;font-size:13px;color:#92400e;">';
+    extraHtml += '⚠ 共匹配 ' + results.length + ' 条记录，当前显示第一条。其他匹配的 Batch No.: ';
+    extraHtml += results.slice(1).map(r => r['Batch No.--工单']).join(', ');
+    extraHtml += '</div>';
+    let existing = document.getElementById('r-desc-tags');
+    let warnDiv = document.getElementById('multiWarn');
+    if (warnDiv) warnDiv.remove();
+    warnDiv = document.createElement('div');
+    warnDiv.id = 'multiWarn';
+    warnDiv.innerHTML = extraHtml;
+    existing.parentElement.appendChild(warnDiv);
+  } else {
+    let warnDiv = document.getElementById('multiWarn');
+    if (warnDiv) warnDiv.remove();
+  }
+
+  // Add to history
+  addToHistory(originalInput.trim().toUpperCase(), hw, batchNo);
+}
+
+function escapeHtml(str) {
+  let div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ====== Search Actions ======
+function doSearch() {
+  let input = document.getElementById('snInput').value;
+  if (!input.trim()) {
+    showInputMeta('请输入 S/N 或 Batch No.', 'error');
+    return;
+  }
+
+  let cleaned = input.trim().toUpperCase();
+  let searchKey = cleaned.substring(0, 12);
+  let results = searchByBatchNo(cleaned);
+
+  if (cleaned.length > 12) {
+    showInputMeta('已自动截取前 12 位: ' + searchKey, 'truncated');
+  } else if (cleaned.length < 10) {
+    showInputMeta('提示: Batch No. 通常为 10 位（如 WP26050086），当前输入 ' + cleaned.length + ' 位', 'info');
+  } else {
+    showInputMeta('查询关键字: ' + searchKey, 'info');
+  }
+
+  displayResult(results, input);
+}
+
+function showInputMeta(msg, type) {
+  let el = document.getElementById('inputMeta');
+  if (type === 'truncated') {
+    el.innerHTML = '<span class="truncated">' + msg + '</span>';
+  } else if (type === 'error') {
+    el.innerHTML = '<span style="color:var(--error);">' + msg + '</span>';
+  } else {
+    el.innerHTML = '<span>' + msg + '</span>';
+  }
+}
+
+// Enter key to search
+document.getElementById('snInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    doSearch();
+  }
+});
+
+// Real-time input meta
+document.getElementById('snInput').addEventListener('input', function(e) {
+  let val = e.target.value.trim().toUpperCase();
+  if (val.length > 12) {
+    showInputMeta('输入 ' + val.length + ' 位，将截取前 12 位查询: ' + val.substring(0, 12), 'truncated');
+  } else if (val.length > 0) {
+    showInputMeta('当前输入: ' + val + ' (' + val.length + ' 位)', 'info');
+  } else {
+    showInputMeta('', '');
+  }
+});
+
+// ====== Scanner ======
+let html5QrCode = null;
+let scannerActive = false;
+
+function toggleScanner() {
+  if (scannerActive) {
+    closeScanner();
+  } else {
+    openScanner();
+  }
+}
+
+function openScanner() {
+  document.getElementById('scannerOverlay').classList.add('active');
+  document.getElementById('scanBtn').classList.add('active');
+  document.getElementById('scanBtn').innerHTML = '⏹ 关闭';
+
+  html5QrCode = new Html5Qrcode("qr-reader");
+
+  // Try to start camera with back camera preferred
+  const config = {
+    fps: 10,
+    qrbox: { width: 250, height: 150 },
+    aspectRatio: 1.333,
+    formatsToSupport: [
+      Html5QrcodeSupportedFormats.CODE_128,
+      Html5QrcodeSupportedFormats.CODE_39,
+      Html5QrcodeSupportedFormats.CODE_93,
+      Html5QrcodeSupportedFormats.EAN_13,
+      Html5QrcodeSupportedFormats.EAN_8,
+      Html5QrcodeSupportedFormats.UPC_A,
+      Html5QrcodeSupportedFormats.UPC_E,
+      Html5QrcodeSupportedFormats.QR_CODE,
+      Html5QrcodeSupportedFormats.ITF,
+      Html5QrcodeSupportedFormats.CODABAR
+    ]
+  };
+
+  Html5Qrcode.getCameras().then(cameras => {
+    if (!cameras || cameras.length === 0) {
+      alert("未检测到摄像头设备");
+      closeScanner();
+      return;
+    }
+
+    // Prefer back/rear camera
+    let cameraId = cameras[0].id;
+    for (let cam of cameras) {
+      if (cam.label && (cam.label.toLowerCase().includes('back') || cam.label.toLowerCase().includes('rear') || cam.label.toLowerCase().includes('环境'))) {
+        cameraId = cam.id;
+        break;
+      }
+    }
+
+    html5QrCode.start(
+      cameraId,
+      config,
+      onScanSuccess,
+      function(errorMessage) {
+        // Per-frame error, ignore
+      }
+    ).catch(err => {
+      alert("摄像头启动失败: " + err);
+      closeScanner();
+    });
+
+    scannerActive = true;
+  }).catch(err => {
+    alert("无法访问摄像头: " + err + "\n请确保使用 HTTPS 或 localhost 访问，并授权摄像头权限。");
+    closeScanner();
+  });
+}
+
+function onScanSuccess(decodedText, decodedResult) {
+  // Fill the input and search
+  document.getElementById('snInput').value = decodedText;
+  closeScanner();
+  doSearch();
+}
+
+function closeScanner() {
+  document.getElementById('scannerOverlay').classList.remove('active');
+  document.getElementById('scanBtn').classList.remove('active');
+  document.getElementById('scanBtn').innerHTML = '📷 扫码';
+
+  if (html5QrCode && scannerActive) {
+    html5QrCode.stop().then(() => {
+      html5QrCode.clear();
+      html5QrCode = null;
+    }).catch(() => {
+      html5QrCode = null;
+    });
+    scannerActive = false;
+  }
+}
+
+// ====== History ======
+function getHistory() {
+  try {
+    return JSON.parse(localStorage.getItem('c6lite_sn_history') || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function addToHistory(input, hw, batchNo) {
+  let history = getHistory();
+  // Remove if same batchNo exists
+  history = history.filter(h => h.batchNo !== batchNo);
+  // Add to front
+  history.unshift({
+    input: input.substring(0, 20),
+    hw: hw,
+    batchNo: batchNo,
+    time: new Date().toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+  });
+  // Keep max 20
+  history = history.slice(0, 20);
+  localStorage.setItem('c6lite_sn_history', JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory() {
+  let history = getHistory();
+  let card = document.getElementById('historyCard');
+  let list = document.getElementById('historyList');
+
+  if (history.length === 0) {
+    card.classList.remove('visible');
+    return;
+  }
+
+  card.classList.add('visible');
+  list.innerHTML = history.map(h => {
+    let isV2 = h.hw.includes('2.0');
+    return '<div class="history-item" onclick="document.getElementById(\'snInput\').value=\'' + h.input + '\';doSearch();">' +
+      '<div class="left">' +
+        '<span class="sn">' + escapeHtml(h.input) + '</span>' +
+        '<span class="time">' + h.time + '</span>' +
+      '</div>' +
+      '<span class="hw-tag ' + (isV2 ? 'v2' : 'v1') + '">' + escapeHtml(h.hw) + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+function clearHistory() {
+  localStorage.removeItem('c6lite_sn_history');
+  renderHistory();
+}
+
+// ====== Init ======
+document.getElementById('dataCount').textContent = BATCH_DATA.length;
+renderHistory();
+</script>
+</body>
+</html>
