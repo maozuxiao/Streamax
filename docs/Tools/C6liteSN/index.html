@@ -205,6 +205,24 @@
     width: 100%;
     border-radius: 8px;
     overflow: hidden;
+    position: relative;
+  }
+  #qr-reader::after {
+    content: '';
+    position: absolute;
+    left: 5%; right: 5%;
+    top: 50%;
+    height: 2px;
+    background: rgba(220, 38, 38, 0.6);
+    box-shadow: 0 0 4px rgba(220, 38, 38, 0.4);
+    animation: scanLine 2s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 10;
+    border-radius: 1px;
+  }
+  @keyframes scanLine {
+    0%, 100% { top: 35%; opacity: 0.3; }
+    50% { top: 65%; opacity: 1; }
   }
   #qr-reader video {
     width: 100% !important;
@@ -538,6 +556,9 @@
     </h3>
     <div id="qr-reader"></div>
     <p class="scanner-hint">将条形码对准摄像头，识别后自动填入</p>
+    <div style="margin-top:10px;text-align:center;">
+      <button class="btn btn-primary" onclick="manualInputFromScanner()" style="font-size:13px;padding:8px 16px;">✏ 手动输入 S/N</button>
+    </div>
   </div>
 </div>
 
@@ -807,9 +828,14 @@ function switchCamera() {
 
 function startCameraWithId(cameraId) {
   const config = {
-    fps: 10,
-    qrbox: { width: 250, height: 150 },
+    fps: 15,
+    qrbox: { width: 300, height: 200 },
     aspectRatio: 1.333,
+    videoConstraints: {
+      facingMode: "environment",
+      width: { ideal: 1920 },
+      height: { ideal: 1080 }
+    },
     formatsToSupport: [
       Html5QrcodeSupportedFormats.CODE_128,
       Html5QrcodeSupportedFormats.CODE_39,
@@ -895,6 +921,15 @@ function onScanSuccess(decodedText, decodedResult) {
   document.getElementById('snInput').value = decodedText;
   closeScanner();
   doSearch();
+}
+
+function manualInputFromScanner() {
+  let val = prompt('请输入 S/N 或 Batch No.（可查看条形码下方的印刷文字）：');
+  if (val !== null && val.trim() !== '') {
+    document.getElementById('snInput').value = val.trim();
+    closeScanner();
+    doSearch();
+  }
 }
 
 function closeScanner() {
