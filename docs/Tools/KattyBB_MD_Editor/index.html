@@ -2776,6 +2776,8 @@ function loadHighlightJS(callback) {
   script.onload = function() {
     _hljsLoaded = true;
     _hljsLoading = false;
+    // CDN 异步加载完成后重新渲染，让代码块获得语法高亮
+    updatePreview();
     if (callback) callback();
   };
   script.onerror = function() {
@@ -3722,6 +3724,9 @@ var everforestCompat = `
   --code-bg: var(--ef-bg-2);
   --code-text: var(--ef-fg-muted);
   --code-ink: var(--ef-fg);
+  --code-dot-red: #e68183;
+  --code-dot-yellow: #d8a657;
+  --code-dot-green: #a7c080;
   --space-unit: 8px;
   --space-xs: calc(var(--space-unit) * 1);
   --space-sm: calc(var(--space-unit) * 1.5);
