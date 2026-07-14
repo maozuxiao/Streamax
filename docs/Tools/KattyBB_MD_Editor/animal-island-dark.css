@@ -672,6 +672,55 @@ button.primary:hover {
     box-shadow: 0 1px 0 0 var(--ai-shadow-button);
 }
 
+/* Format toolbar — larger icons for better usability */
+.fmt-toolbar .fmt-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+    background: var(--ai-bg-paper);
+    border: 2px solid var(--ai-border-light);
+    border-radius: var(--ai-radius-sm);
+    box-shadow: 0 3px 0 0 var(--ai-shadow-button);
+    color: var(--ai-text-main);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.fmt-toolbar .fmt-btn:hover {
+    background: var(--ai-bg-soft);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 0 0 var(--ai-shadow-button);
+    color: var(--ai-text-body);
+}
+.fmt-toolbar .fmt-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 0 var(--ai-shadow-button);
+}
+.fmt-toolbar .fmt-btn svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+}
+.fmt-toolbar .fmt-btn .fmt-label {
+    font-size: 16px;
+    font-weight: 800;
+}
+.fmt-toolbar .fmt-btn.active {
+    background: var(--ai-primary);
+    color: #0d1413;
+    border-color: var(--ai-primary-active);
+    box-shadow: 0 3px 0 0 var(--ai-primary-active);
+}
+
+/* Toolbar dropdown items */
+.fmt-item {
+    padding: 8px 14px;
+    font-size: 14px;
+}
+.fmt-item-key {
+    font-size: 12px;
+}
+
 /* =========================================================
    Footer / status bar
    ========================================================= */
