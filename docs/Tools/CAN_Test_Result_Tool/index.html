@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAN 数据字段映射验证工具</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  background: #f0f2f5;
+  min-height: 100vh;
+  color: #333;
+}
+.header {
+  background: linear-gradient(135deg, #1a73e8, #0d47a1);
+  color: #fff;
+  padding: 28px 40px;
+  text-align: center;
+}
+.header h1 { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+.header p { font-size: 14px; opacity: 0.85; }
+
+.container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+
+.drop-zone {
+  border: 3px dashed #b0bec5;
+  border-radius: 16px;
+  padding: 60px 40px;
+  text-align: center;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 24px;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: #1a73e8;
+  background: #e8f0fe;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(26,115,232,0.12);
+}
+.drop-zone .icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+.drop-zone .title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a3a5c;
+  margin-bottom: 8px;
+}
+.drop-zone .subtitle {
+  font-size: 14px;
+  color: #78909c;
+}
+.drop-zone.file-loaded {
+  border-color: #43a047;
+  background: #e8f5e9;
+}
+
+.file-info {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 28px;
+  margin-bottom: 24px;
+  display: none;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border-left: 4px solid #1a73e8;
+}
+.file-info.show { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.file-info .file-icon { font-size: 32px; }
+.file-info .file-name { font-weight: 600; font-size: 15px; color: #1a3a5c; }
+.file-info .file-meta { font-size: 13px; color: #78909c; }
+.file-info .badge {
+  background: #e8f5e9; color: #2e7d32;
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+}
+
+.result-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  overflow: hidden;
+  display: none;
+}
+.result-card.show { display: block; }
+
+.result-header {
+  background: #f8f9fa;
+  padding: 16px 28px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.result-header h3 { font-size: 16px; font-weight: 600; color: #1a3a5c; }
+.result-stats { display: flex; gap: 20px; font-size: 13px; }
+.result-stats .stat { display: flex; align-items: center; gap: 6px; }
+.stat-ok { color: #2e7d32; }
+.stat-fail { color: #c62828; }
+.stat-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.stat-dot.ok { background: #43a047; }
+.stat-dot.fail { background: #e53935; }
+
+.result-body { padding: 8px 0; }
+.result-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 28px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.15s;
+}
+.result-row:last-child { border-bottom: none; }
+.result-row:hover { background: #f8f9fa; }
+.result-row .index {
+  width: 32px; font-size: 12px; color: #90a4ae; text-align: right;
+  margin-right: 16px; flex-shrink: 0;
+}
+.result-row .field-name {
+  flex: 1; font-size: 14px; font-weight: 500; color: #333;
+}
+.result-row .mapped-from {
+  flex: 1; font-size: 13px; color: #78909c;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.result-row .valid-count {
+  width: 80px; text-align: center; font-size: 13px; color: #78909c;
+  flex-shrink: 0;
+}
+.result-row .status {
+  width: 50px; text-align: center; font-size: 18px; flex-shrink: 0;
+}
+.status.ok { color: #43a047; }
+.status.fail { color: #e53935; }
+
+.result-footer {
+  background: #f8f9fa;
+  padding: 14px 28px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.result-footer .summary-text { font-size: 13px; color: #546e7a; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 24px; border: none; border-radius: 8px;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary { background: #1a73e8; color: #fff; }
+.btn-primary:hover { background: #1557b0; }
+.btn-outline { background: #fff; color: #1a73e8; border: 1.5px solid #1a73e8; }
+.btn-outline:hover { background: #e8f0fe; }
+.btn-copy { background: #fff; color: #333; border: 1.5px solid #cfd8dc; }
+.btn-copy:hover { background: #f5f5f5; border-color: #90a4ae; }
+.btn-copy.copied { background: #e8f5e9; color: #2e7d32; border-color: #43a047; }
+
+.btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.legend {
+  display: flex; gap: 24px; align-items: center;
+  font-size: 13px;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+
+.error-msg {
+  background: #ffebee; color: #c62828; border-radius: 10px;
+  padding: 16px 24px; margin-bottom: 24px;
+  display: none; font-size: 14px;
+}
+.error-msg.show { display: block; }
+
+input[type="file"] { display: none; }
+
+@media (max-width: 768px) {
+  .header { padding: 20px; }
+  .header h1 { font-size: 20px; }
+  .container { padding: 16px; }
+  .drop-zone { padding: 40px 20px; }
+  .result-row { flex-wrap: wrap; padding: 10px 16px; }
+  .result-row .mapped-from, .result-row .valid-count { display: none; }
+  .result-header { flex-direction: column; gap: 8px; align-items: flex-start; }
+  .btn-group { width: 100%; }
+  .btn-group .btn { flex: 1; justify-content: center; padding: 10px 12px; font-size: 13px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>CAN 数据字段映射验证工具</h1>
+  <p>拖拽上传 Excel 文件，自动完成字段映射与数据有效性检查</p>
+</div>
+
+<div class="container">
+  <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <div class="icon">&#128196;</div>
+    <div class="title">拖拽 Excel 文件到此处</div>
+    <div class="subtitle">支持 .xlsx / .xls 格式，或点击选择文件</div>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="file-info" id="fileInfo">
+    <div class="file-icon">&#128202;</div>
+    <div>
+      <div class="file-name" id="fileName"></div>
+      <div class="file-meta" id="fileMeta"></div>
+    </div>
+    <div class="badge" id="fileBadge"></div>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <div class="result-header">
+      <h3>字段映射验证结果</h3>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div class="result-stats" id="resultStats"></div>
+        <div class="btn-group" id="resultActions" style="display:none;">
+          <button class="btn btn-copy" id="btnCopy" onclick="copyResults()" title="复制结果到剪贴板">
+            <span>&#128203;</span> 复制结果
+          </button>
+          <button class="btn btn-outline" id="btnExport" onclick="exportExcel()" title="导出为 Excel 文件">
+            <span>&#128190;</span> 导出 Excel
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="result-body" id="resultBody"></div>
+    <div class="result-footer">
+      <div class="legend">
+        <div class="legend-item"><span class="stat-dot ok"></span> 有有效数据</div>
+        <div class="legend-item"><span class="stat-dot fail"></span> 无有效数据</div>
+      </div>
+      <span class="summary-text" id="summaryText"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ 字段映射配置 ============
+const FIELD_MAPPING = [
+  { group1: 'Speed',                         group2: ['OBD speed(km/h)'] },
+  { group1: 'Odometer',                      group2: ['Total Mileage(km)'] },
+  { group1: 'Left/Right turn',               group2: ['Steering Angle(\u00b0)', 'Vehicle Steering Status'] },
+  { group1: 'Brake',                         group2: ['Brake (Foot Brake)'] },
+  { group1: 'Steering angle',                group2: ['Steering Angle(\u00b0)'] },
+  { group1: 'Driver Seatbelt',               group2: ["Driver's Seatbelt"] },
+  { group1: 'High beam',                     group2: ['High Beam'] },
+  { group1: 'DTC',                           group2: ['Disturbance Code'] },
+  { group1: 'Ignition state',                group2: ['Ignition Status'] },
+  { group1: 'Engine speed',                  group2: ['Engine Speed(rpm)'] },
+  { group1: 'Average fuel consumption',      group2: ['Average Fuel Consumption(km/L)'] },
+  { group1: 'Gear (D/R/N/P)',                group2: ['Gear'] },
+  { group1: 'Battery voltage',               group2: ['Battery Voltage(V)'] },
+  { group1: 'Gas pedal position',            group2: ['Throttle Position(%)'] },
+  { group1: 'Total Engine Hours',            group2: ['Engine Operating Hours'] },
+  { group1: 'Engine Coolant Temperature',    group2: ['Coolant Temperature(\u00b0C)'] },
+  { group1: 'Total fuel consumption',        group2: ['Total(L)'] },
+  { group1: 'Instantaneous Fuel Consumption',group2: ['Instantaneous Fuel Consumption(L/h)'] },
+  { group1: 'Fuellevel(%)',                  group2: ['Remaining Fuel(%)'] },
+  { group1: 'Oilpressure',                   group2: ['Engine Oil Pressure(kPa)'] },
+  { group1: 'Engine intake flow rate',       group2: ['Engine Air Flow(g/s)'] },
+  { group1: 'Engine load',                   group2: ['Engine Load(%)'] },
+  { group1: 'Clutch',                        group2: ['Clutch Status'] },
+];
+
+// ============ 工具函数 ============
+function isValidValue(val) {
+  if (val === null || val === undefined) return false;
+  var s = String(val).trim();
+  return s !== '' && s !== '-' && s !== 'nan' && s !== 'NaN' && s !== 'None' && s !== 'null';
+}
+
+function fuzzyFindColumn(headers, target) {
+  // 精确匹配
+  if (headers.indexOf(target) !== -1) return target;
+  // 规范化后匹配：忽略全角半角空格等细微差异
+  var normTarget = target.normalize('NFC');
+  for (var i = 0; i < headers.length; i++) {
+    if (headers[i].normalize('NFC') === normTarget) return headers[i];
+  }
+  // 尝试匹配去掉多余空格
+  var trimmedTarget = target.replace(/\s+/g, ' ').trim().normalize('NFC');
+  for (var i = 0; i < headers.length; i++) {
+    if (headers[i].replace(/\s+/g, ' ').trim().normalize('NFC') === trimmedTarget) return headers[i];
+  }
+  return null;
+}
+
+function getColumnData(rows, colIndex) {
+  return rows.map(function(r) { return r[colIndex]; });
+}
+
+function checkColumnValid(rows, colIndex) {
+  if (colIndex === -1) return { ok: false, count: 0 };
+  var validCount = 0;
+  for (var i = 0; i < rows.length; i++) {
+    if (isValidValue(rows[i][colIndex])) validCount++;
+  }
+  return { ok: validCount > 0, count: validCount };
+}
+
+// ============ 文件处理 ============
+function handleFileSelect(e) { if (e.target.files.length) processFile(e.target.files[0]); }
+
+function processFile(file) {
+  hideError();
+  if (!file.name.match(/\.(xlsx|xls)$/i)) {
+    showError('不支持的文件格式，请上传 .xlsx 或 .xls 文件');
+    return;
+  }
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var wb = XLSX.read(data, { type: 'array' });
+      var sheetName = wb.SheetNames[0];
+      var sheet = wb.Sheets[sheetName];
+      var rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+
+      if (rows.length < 2) {
+        showError('文件数据不足，表头或数据行缺失');
+        return;
+      }
+
+      var headers = rows[0].map(function(h) { return h !== null && h !== undefined ? String(h).trim() : ''; });
+      var dataRows = rows.slice(1);
+
+      // 显示文件信息
+      document.getElementById('fileName').textContent = file.name;
+      document.getElementById('fileMeta').textContent =
+        '工作表: ' + sheetName + ' | 总行数: ' + dataRows.length + ' | 列数: ' + headers.length;
+      document.getElementById('fileBadge').textContent = '已加载';
+      document.getElementById('fileInfo').classList.add('show');
+
+      // Drop zone 状态
+      var dz = document.getElementById('dropZone');
+      dz.classList.add('file-loaded');
+      dz.querySelector('.title').textContent = '文件已加载';
+      dz.querySelector('.subtitle').textContent = '拖拽新文件重新分析，或点击更换文件';
+
+      // 执行分析
+      analyzeData(headers, dataRows);
+    } catch (err) {
+      showError('文件解析失败: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function analyzeData(headers, dataRows) {
+  var headerIndex = {};
+  headers.forEach(function(h, i) { if (h) headerIndex[h] = i; });
+
+  var results = [];
+  var okCount = 0, failCount = 0;
+
+  FIELD_MAPPING.forEach(function(map, idx) {
+    var g2Columns = map.group2;
+    var allOk = true;
+    var validCounts = [];
+    var mappedNames = [];
+
+    g2Columns.forEach(function(targetCol) {
+      var foundCol = fuzzyFindColumn(headers, targetCol);
+      if (foundCol === null || !(foundCol in headerIndex)) {
+        allOk = false;
+        mappedNames.push(targetCol + ' (列不存在)');
+        validCounts.push(0);
+      } else {
+        var colIdx = headerIndex[foundCol];
+        var check = checkColumnValid(dataRows, colIdx);
+        mappedNames.push(foundCol);
+        validCounts.push(check.count);
+        if (!check.ok) allOk = false;
+      }
+    });
+
+    var result = {
+      index: idx + 1,
+      group1: map.group1,
+      ok: allOk,
+      mappedFrom: mappedNames.join(', '),
+      validCount: validCounts.join(' / ')
+    };
+    results.push(result);
+    if (allOk) okCount++; else failCount++;
+  });
+
+  renderResults(results, okCount, failCount, dataRows.length, headers.length);
+}
+
+// 保存分析上下文，供复制/导出使用
+var currentContext = null;
+
+function renderResults(results, okCount, failCount, totalRows, totalCols) {
+  // Store context
+  currentContext = {
+    results: results,
+    okCount: okCount,
+    failCount: failCount,
+    totalRows: totalRows,
+    totalCols: totalCols,
+    fileName: document.getElementById('fileName').textContent || 'CAN_Data'
+  };
+
+  // Stats
+  document.getElementById('resultStats').innerHTML =
+    '<div class="stat stat-ok"><span class="stat-dot ok"></span> 可用字段: ' + okCount + '</div>' +
+    '<div class="stat stat-fail"><span class="stat-dot fail"></span> 缺失字段: ' + failCount + '</div>';
+
+  // Body
+  var bodyHtml = '';
+  results.forEach(function(r, i) {
+    bodyHtml +=
+      '<div class="result-row">' +
+      '<span class="index">' + r.index + '</span>' +
+      '<span class="field-name">' + escapeHtml(r.group1) + '</span>' +
+      '<span class="mapped-from" title="' + escapeHtml(r.mappedFrom) + '">' + escapeHtml(r.mappedFrom) + '</span>' +
+      '<span class="valid-count">' + r.validCount + '</span>' +
+      '<span class="status ' + (r.ok ? 'ok' : 'fail') + '">' + (r.ok ? '\u2713' : '\u2717') + '</span>' +
+      '</div>';
+  });
+  document.getElementById('resultBody').innerHTML = bodyHtml;
+
+  // Summary
+  document.getElementById('summaryText').textContent =
+    '共 ' + totalRows + ' 行 x ' + totalCols + ' 列 | ' +
+    okCount + ' 个字段可用，' + failCount + ' 个字段缺失';
+
+  // Show actions
+  document.getElementById('resultActions').style.display = 'flex';
+  document.getElementById('resultCard').classList.add('show');
+}
+
+// ============ 复制结果 ============
+function copyResults() {
+  if (!currentContext) return;
+  var lines = [];
+  lines.push('序号\t字段组一\t状态\t有效行数\t映射自(字段组二)');
+  lines.push('----\t------\t----\t------\t------------');
+  currentContext.results.forEach(function(r) {
+    lines.push(r.index + '\t' + r.group1 + '\t' + (r.ok ? '✓' : '✗') + '\t' + r.validCount + '\t' + r.mappedFrom);
+  });
+  lines.push('');
+  lines.push('总计: ' + currentContext.okCount + ' 个字段可用, ' + currentContext.failCount + ' 个字段缺失');
+  lines.push('数据来源: ' + currentContext.fileName + ' (共 ' + currentContext.totalRows + ' 行 x ' + currentContext.totalCols + ' 列)');
+
+  var text = lines.join('\n');
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = document.getElementById('btnCopy');
+    var origHTML = btn.innerHTML;
+    btn.innerHTML = '<span>&#10003;</span> 已复制';
+    btn.classList.add('copied');
+    setTimeout(function() {
+      btn.innerHTML = origHTML;
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(function() {
+    // Fallback
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    var btn = document.getElementById('btnCopy');
+    btn.innerHTML = '<span>&#10003;</span> 已复制';
+    btn.classList.add('copied');
+    setTimeout(function() {
+      btn.innerHTML = '<span>&#128203;</span> 复制结果';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// ============ 导出 Excel ============
+function exportExcel() {
+  if (!currentContext) return;
+  var ctx = currentContext;
+
+  var aoa = [
+    ['序号', '字段组一', '状态', '有效行数', '映射自(字段组二)'],
+  ];
+  ctx.results.forEach(function(r) {
+    aoa.push([r.index, r.group1, r.ok ? '✓' : '✗', r.validCount, r.mappedFrom]);
+  });
+  aoa.push([]);
+  aoa.push(['总计:', '', ctx.okCount + ' 个字段可用, ' + ctx.failCount + ' 个字段缺失', '', '']);
+  aoa.push(['数据来源:', ctx.fileName, '共 ' + ctx.totalRows + ' 行 x ' + ctx.totalCols + ' 列', '', '']);
+
+  var ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  // 设置列宽
+  ws['!cols'] = [
+    { wch: 6 },
+    { wch: 38 },
+    { wch: 8 },
+    { wch: 16 },
+    { wch: 55 },
+  ];
+
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '字段映射验证结果');
+
+  var baseName = ctx.fileName.replace(/\.(xlsx|xls)$/i, '');
+  XLSX.writeFile(wb, baseName + '_映射结果.xlsx');
+}
+
+// ============ 拖拽支持 ============
+var dropZone = document.getElementById('dropZone');
+
+['dragenter', 'dragover'].forEach(function(evt) {
+  dropZone.addEventListener(evt, function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.add('drag-over');
+  });
+});
+
+['dragleave', 'drop'].forEach(function(evt) {
+  dropZone.addEventListener(evt, function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dropZone.classList.remove('drag-over');
+  });
+});
+
+dropZone.addEventListener('drop', function(e) {
+  var files = e.dataTransfer.files;
+  if (files.length > 0) processFile(files[0]);
+});
+
+// ============ 辅助函数 ============
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
+
+function showError(msg) {
+  var el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function hideError() {
+  document.getElementById('errorMsg').classList.remove('show');
+}
+</script>
+</body>
+</html>
