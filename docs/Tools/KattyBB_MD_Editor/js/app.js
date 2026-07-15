@@ -1101,25 +1101,29 @@ function processAlerts(text) {
   };
   
   function splitAlertContent(content) {
+    // 块内的空引用行（如 "> [!NOTE]" 后紧跟的空 "> " 行）只是块内换行，
+    // 并非结束边界；正则已通过负向先行断言在遇到下一个 >[!TYPE] 时停止，
+    // 因此此处只需把所有 > 行合并后统一去除 ">" 前缀即可。
     var lines = content.split('\n');
     var alertLines = [];
-    var remainingLines = [];
-    var foundEnd = false;
     for (var i = 0; i < lines.length; i++) {
-      if (foundEnd) {
-        remainingLines.push(lines[i]);
-        continue;
-      }
-      if (lines[i].match(/^>\s*$/)) {
-        foundEnd = true;
-        continue;
-      }
       alertLines.push(lines[i]);
     }
     return {
       alertContent: alertLines.join('\n').replace(/^>\s*/gm, '').trim(),
-      remaining: remainingLines.join('\n')
+      remaining: ''
     };
+  }
+
+  // 将 alert 内部内容渲染为 HTML。
+  // 注意：alert 整体是原始 HTML <div>，marked 不会解析其内部 markdown，
+  // 因此必须在此处先调用 marked 把 **加粗** / `代码` / 列表等渲染成 HTML，
+  // 否则这些内容会以字面文本显示。
+  function renderAlertInner(md) {
+    if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
+      return marked.parse(md);
+    }
+    return md;
   }
   
   // 处理 > [!NOTE] 格式
@@ -1132,7 +1136,7 @@ function processAlerts(text) {
     var icon = alertIcons[lowerType] || '📌';
     var title = alertTitles[lowerType] || type;
     var parts = splitAlertContent(content);
-    var result = '<div class="alert alert-' + lowerType + '"><div class="alert-title">' + icon + ' ' + title + '</div><div class="alert-content">' + parts.alertContent + '</div></div>';
+    var result = '<div class="alert alert-' + lowerType + '"><div class="alert-title">' + icon + ' ' + title + '</div><div class="alert-content">' + renderAlertInner(parts.alertContent) + '</div></div>';
     if (parts.remaining) {
       result += '\n\n' + parts.remaining;
     }
@@ -1147,7 +1151,7 @@ function processAlerts(text) {
     if (alertTypes.indexOf(lowerTitle) === -1) return match;
     var icon = alertIcons[lowerTitle] || '📌';
     var parts = splitAlertContent(content);
-    var result = '<div class="alert alert-' + lowerTitle + '"><div class="alert-title">' + icon + ' ' + title + '</div><div class="alert-content">' + parts.alertContent + '</div></div>';
+    var result = '<div class="alert alert-' + lowerTitle + '"><div class="alert-title">' + icon + ' ' + title + '</div><div class="alert-content">' + renderAlertInner(parts.alertContent) + '</div></div>';
     if (parts.remaining) {
       result += '\n\n' + parts.remaining;
     }
