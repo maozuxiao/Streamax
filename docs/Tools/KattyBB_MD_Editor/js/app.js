@@ -716,9 +716,50 @@ renderer.heading = function(text, level) {
     headingLevel = level;
     headingHtml = text;
   }
-  var slug = String(headingHtml).toLowerCase().replace(/<[^>]+>/g, '').replace(/[^\w\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '');
+  // 注意：headingHtml 是已渲染的 HTML，内联代码中的特殊字符会被转义为实体，
+  // 例如 `> [!TYPE]` 会变成 &gt; [!TYPE]。若直接据此生成 slug，&gt; 里的 g/t
+  // 会被当作单词字符，导致标题 id 混入 "gt-" 前缀，与 TOC / 锚点（基于原始
+  // markdown 文本生成、无实体）的 slug 不一致，从而无法跳转。
+  // 因此必须先解码 HTML 实体，再去标签，最后统一按 slug 规则生成。
+  var slug = slugifyHtml(headingHtml);
   return '<h' + headingLevel + ' id="' + slug + '">' + headingHtml + '</h' + headingLevel + '>\n';
 };
+
+// 将已渲染的 HTML 标题文本转换为与 TOC/锚点一致的 slug：
+// 先解码 HTML 实体（&gt; → > 等），再去标签，最后按统一规则规范化。
+function slugifyHtml(html) {
+  var plain = decodeHtmlEntities(html).replace(/<[^>]+>/g, '');
+  return slugifyText(plain);
+}
+
+// 纯文本 → slug（与 TOC、内部锚点链接的算法保持一致）
+function slugifyText(text) {
+  return String(text).toLowerCase()
+    .replace(/[^\w\u4e00-\u9fa5]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+// 解码常见 HTML 实体（命名 + 十进制/十六进制数字实体）
+function decodeHtmlEntities(str) {
+  if (typeof str !== 'string') return str;
+  var named = {
+    gt: '>', lt: '<', amp: '&', quot: '"', apos: "'", nbsp: ' ',
+    hellip: '…', mdash: '—', ndash: '–', copy: '©', reg: '®'
+  };
+  return str.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, function(m, ent) {
+    if (ent.charAt(0) === '#') {
+      var code;
+      try {
+        code = ent.charAt(1) === 'x' || ent.charAt(1) === 'X'
+          ? parseInt(ent.substring(2), 16)
+          : parseInt(ent.substring(1), 10);
+        if (!isNaN(code)) return String.fromCodePoint(code);
+      } catch (e) { /* 忽略无效编码，保留原样 */ }
+      return m;
+    }
+    return named[ent] !== undefined ? named[ent] : m;
+  });
+}
 
 // 覆盖 link renderer，处理内部锚点链接（兼容带空格的标题写法）
 renderer.link = function(token) {
@@ -958,9 +999,25 @@ function processMath(text) {
       continue;
     }
 
-    var blockStart = line.indexOf('$$');
-    while (blockStart !== -1 && blockStart > 0 && line[blockStart - 1] === '\\') {
-      blockStart = line.indexOf('$$', blockStart + 2);
+    // 在行内查找 $$ 块公式起始位置，但跳过被反引号（行内代码）包围的位置，
+    // 否则会把表格单元格 / 代码内的 $$ 误判为块公式，插入块级占位符破坏结构。
+    function isInInlineCode(str, pos) {
+      var cnt = 0;
+      for (var p = 0; p < pos; p++) {
+        if (str[p] === '\\') { p++; continue; }
+        if (str[p] === '`') cnt++;
+      }
+      return cnt % 2 === 1;
+    }
+    var blockStart = -1;
+    var _search = 0;
+    while (true) {
+      var _idx = line.indexOf('$$', _search);
+      if (_idx === -1) break;
+      if (_idx > 0 && line[_idx - 1] === '\\') { _search = _idx + 2; continue; }
+      if (isInInlineCode(line, _idx)) { _search = _idx + 2; continue; }
+      blockStart = _idx;
+      break;
     }
     if (blockStart !== -1 && !line.match(/^( {4}|\t)/)) {
       var beforeBlock = line.substring(0, blockStart);
@@ -968,17 +1025,23 @@ function processMath(text) {
       var sameLineEnd = afterStart.indexOf('$$');
       
       if (sameLineEnd !== -1) {
-        if (beforeBlock.trim()) {
-          result.push(beforeBlock);
-        }
         var mathContent = afterStart.substring(0, sameLineEnd);
-        if (mathContent.length > 0) {
-          _mathExpressions.push({ type: 'block', content: mathContent });
-          result.push('<!--MATH_BLOCK:' + (_mathExpressions.length - 1) + '-->');
-        }
         var afterBlock = afterStart.substring(sameLineEnd + 2);
-        if (afterBlock.trim()) {
-          result.push(afterBlock);
+        if (mathContent.length > 0) {
+          if (beforeBlock.trim() || afterBlock.trim()) {
+            // 同一行内 $$...$$ 前后还有其它内容（常见于表格单元格），
+            // 必须作为行内公式处理；否则块级占位符会切断表格/段落结构。
+            _mathExpressions.push({ type: 'inline', content: mathContent });
+            if (beforeBlock.trim()) result.push(beforeBlock);
+            result.push('<!--MATH_INLINE:' + (_mathExpressions.length - 1) + '-->');
+            if (afterBlock.trim()) result.push(afterBlock);
+          } else {
+            _mathExpressions.push({ type: 'block', content: mathContent });
+            result.push('<!--MATH_BLOCK:' + (_mathExpressions.length - 1) + '-->');
+          }
+        } else {
+          if (beforeBlock.trim()) result.push(beforeBlock);
+          if (afterBlock.trim()) result.push(afterBlock);
         }
         continue;
       }
@@ -1067,17 +1130,35 @@ function processMath(text) {
   return result.join('\n');
 }
 
+// 将标题文本渲染为 HTML（用于目录/锚点显示），与预览区标题保持视觉一致；
+// 注意：slug 必须基于原始 markdown 文本生成，才能与标题 id 一致、正确跳转。
+// 预览区的标题会先经 preprocessMarkdown 处理（含 processHighlight 将 ==高亮==
+// 转为 <mark>），因此这里也要先走 processHighlight，再用 marked.parseInline 渲染，
+// 否则目录会显示字面 "==高亮==" 而预览区是高亮，两者不一致。
+function renderTocTitle(title) {
+  var html = title;
+  if (typeof processHighlight === 'function') {
+    try { html = processHighlight(title); } catch (e) { /* 失败则保留原文本 */ }
+  }
+  if (typeof marked !== 'undefined' && typeof marked.parseInline === 'function') {
+    try {
+      return marked.parseInline(html);
+    } catch (e) { /* 解析失败时回退为处理后的文本 */ }
+  }
+  return html;
+}
+
 // 生成 TOC HTML（任务6）
 function generateTOC(fullText) {
   var headings = extractHeadings(fullText);
   if (!headings) return '<div class="toc"></div>';
 
-  var tocHtml = '<div class="toc"><ul>';
+  var tocHtml = '<div class="toc"><div class="toc-title">' + t('tocTitle') + '</div><ul>';
   headings.forEach(function(h) {
     var level = h.match(/^#+/)[0].length;
     var title = h.replace(/^#+\s+/, '').replace(/[#]+$/, '').trim();
     var slug = title.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '');
-    tocHtml += '<li class="toc-level-' + level + '"><a href="#' + slug + '">' + title + '</a></li>';
+    tocHtml += '<li class="toc-level-' + level + '"><a href="#' + slug + '">' + renderTocTitle(title) + '</a></li>';
   });
   tocHtml += '</ul></div>';
   return tocHtml;
@@ -1852,7 +1933,7 @@ function updateTocFloat() {
     var level = h.match(/^#+/)[0].length;
     var title = h.replace(/^#+\s+/, '').replace(/[#]+$/, '').trim();
     var slug = title.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '');
-    tocHtml += '<li class="toc-level-' + level + '"><a href="#' + slug + '" onclick="scrollToHeading(\'' + slug + '\'); return false;">' + title + '</a></li>';
+    tocHtml += '<li class="toc-level-' + level + '"><a href="#' + slug + '" onclick="scrollToHeading(\'' + slug + '\'); return false;">' + renderTocTitle(title) + '</a></li>';
   });
   tocHtml += '</ul>';
 
@@ -2052,10 +2133,13 @@ function buildExportTocList(html) {
   for (var i = 0; i < heads.length; i++) {
     var h = heads[i];
     var id = h.id || '';
-    var txt = (h.textContent || '').trim();
-    if (!id || !txt) continue;
+    if (!id) continue;
+    // 使用已渲染的 innerHTML（保留 <mark>/<code> 等格式），与锚点目录 renderTocTitle 的渲染一致；
+    // 不再用 textContent + escapeHtml，否则 ==高亮==、行内代码等会丢失格式。
+    var inner = h.innerHTML.trim();
+    if (!inner) continue;
     var lvl = h.tagName.substring(1);
-    list += '<li class="toc-lvl-' + lvl + '"><a href="#' + id + '" onclick="exportTocGo(\'' + id + '\');return false;">' + escapeHtml(txt) + '</a></li>';
+    list += '<li class="toc-level-' + lvl + '"><a href="#' + id + '" onclick="exportTocGo(\'' + id + '\');return false;">' + inner + '</a></li>';
   }
   list += '</ul>';
   return list;
@@ -2063,17 +2147,22 @@ function buildExportTocList(html) {
 
 function getExportExtraCSS() {
   return [
-    /* TOC 样式 */
-    '.markdown-body .toc { background: var(--surface, #f5f2f1); border: 1px solid var(--border, rgba(0,0,0,0.1)); border-radius: 14px; padding: 16px 20px; margin: 1.5em 0; }',
-    '.markdown-body .toc ul { list-style: none; padding-left: 0; }',
-    '.markdown-body .toc li { margin: 4px 0; }',
-    '.markdown-body .toc a { color: var(--accent, #e8859b); text-decoration: none !important; border-bottom: none !important; border-radius: 0 !important; }',
-    '.markdown-body .toc a:hover { text-decoration: underline !important; background: transparent !important; color: var(--accent, #e8859b) !important; }',
-    '.markdown-body .toc-level-2 { padding-left: 1.2em; }',
-    '.markdown-body .toc-level-3 { padding-left: 2.4em; }',
-    '.markdown-body .toc-level-4 { padding-left: 3.6em; }',
-    '.markdown-body .toc-level-5 { padding-left: 4.8em; }',
-    '.markdown-body .toc-level-6 { padding-left: 6em; }',
+    /* TOC 样式（与悬浮目录视觉一致） */
+    '.markdown-body .toc { background: var(--surface, #f5f2f1); border: 1px solid var(--border, rgba(0,0,0,0.1)); border-radius: 14px; padding: 12px 16px; margin: 1.5em 0; }',
+    '.markdown-body .toc-title { padding: 0 12px 8px; font-size: 14px; font-weight: 700; color: var(--text, #443a3e); }',
+    '.markdown-body .toc ul { list-style: none; padding-left: 0; margin: 0; }',
+    '.markdown-body .toc li { margin: 0; }',
+    '.markdown-body .toc a { display: block; padding: 6px 12px; font-size: 13px; line-height: 1.5; color: var(--text-semi, #7b6c71); text-decoration: none !important; border-bottom: none !important; border-radius: 8px; transition: background 0.15s ease, color 0.15s ease; }',
+    '.markdown-body .toc a:hover { background: var(--accent-soft, rgba(232,133,155,0.1)) !important; color: var(--accent, #e8859b) !important; text-decoration: none !important; border-bottom: none !important; }',
+    '.markdown-body .toc a.active { color: var(--accent, #e8859b) !important; font-weight: 600; background: var(--accent-soft, rgba(232,133,155,0.12)) !important; }',
+    '.markdown-body .toc-level-2 { padding-left: 12px; }',
+    '.markdown-body .toc-level-3 { padding-left: 24px; }',
+    '.markdown-body .toc-level-4 { padding-left: 36px; }',
+    '.markdown-body .toc-level-5 { padding-left: 48px; }',
+    '.markdown-body .toc-level-6 { padding-left: 60px; }',
+    /* [TOC] 目录内的 mark/code 与正文预览区保持一致 */
+    '.markdown-body .toc mark { background: linear-gradient(120deg, rgba(var(--accent-rgb), 0.25), rgba(var(--accent-rgb), 0.12)); color: inherit; padding: 0.12em 0.26em; border-radius: 9px; border: 1px solid rgba(var(--accent-rgb), 0.32); }',
+    '.markdown-body .toc code { font-family: var(--font-mono); font-size: 0.88em; padding: 0.2em 0.45em; border-radius: 7px; background: rgba(var(--accent-rgb), 0.14); color: var(--accent); font-weight: 600; border: 1px solid rgba(var(--accent-rgb), 0.32); }',
     /* Mermaid 容器 */
     '.markdown-body .mermaid { text-align: center; margin: 1.5em 0; background: var(--surface, #f5f2f1); border-radius: 14px; padding: 16px; }',
     /* 代码块基础 */
@@ -2280,13 +2369,17 @@ async function exportHTML() {
 .export-toc-content { max-height: 400px; overflow-y: auto; padding: 8px 0; }
 .export-toc-content ul { list-style: none; padding: 0; margin: 0; }
 .export-toc-content li { margin: 0; padding: 0; }
-.export-toc-content a { display: block; padding: 6px 16px; font-size: 13px; color: var(--text-semi, #7b6c71); text-decoration: none !important; border-bottom: none !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.15s ease, color 0.15s ease; }
+.export-toc-content a { display: block; padding: 6px 16px; font-size: 13px; color: var(--text-semi, #7b6c71); text-decoration: none !important; border-bottom: none !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.15s ease, color 0.15s ease; border-radius: 0 !important; }
 .export-toc-content a:hover { background: var(--accent-soft, rgba(232,133,155,0.1)) !important; color: var(--accent, #e8859b) !important; }
-.export-toc-content .toc-lvl-2 a { padding-left: 28px; }
-.export-toc-content .toc-lvl-3 a { padding-left: 40px; }
-.export-toc-content .toc-lvl-4 a { padding-left: 52px; }
-.export-toc-content .toc-lvl-5 a { padding-left: 64px; }
-.export-toc-content .toc-lvl-6 a { padding-left: 76px; }
+.export-toc-content a.active { color: var(--accent, #e8859b) !important; font-weight: 600; background: var(--accent-soft, rgba(232,133,155,0.12)) !important; }
+.export-toc-content .toc-level-2 { padding-left: 12px; }
+.export-toc-content .toc-level-3 { padding-left: 24px; }
+.export-toc-content .toc-level-4 { padding-left: 36px; }
+.export-toc-content .toc-level-5 { padding-left: 48px; }
+.export-toc-content .toc-level-6 { padding-left: 60px; }
+/* 导出悬浮目录内的 mark/code 与正文预览区保持一致（独立于 .markdown-body，需单独定义） */
+.export-toc-content mark { background: linear-gradient(120deg, rgba(var(--accent-rgb), 0.25), rgba(var(--accent-rgb), 0.12)); color: inherit; padding: 0.12em 0.26em; border-radius: 9px; border: 1px solid rgba(var(--accent-rgb), 0.32); }
+.export-toc-content code { font-family: var(--font-mono); font-size: 0.88em; padding: 0.2em 0.45em; border-radius: 7px; background: rgba(var(--accent-rgb), 0.14); color: var(--accent); font-weight: 600; border: 1px solid rgba(var(--accent-rgb), 0.32); }
 #write.markdown-body.full-width { max-width: 100% !important; margin-left: 0; margin-right: 0; }
 @media print { .export-width-btn, .export-toc-btn, .export-toc-panel { display: none !important; } }
 `;
@@ -2324,7 +2417,7 @@ function exportTocGo(id){
     tocUI = '<div class="export-toc-btn" id="exportTocBtn" title="目录" aria-label="目录">'
       + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><path d="M18 9a9 9 0 0 0-9 9"></path><path d="M6 15a9 9 0 0 0 9-9"></path></svg>'
       + '<div class="export-toc-panel" id="exportTocPanel">'
-      + '<div class="export-toc-header">目录</div>'
+      + '<div class="export-toc-header">' + t('tocTitle') + '</div>'
       + '<div class="export-toc-content">' + tocList + '</div>'
       + '</div>'
       + '</div>';
@@ -5453,16 +5546,10 @@ function loadKaTeX() {
 }
 
 renderer.codespan = function(token) {
+  // 行内代码始终渲染为字面 <code>；公式应使用 $...$ / $$...$$ 语法，
+  // 不能用反引号包裹（反引号内是"转义为字面代码"的语义），否则表格单元格
+  // 中的 `$x$` 会被误渲染成公式，破坏其它内容。
   var text = token.text || '';
-  if (/^\$[^$]/.test(text) && text.slice(-1) === '$') {
-    loadKaTeX();
-    var tex = text.slice(1, -1);
-    try {
-      return katex.renderToString(tex, { throwOnError: false });
-    } catch (e) {
-      return '<code>' + escapeHtml(text) + '</code>';
-    }
-  }
   return '<code>' + escapeHtml(text) + '</code>';
 };
 

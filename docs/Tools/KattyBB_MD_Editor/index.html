@@ -1036,6 +1036,9 @@ body {
 .toc-float-content .toc-level-4 { padding-left: 36px; }
 .toc-float-content .toc-level-5 { padding-left: 48px; }
 .toc-float-content .toc-level-6 { padding-left: 60px; }
+/* 悬浮锚点目录内的 mark/code 与导出 HTML 目录保持一致（独立于 .markdown-body，需单独定义） */
+.toc-float-content mark { background: linear-gradient(120deg, rgba(var(--accent-rgb), 0.25), rgba(var(--accent-rgb), 0.12)); color: inherit; padding: 0.12em 0.26em; border-radius: 9px; border: 1px solid rgba(var(--accent-rgb), 0.32); }
+.toc-float-content code { font-family: var(--font-mono); font-size: 0.88em; padding: 0.2em 0.45em; border-radius: 7px; background: rgba(var(--accent-rgb), 0.14); color: var(--accent); font-weight: 600; border: 1px solid rgba(var(--accent-rgb), 0.32); }
 
 /* 打印/导出样式 */
 @media print {
