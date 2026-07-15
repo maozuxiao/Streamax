@@ -1,46 +1,46 @@
 /*
- * Animal Island Theme for Typora
- * Inspired by animal-island-ui (https://github.com/guokaigdg/animal-island-ui)
- * Aesthetic: Animal Crossing — warm cream paper, mint accents, 3D pillow shadows
+ * Animal Island (Night) Theme for Typora
+ * Dark variant — deep forest night with mint glow
+ * Companion to animal-island.css
  */
 
 :root {
-    /* === Primary (mint / leaf) === */
-    --ai-primary:          #19c8b9;
-    --ai-primary-hover:    #3dd4c6;
-    --ai-primary-active:   #11a89b;
-    --ai-primary-bg:       #e6f9f6;
+    /* === Primary (mint glow) === */
+    --ai-primary:          #2dd4c1;
+    --ai-primary-hover:    #5ce5d4;
+    --ai-primary-active:   #19c8b9;
+    --ai-primary-bg:       rgba(45, 212, 193, 0.14);
 
-    /* === Text (warm brown) === */
-    --ai-text-main:        #794f27;
-    --ai-text-body:        #725d42;
-    --ai-text-secondary:   #9f927d;
-    --ai-text-muted:       #8a7b66;
-    --ai-text-disabled:    #c4b89e;
+    /* === Text (warm cream) === */
+    --ai-text-main:        #f5e8c8;
+    --ai-text-body:        #e0d3b3;
+    --ai-text-secondary:   #b5a989;
+    --ai-text-muted:       #8a7e62;
+    --ai-text-disabled:    #5a5340;
 
-    /* === Surfaces (white paper, almost-white desk) === */
-    --ai-bg-app:           #faf9f3;   /* desk: near-white with a hint of warmth */
-    --ai-bg-paper:         #ffffff;   /* paper: pure white */
-    --ai-bg-soft:          #efe9d6;   /* callout / code bg (kept warm to stand out) */
-    --ai-bg-input:         #f7f5ec;
+    /* === Surfaces (forest night) === */
+    --ai-bg-app:           #1a2624;
+    --ai-bg-paper:         #243430;
+    --ai-bg-soft:          #2e3f3a;
+    --ai-bg-input:         #1f2d29;
 
     /* === Borders === */
-    --ai-border:           #a89c83;
-    --ai-border-light:     #c9bea4;
-    --ai-border-soft:      #d8cdb2;
+    --ai-border:           #5a6e68;
+    --ai-border-light:     #4a5d57;
+    --ai-border-soft:      #344541;
 
     /* === Status === */
-    --ai-success:          #6fba2c;
+    --ai-success:          #8fd44c;
     --ai-warning:          #f5c31c;
-    --ai-error:            #e05a5a;
+    --ai-error:            #ff7878;
     --ai-focus-yellow:     #ffcc00;
 
-    /* === 3D Shadows === */
-    --ai-shadow-button:    #bdaea0;
-    --ai-shadow-input:     #d4c9b4;
-    --ai-shadow-card:      0 3px 10px 0 rgba(61, 52, 40, 0.10);
-    --ai-shadow-large:     0 8px 24px 0 rgba(61, 52, 40, 0.14);
-    --ai-shadow-deep:      0 4px 10px rgba(107, 92, 67, 0.32);
+    /* === 3D Shadows (deeper than surface) === */
+    --ai-shadow-button:    #0d1413;
+    --ai-shadow-input:     #121c19;
+    --ai-shadow-card:      0 3px 12px 0 rgba(0, 0, 0, 0.35);
+    --ai-shadow-large:     0 8px 28px 0 rgba(0, 0, 0, 0.45);
+    --ai-shadow-deep:      0 4px 14px rgba(0, 0, 0, 0.55);
 
     /* === Radius === */
     --ai-radius-sm:        12px;
@@ -100,7 +100,7 @@ h1, h2, h3, h4, h5, h6 {
     line-height: 1.35;
 }
 
-/* H1 — 居中勋章 · 三色胶囊下划线 */
+/* H1 — 居中勋章 · 三色发光胶囊下划线 */
 h1 {
     font-size: 2.25em;
     font-weight: 900;
@@ -122,7 +122,7 @@ h1::after {
         var(--ai-primary)   0%, var(--ai-primary)   40%,
         var(--ai-warning)   40%, var(--ai-warning)  60%,
         var(--ai-primary)   60%, var(--ai-primary)  100%);
-    box-shadow: 0 2px 0 0 var(--ai-shadow-input);
+    box-shadow: 0 0 14px rgba(45, 212, 193, 0.55);
 }
 
 /* H2 — 卡片便签 · 薄荷渐变 + 左厚竖块 */
@@ -158,7 +158,7 @@ h3 {
 h4 {
     font-size: 1.15em;
     font-weight: 800;
-    color: var(--ai-primary-active);
+    color: var(--ai-primary);
     margin: 1.3em 0 0.5em;
     padding-bottom: 6px;
     background-image: linear-gradient(
@@ -172,7 +172,7 @@ h4 {
     background-size: 100% 3px;
 }
 
-/* H5 — 米色胶囊贴纸 (inline-block) */
+/* H5 — 深色胶囊贴纸 (inline-block) */
 h5 {
     font-size: 0.98em;
     font-weight: 800;
@@ -181,7 +181,7 @@ h5 {
     display: inline-block;
     padding: 3px 14px;
     background: var(--ai-bg-soft);
-    border: 1.5px solid var(--ai-border-soft);
+    border: 1.5px solid var(--ai-border-light);
     border-radius: var(--ai-radius-pill);
 }
 
@@ -214,7 +214,7 @@ em, i {
 
 mark {
     background: var(--ai-focus-yellow);
-    color: var(--ai-text-main);
+    color: #2a2010;
     padding: 0 4px;
     border-radius: 4px;
 }
@@ -227,7 +227,7 @@ del, s {
    Links
    ========================================================= */
 a {
-    color: var(--ai-primary-active);
+    color: var(--ai-primary-hover);
     text-decoration: none;
     border-bottom: 2px dotted var(--ai-primary);
     padding: 0 2px;
@@ -235,7 +235,7 @@ a {
 }
 
 #write a:hover {
-    color: var(--ai-primary-active);
+    color: var(--ai-primary-hover);
     background: transparent;
     border-bottom-style: solid;
 }
@@ -257,11 +257,11 @@ ul > li::marker {
 }
 
 ol > li::marker {
-    color: var(--ai-primary-active);
+    color: var(--ai-primary-hover);
     font-weight: 800;
 }
 
-/* Task list — soft 3D checkbox */
+/* Task list */
 .md-task-list-item > input {
     -webkit-appearance: none;
     appearance: none;
@@ -281,7 +281,7 @@ ol > li::marker {
 .md-task-list-item > input:checked {
     background: var(--ai-success);
     border-color: var(--ai-success);
-    box-shadow: 0 2px 0 0 #5a9e1e;
+    box-shadow: 0 2px 0 0 #4a7d1e;
 }
 
 .md-task-list-item > input:checked::after {
@@ -291,13 +291,13 @@ ol > li::marker {
     top: 0px;
     width: 5px;
     height: 10px;
-    border: solid white;
+    border: solid #1a2624;
     border-width: 0 2.5px 2.5px 0;
     transform: rotate(45deg);
 }
 
 /* =========================================================
-   Blockquote — pillow card
+   Blockquote
    ========================================================= */
 blockquote {
     margin: 1em 0;
@@ -314,7 +314,7 @@ blockquote p {
 }
 
 blockquote blockquote {
-    background: rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.05);
     border-left-color: var(--ai-warning);
     box-shadow: none;
 }
@@ -325,15 +325,15 @@ blockquote blockquote {
 code, tt {
     font-family: var(--ai-mono);
     font-size: 0.9em;
-    color: var(--ai-primary-active);
+    color: var(--ai-primary-hover);
     background: var(--ai-primary-bg);
     padding: 2px 8px;
-    border: 1.5px solid #cdeeea;
+    border: 1.5px solid rgba(45, 212, 193, 0.3);
     border-radius: 6px;
 }
 
 .md-fences, pre {
-    background: var(--ai-bg-soft);
+    background: var(--ai-bg-input);
     border: 2px solid var(--ai-border-light);
     border-radius: var(--ai-radius);
     padding: 16px 20px;
@@ -347,6 +347,7 @@ code, tt {
 .CodeMirror {
     background: transparent !important;
     font-family: var(--ai-mono) !important;
+    color: var(--ai-text-body) !important;
 }
 
 .CodeMirror-gutters {
@@ -359,11 +360,11 @@ code, tt {
 }
 
 .CodeMirror-cursor {
-    border-left: 2px solid var(--ai-primary-active) !important;
+    border-left: 2px solid var(--ai-primary-hover) !important;
 }
 
 .CodeMirror-selected {
-    background: var(--ai-focus-yellow) !important;
+    background: rgba(255, 204, 0, 0.35) !important;
 }
 
 /* === Syntax — applies to ALL CodeMirror instances (fenced + source) === */
@@ -391,49 +392,48 @@ code, tt {
 .CodeMirror .cm-formatting-link,
 .CodeMirror .cm-formatting-link-string,
 .CodeMirror .cm-formatting-image {
-    color: var(--ai-primary-active) !important;
-    opacity: 0.9;
+    color: var(--ai-primary) !important;
+    opacity: 0.95;
 }
 
 .CodeMirror .cm-strong { color: var(--ai-text-main) !important; font-weight: 800; }
-.CodeMirror .cm-em     { color: #c97d1c !important; font-style: italic; }
-.CodeMirror .cm-link   { color: var(--ai-primary-active) !important; }
+.CodeMirror .cm-em     { color: var(--ai-warning) !important; font-style: italic; }
+.CodeMirror .cm-link   { color: var(--ai-primary-hover) !important; }
 .CodeMirror .cm-url    { color: var(--ai-text-secondary) !important; }
 .CodeMirror .cm-quote  { color: var(--ai-text-secondary) !important; font-style: italic; }
 
 /* General language syntax (Python/JS/etc) */
-.CodeMirror .cm-keyword { color: #c94444 !important; font-weight: 700; }
-.CodeMirror .cm-atom    { color: #dba90e !important; }
-.CodeMirror .cm-number  { color: #dba90e !important; }
-.CodeMirror .cm-def     { color: var(--ai-primary-active) !important; font-weight: 700; }
+.CodeMirror .cm-keyword { color: #ff8a8a !important; font-weight: 700; }
+.CodeMirror .cm-atom    { color: #ffd566 !important; }
+.CodeMirror .cm-number  { color: #ffc94a !important; }
+.CodeMirror .cm-def     { color: var(--ai-primary-hover) !important; font-weight: 700; }
 .CodeMirror .cm-variable,
 .CodeMirror .cm-variable-2,
 .CodeMirror .cm-variable-3 { color: var(--ai-text-main) !important; }
-.CodeMirror .cm-property { color: var(--ai-primary-active) !important; }
-.CodeMirror .cm-operator { color: var(--ai-text-main) !important; }
-.CodeMirror .cm-string   { color: #5a9e1e !important; }
-.CodeMirror .cm-string-2 { color: #4a8517 !important; }
+.CodeMirror .cm-property { color: var(--ai-primary-hover) !important; }
+.CodeMirror .cm-operator { color: var(--ai-text-body) !important; }
+.CodeMirror .cm-string   { color: #a8e670 !important; }
+.CodeMirror .cm-string-2 { color: #8fd44c !important; }
 .CodeMirror .cm-comment  { color: var(--ai-text-disabled) !important; font-style: italic; }
-.CodeMirror .cm-tag      { color: #c94444 !important; }
-.CodeMirror .cm-attribute{ color: #dba90e !important; }
+.CodeMirror .cm-tag      { color: #ff8a8a !important; }
+.CodeMirror .cm-attribute{ color: #ffd566 !important; }
 .CodeMirror .cm-bracket  { color: var(--ai-text-secondary) !important; }
-.CodeMirror .cm-builtin  { color: var(--ai-primary-active) !important; }
+.CodeMirror .cm-builtin  { color: var(--ai-primary) !important; }
 .CodeMirror .cm-meta     { color: var(--ai-text-muted) !important; }
 
-/* Inline KaTeX/MathJax */
 .MathJax, mjx-container {
     color: var(--ai-text-main);
 }
 
 /* =========================================================
-   Horizontal rule — dashed paw-print path
+   Horizontal rule — paw prints
    ========================================================= */
-hr {
+hr, #write hr, #preview hr {
     border: none;
     height: 18px;
     width: 70%;
     margin: 2.4em auto;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 18'><ellipse cx='16' cy='13' rx='5' ry='3.8' fill='%2319c8b9'/><circle cx='9' cy='6' r='2.3' fill='%2319c8b9'/><circle cx='14' cy='3' r='2.3' fill='%2319c8b9'/><circle cx='19' cy='3' r='2.3' fill='%2319c8b9'/><circle cx='24' cy='6' r='2.3' fill='%2319c8b9'/></svg>");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 18'%3E%3Cellipse cx='16' cy='13' rx='5' ry='3.8' fill='%232dd4c1'/%3E%3Ccircle cx='9' cy='6' r='2.3' fill='%232dd4c1'/%3E%3Ccircle cx='14' cy='3' r='2.3' fill='%232dd4c1'/%3E%3Ccircle cx='19' cy='3' r='2.3' fill='%232dd4c1'/%3E%3Ccircle cx='24' cy='6' r='2.3' fill='%232dd4c1'/%3E%3C/svg%3E");
     background-size: 80px 18px;
     background-repeat: repeat-x;
     background-position: center;
@@ -453,11 +453,11 @@ table {
 }
 
 thead {
-    background: var(--ai-primary);
+    background: var(--ai-primary-active);
 }
 
 th {
-    color: white;
+    color: #0d1413;
     font-weight: 800;
     letter-spacing: 0.02em;
     padding: 10px 16px;
@@ -498,22 +498,18 @@ p > img:only-child {
    ========================================================= */
 .md-footnote {
     background: var(--ai-primary-bg);
-    color: var(--ai-primary-active);
+    color: var(--ai-primary-hover);
     border-radius: 6px;
     padding: 1px 6px;
     font-weight: 700;
 }
 
 /* =========================================================
-   Selection / focus
+   Selection
    ========================================================= */
 ::selection {
     background: var(--ai-focus-yellow);
-    color: var(--ai-text-main);
-}
-
-#write .md-focus-container {
-    outline: none;
+    color: #2a2010;
 }
 
 /* =========================================================
@@ -535,7 +531,7 @@ p > img:only-child {
 }
 
 .sidebar-tabs .sidebar-tab.active {
-    color: var(--ai-primary-active);
+    color: var(--ai-primary-hover);
     border-bottom: 3px solid var(--ai-primary);
 }
 
@@ -556,19 +552,19 @@ p > img:only-child {
 .outline-active,
 .file-list-item-selected {
     background: var(--ai-primary-bg) !important;
-    color: var(--ai-primary-active) !important;
+    color: var(--ai-primary-hover) !important;
     font-weight: 700;
 }
 
-/* Search */
 .searchpanel-search-option-btn {
     background: var(--ai-bg-input);
     border: 2px solid var(--ai-border-light);
     border-radius: var(--ai-radius-sm);
+    color: var(--ai-text-body);
 }
 
 /* =========================================================
-   Quick open / find bar
+   Quick open / inputs
    ========================================================= */
 #typora-quick-open {
     background: var(--ai-bg-app) !important;
@@ -594,11 +590,11 @@ input[type="text"]:focus {
     outline: none;
 }
 
-/* Buttons (toolbar / popovers) — 3D pillow */
+/* Buttons */
 button,
 .btn,
 .export-item {
-    background: white;
+    background: var(--ai-bg-soft);
     border: 2px solid var(--ai-border-light);
     border-radius: var(--ai-radius-sm);
     box-shadow: 0 3px 0 0 var(--ai-shadow-button);
@@ -611,7 +607,7 @@ button,
 button:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 0 0 var(--ai-shadow-button);
-    background: var(--ai-bg-soft);
+    background: var(--ai-primary-bg);
 }
 
 button:active {
@@ -622,7 +618,7 @@ button:active {
 button.primary,
 .btn-primary {
     background: var(--ai-primary);
-    color: white;
+    color: #0d1413;
     border-color: var(--ai-primary-active);
     box-shadow: 0 3px 0 0 var(--ai-primary-active);
 }
@@ -644,7 +640,7 @@ button.primary:hover {
     width: 32px;
     height: 32px;
     padding: 0;
-    background: var(--ai-bg-soft, #fff8e6);
+    background: var(--ai-bg-soft, #1f2a2c);
     border: 2px solid var(--ai-border-light);
     border-radius: 0;
     box-shadow: 0 3px 0 0 var(--ai-shadow-button);
@@ -662,12 +658,12 @@ button.primary:hover {
 }
 .view-mode-btn.active {
     background: var(--ai-primary);
-    color: white;
+    color: #0d1413;
     border-color: var(--ai-primary-active);
     box-shadow: 0 3px 0 0 var(--ai-primary-active);
 }
 .view-mode-btn:hover:not(.active) {
-    background: var(--ai-bg-paper, #fff8e6);
+    background: var(--ai-bg-paper, #1a2528);
     transform: translateY(-1px);
     box-shadow: 0 4px 0 0 var(--ai-shadow-button);
 }
@@ -711,7 +707,7 @@ button.primary:hover {
 }
 .fmt-toolbar .fmt-btn.active {
     background: var(--ai-primary);
-    color: white;
+    color: #0d1413;
     border-color: var(--ai-primary-active);
     box-shadow: 0 3px 0 0 var(--ai-primary-active);
 }
@@ -757,11 +753,11 @@ footer,
 }
 
 #typora-source .CodeMirror-cursor {
-    border-left: 2px solid var(--ai-primary-active) !important;
+    border-left: 2px solid var(--ai-primary-hover) !important;
 }
 
 #typora-source .CodeMirror-gutters {
-    background: var(--ai-bg-soft) !important;
+    background: var(--ai-bg-app) !important;
     border-right: 1px solid var(--ai-border-light) !important;
 }
 
@@ -774,7 +770,7 @@ footer,
 #typora-source .CodeMirror-selected,
 #typora-source .CodeMirror-line::selection,
 #typora-source .CodeMirror-line ::selection {
-    background: var(--ai-focus-yellow) !important;
+    background: rgba(255, 204, 0, 0.35) !important;
 }
 
 /* === Markdown source syntax (override default CM blue) === */
@@ -795,8 +791,8 @@ footer,
 #typora-source .cm-formatting-quote,
 #typora-source .cm-formatting-code,
 #typora-source .cm-formatting-code-block {
-    color: var(--ai-primary-active) !important;
-    opacity: 0.9;
+    color: var(--ai-primary) !important;
+    opacity: 0.95;
 }
 
 #typora-source .cm-formatting-strong,
@@ -807,14 +803,14 @@ footer,
 
 #typora-source .cm-formatting-em,
 #typora-source .cm-em {
-    color: #c97d1c !important;
+    color: var(--ai-warning) !important;
     font-style: italic;
 }
 
 #typora-source .cm-link,
 #typora-source .cm-formatting-link,
 #typora-source .cm-formatting-link-string {
-    color: var(--ai-primary-active) !important;
+    color: var(--ai-primary-hover) !important;
 }
 
 #typora-source .cm-url {
@@ -832,19 +828,19 @@ footer,
 }
 
 #typora-source .cm-meta { color: var(--ai-text-muted) !important; }
-#typora-source .cm-string { color: #5a9e1e !important; }
-#typora-source .cm-tag { color: #c94444 !important; }
-#typora-source .cm-keyword { color: #c94444 !important; }
-#typora-source .cm-number { color: #dba90e !important; }
+#typora-source .cm-string { color: #a8e670 !important; }
+#typora-source .cm-tag { color: #ff8a8a !important; }
+#typora-source .cm-keyword { color: #ff8a8a !important; }
+#typora-source .cm-number { color: #ffc94a !important; }
 #typora-source .cm-variable { color: var(--ai-text-body) !important; }
-#typora-source .cm-def { color: var(--ai-primary-active) !important; }
+#typora-source .cm-def { color: var(--ai-primary-hover) !important; }
 
 /* =========================================================
-   Misc UI
+   Popovers / dropdowns / modal
    ========================================================= */
 .popover-title {
     background: var(--ai-primary-bg);
-    color: var(--ai-primary-active);
+    color: var(--ai-primary-hover);
     border-radius: var(--ai-radius-sm) var(--ai-radius-sm) 0 0;
     font-weight: 800;
 }
@@ -865,13 +861,12 @@ footer,
 .tip,
 .tooltip {
     background: var(--ai-text-main);
-    color: white;
+    color: #1a2624;
     border-radius: var(--ai-radius-sm);
     box-shadow: var(--ai-shadow-card);
     font-family: var(--ai-font);
 }
 
-/* Auto-suggest / dropdown */
 .auto-suggest-container,
 .dropdown-menu {
     background: var(--ai-bg-paper);
@@ -886,10 +881,9 @@ footer,
 
 .dropdown-menu > li > a:hover {
     background: var(--ai-primary-bg);
-    color: var(--ai-primary-active);
+    color: var(--ai-primary-hover);
 }
 
-/* Modal */
 .modal-content {
     background: var(--ai-bg-paper);
     border: 2px solid var(--ai-border-light);
@@ -922,14 +916,11 @@ footer,
    Print
    ========================================================= */
 @media print {
-    html, body {
-        background: white;
-    }
+    /* 打印保持暗色主题（与导出 HTML 一致）：
+       原先强制 html/body/#write 白底黑字，但标题/引用/代码等仍是为暗色设计的浅色，
+       导致打印 PDF 白底浅字、错乱。故不再白化，仅去除对打印无意义的阴影。 */
     #write {
         box-shadow: none;
-        background: white;
-        max-width: 100%;
-        padding: 0;
     }
     .md-fences, pre, blockquote, table {
         box-shadow: none;

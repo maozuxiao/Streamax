@@ -1,6 +1,7 @@
 @charset "UTF-8";
 
 :root {
+  color-scheme: dark;
     /* --- Spacing System (8px based) --- */
     --space-unit: 8px;
     --space-3xs: calc(var(--space-unit) * 0.25);
@@ -13,75 +14,78 @@
     --space-2xl: calc(var(--space-unit) * 6);
     --space-3xl: calc(var(--space-unit) * 8);
 
-    /* --- Morandi Ripple Dark (Deep Teal) --- */
-    --accent: oklch(75% 0.12 195);
-    --accent-rgb: 155, 215, 218;
+    /* --- Modern Color System (OKLCH) --- */
+    /* Main Accent: Lavender Pink (derived from #8F84AB but more vibrant for Bloom) */
+    --accent: oklch(75% 0.16 295);
+    --accent-rgb: 175, 155, 215;
 
     /* Dynamic States */
     --accent-hover: color-mix(in oklch, var(--accent), white 8%);
     --accent-active: color-mix(in oklch, var(--accent), white 15%);
-    --accent-soft: color-mix(in oklch, var(--accent), transparent 85%);
+    --accent-soft: color-mix(in oklch, var(--accent), transparent 82%);
 
     /* Semantic Colors */
-    --success: oklch(72% 0.12 150);
-    --warning: oklch(78% 0.12 75);
-    --error: oklch(62% 0.15 25);
-    --info: oklch(65% 0.12 250);
+    --success: oklch(75% 0.16 150);
+    --warning: oklch(80% 0.16 75);
+    --error: oklch(65% 0.2 25);
+    --info: oklch(70% 0.16 250);
     --important: oklch(75% 0.14 280);
 
-    /* Neutrals - Ripple Dark Base (Cool Teal Tint) */
-    --bg: oklch(20% 0.02 195);
-    --surface: oklch(28% 0.02 195);
-    --surface-2: oklch(34% 0.03 195);
+    /* Neutrals - Spring Night Base (Deep Purple Tint) */
+    /* 补充：原主题漏定义 --page-depth-1/2，导致 html,body 的 background 简写整体失效（导出/打印白底） */
+    --page-depth-1: oklch(20% 0.02 295);
+    --page-depth-2: oklch(18% 0.02 295);
+    --bg: oklch(18% 0.02 295);
+    --surface: oklch(26% 0.02 295);
+    --surface-2: oklch(32% 0.03 295);
 
-    --text: oklch(96% 0.01 195);
-    --text-rgb: 240, 246, 248;
-    --text-semi: oklch(82% 0.02 195);
+    --text: oklch(96% 0.01 295);
+    --text-rgb: 245, 240, 248;
+    --text-semi: oklch(84% 0.02 295);
     --muted: color-mix(in oklch, var(--text), transparent 30%);
 
     --border: color-mix(in oklch, var(--text), transparent 88%);
     --border-semi: color-mix(in oklch, var(--text), transparent 78%);
 
     /* Effects */
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-    --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.6);
+    --shadow: 0 16px 48px color-mix(in oklch, var(--bg), black 50%);
+    --shadow-lg: 0 30px 80px color-mix(in oklch, var(--bg), black 60%);
 
     /* Typography */
     --font-sans: "MiSans", "PingFang SC", "Microsoft YaHei", sans-serif;
     --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 
     /* Selection */
-    --selection: color-mix(in oklch, var(--accent), transparent 75%);
+    --selection: color-mix(in oklch, var(--accent), transparent 65%);
 
     /* Code Layer */
-    --code-bg: oklch(14% 0.01 195);
+    --code-bg: oklch(14% 0.02 295);
     --code-text: var(--text-semi);
     --code-ink: var(--text);
-    --code-dot-red: oklch(65% 0.15 25);
-    --code-dot-yellow: oklch(78% 0.15 85);
-    --code-dot-green: oklch(72% 0.15 145);
+    --code-dot-red: oklch(65% 0.2 25);
+    --code-dot-yellow: oklch(80% 0.18 85);
+    --code-dot-green: oklch(75% 0.18 145);
 
     /* Code Token Colors */
-    --code-token-keyword: oklch(78% 0.12 240);
-    --code-token-string: oklch(75% 0.12 170);
-    --code-token-number: oklch(78% 0.12 40);
-    --code-token-blue: oklch(72% 0.12 210);
-    --code-muted-rgb: 130, 140, 140;
+    --code-token-keyword: oklch(78% 0.16 295);
+    --code-token-string: oklch(75% 0.16 145);
+    --code-token-number: oklch(78% 0.18 75);
+    --code-token-blue: oklch(72% 0.18 250);
+    --code-muted-rgb: 140, 140, 150;
+    --ink-rgb: 235, 232, 240;
+    /* 补充：原主题漏定义 --white-rgb / --black-rgb，导致 rgba(var(--white-rgb/--black-rgb), a) 在导出/打印中失效 */
+    --white-rgb: 255, 255, 255;
+    --black-rgb: 0, 0, 0;
 
     /* Typora chrome */
     --bg-color: var(--bg);
-    --side-bar-bg-color: var(--surface);
+    --side-bar-bg-color: color-mix(in oklch, var(--bg), black 5%);
     --item-hover-bg-color: var(--accent-soft);
     --item-hover-text-color: var(--text);
-    --window-border: 1px solid var(--border);
     --primary-color: var(--accent);
     --text-color: var(--text);
     --select-text-bg-color: var(--selection);
-
-    /* RGB Helpers */
-    --white-rgb: 255, 255, 255;
-    --black-rgb: 0, 0, 0;
+    --window-border: 1px solid var(--border);
 
     /* Icons */
     --icon-document: url("data:image/svg+xml;utf8,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20d%3D%22M7.5%207C7.22386%207%207%207.22386%207%207.5C7%207.77614%207.22386%208%207.5%208H12.5C12.7761%208%2013%207.77614%2013%207.5C13%207.22386%2012.7761%207%2012.5%207H7.5Z%22%20fill%3D%22%23636566%22/%3E%0A%3Cpath%20d%3D%22M7%2010.5C7%2010.2239%207.22386%2010%207.5%2010H12.5C12.7761%2010%2013%2010.2239%2013%2010.5C13%2010.7761%2012.7761%2011%2012.5%2011H7.5C7.22386%2011%207%2010.7761%207%2010.5Z%22%20fill%3D%22%23636566%22/%3E%0A%3Cpath%20d%3D%22M7.5%2013C7.22386%2013%207%2013.2239%207%2013.5C7%2013.7761%207.22386%2014%207.5%2014H9.5C9.77614%2014%2010%2013.7761%2010%2013.5C10%2013.2239%209.77614%2013%209.5%2013H7.5Z%22%20fill%3D%22%23636566%22/%3E%0A%3Cpath%20d%3D%22M6.5%202C6.22386%202%206%202.22386%206%202.5V3H5.5C4.67157%203%204%203.67157%204%204.5V16.5C4%2017.3284%204.67157%2018%205.5%2018H11.5C11.6326%2018%2011.7598%2017.9473%2011.8536%2017.8536L15.8536%2013.8536C15.9473%2013.7598%2016%2013.6326%2016%2013.5V4.5C16%203.67157%2015.3284%203%2014.5%203H14V2.5C14%202.22386%2013.7761%202%2013.5%202C13.2239%202%2013%202.22386%2013%202.5V3H10.5V2.5C10.5%202.22386%2010.2761%202%2010%202C9.72386%202%209.5%202.22386%209.5%202.5V3H7V2.5C7%202.22386%206.77614%202%206.5%202ZM14.5%204C14.7761%204%2015%204.22386%2015%204.5V13H12.5C11.6716%2013%2011%2013.6716%2011%2014.5V17H5.5C5.22386%2017%205%2016.7761%205%2016.5V4.5C5%204.22386%205.22386%204%205.5%204H14.5ZM14.2929%2014L12%2016.2929V14.5C12%2014.2239%2012.2239%2014%2012.5%2014H14.2929Z%22%20fill%3D%22%23636566%22/%3E%0A%3C/svg%3E%0A");

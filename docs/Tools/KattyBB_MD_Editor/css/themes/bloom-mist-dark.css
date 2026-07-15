@@ -1,6 +1,7 @@
 @charset "UTF-8";
 
 :root {
+  color-scheme: dark;
     /* --- Spacing System (8px based) --- */
     --space-unit: 8px;
     --space-3xs: calc(var(--space-unit) * 0.25);
