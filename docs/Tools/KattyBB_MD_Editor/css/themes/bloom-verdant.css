@@ -43,9 +43,9 @@
     --border-semi: color-mix(in oklch, var(--text), transparent 80%);
 
     /* Effects */
-    --shadow-sm: 0 2px 8px color-mix(in oklch, var(--text), transparent 96%);
-    --shadow: 0 10px 30px color-mix(in oklch, var(--text), transparent 94%);
-    --shadow-lg: 0 24px 60px color-mix(in oklch, var(--text), transparent 90%);
+    --shadow-sm: 0 2px 8px rgba(var(--text-rgb), 0.04);
+    --shadow: 0 10px 30px rgba(var(--text-rgb), 0.06);
+    --shadow-lg: 0 24px 60px rgba(var(--text-rgb), 0.10);
 
     /* Typography */
     --font-sans: "MiSans", "PingFang SC", "Microsoft YaHei", sans-serif;

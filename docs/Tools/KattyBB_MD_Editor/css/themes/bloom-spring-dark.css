@@ -48,8 +48,8 @@
     --border-semi: color-mix(in oklch, var(--text), transparent 78%);
 
     /* Effects */
-    --shadow: 0 16px 48px color-mix(in oklch, var(--bg), black 50%);
-    --shadow-lg: 0 30px 80px color-mix(in oklch, var(--bg), black 60%);
+    --shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.6);
 
     /* Typography */
     --font-sans: "MiSans", "PingFang SC", "Microsoft YaHei", sans-serif;
