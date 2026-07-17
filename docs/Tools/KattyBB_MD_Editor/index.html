@@ -1668,14 +1668,39 @@ body {
   cursor: grab; user-select: none; -webkit-user-drag: none; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
 .img-lightbox-img.grabbing { cursor: grabbing; }
-.img-lightbox-toolbar { position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; z-index: 10000; }
-.img-lb-btn {
-  width: 42px; height: 42px; border-radius: 50%; border: none;
-  background: rgba(255,255,255,0.16); color: #fff; font-size: 18px; line-height: 1;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  backdrop-filter: blur(4px); transition: background 0.15s ease;
+.img-lightbox-toolbar {
+  position: absolute; top: 16px; right: 16px;
+  display: flex; align-items: center; gap: 16px;
+  padding: 10px 12px;
+  background: rgba(22, 22, 26, 0.55);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
+  z-index: 10000;
 }
-.img-lb-btn:hover { background: rgba(255,255,255,0.34); }
+.img-lb-group { display: flex; align-items: center; gap: 8px; }
+.img-lb-sep { width: 1px; align-self: stretch; min-height: 22px; background: rgba(255, 255, 255, 0.16); }
+.img-lb-btn {
+  width: 40px; height: 40px; border-radius: 11px;
+  border: none; background: rgba(255, 255, 255, 0.08);
+  color: #fff; cursor: pointer; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.16s ease, transform 0.12s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+.img-lb-btn svg { width: 20px; height: 20px; display: block; pointer-events: none; }
+.img-lb-btn:hover { background: rgba(255, 255, 255, 0.2); }
+.img-lb-btn:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.28); }
+.img-lb-btn:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.7); outline-offset: 2px; }
+.img-lb-btn.is-disabled { opacity: 0.4; pointer-events: none; cursor: default; }
+.img-lb-close {
+  background: rgba(229, 72, 77, 0.18);
+  color: #ff6b6b;
+  margin-left: 4px;
+}
+.img-lb-close:hover { background: rgba(229, 72, 77, 0.34); color: #ff8585; }
+.img-lb-close:active { transform: scale(0.92); background: rgba(229, 72, 77, 0.5); }
 .img-lb-mini {
   position: fixed; right: 20px; bottom: 20px; width: 220px; max-height: 240px;
   background: #111; border: 1px solid rgba(255,255,255,0.22); border-radius: 10px;
@@ -1956,7 +1981,6 @@ body {
         <path d="M6 15a9 9 0 0 0 9-9"></path>
       </svg>
       <div class="toc-float-panel" id="tocFloatPanel">
-        <div class="toc-float-header" id="tocFloatHeader">目录</div>
         <div class="toc-float-content" id="tocFloatContent"></div>
       </div>
     </div>

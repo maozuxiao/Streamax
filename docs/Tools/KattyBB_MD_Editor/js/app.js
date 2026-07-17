@@ -371,8 +371,6 @@ function applyLang() {
   document.querySelector('button[onclick="clearEditor()"]').title = t('clearEditor');
   document.querySelector('.toolbar-logo').title = t('logoTitle');
   document.getElementById('tocFloatBtn').title = t('tocTitle');
-  var tocFloatHeader = document.getElementById('tocFloatHeader');
-  if (tocFloatHeader) tocFloatHeader.textContent = t('tocTitle');
   // 更新编辑器 placeholder
   editor.placeholder = t('editorPlaceholder');
   // 更新文件名（如果是默认值）
@@ -1197,7 +1195,7 @@ function generateTOC(fullText) {
   var headings = extractHeadings(fullText);
   if (!headings) return '<div class="toc"></div>';
 
-  var tocHtml = '<div class="toc"><div class="toc-title">' + t('tocTitle') + '</div><ul>';
+  var tocHtml = '<div class="toc"><ul>';
   headings.forEach(function(h) {
     var level = h.match(/^#+/)[0].length;
     var title = h.replace(/^#+\s+/, '').replace(/[#]+$/, '').trim();
@@ -2510,9 +2508,39 @@ async function exportHTML() {
 .img-lightbox-overlay.open { display: flex; }
 .img-lightbox-img { max-width: 90%; max-height: 90%; transform-origin: center center; cursor: grab; user-select: none; -webkit-user-drag: none; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
 .img-lightbox-img.grabbing { cursor: grabbing; }
-.img-lightbox-toolbar { position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; z-index: 10000; }
-.img-lb-btn { width: 42px; height: 42px; border-radius: 50%; border: none; background: rgba(255,255,255,0.16); color: #fff; font-size: 18px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); transition: background 0.15s ease; }
-.img-lb-btn:hover { background: rgba(255,255,255,0.34); }
+.img-lightbox-toolbar {
+  position: absolute; top: 16px; right: 16px;
+  display: flex; align-items: center; gap: 16px;
+  padding: 10px 12px;
+  background: rgba(22, 22, 26, 0.55);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
+  z-index: 10000;
+}
+.img-lb-group { display: flex; align-items: center; gap: 8px; }
+.img-lb-sep { width: 1px; align-self: stretch; min-height: 22px; background: rgba(255, 255, 255, 0.16); }
+.img-lb-btn {
+  width: 40px; height: 40px; border-radius: 11px;
+  border: none; background: rgba(255, 255, 255, 0.08);
+  color: #fff; cursor: pointer; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.16s ease, transform 0.12s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+.img-lb-btn svg { width: 20px; height: 20px; display: block; pointer-events: none; }
+.img-lb-btn:hover { background: rgba(255, 255, 255, 0.2); }
+.img-lb-btn:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.28); }
+.img-lb-btn:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.7); outline-offset: 2px; }
+.img-lb-btn.is-disabled { opacity: 0.4; pointer-events: none; cursor: default; }
+.img-lb-close {
+  background: rgba(229, 72, 77, 0.18);
+  color: #ff6b6b;
+  margin-left: 4px;
+}
+.img-lb-close:hover { background: rgba(229, 72, 77, 0.34); color: #ff8585; }
+.img-lb-close:active { transform: scale(0.92); background: rgba(229, 72, 77, 0.5); }
 .img-lb-mini { position: fixed; right: 20px; bottom: 20px; width: 220px; max-height: 240px; background: #111; border: 1px solid rgba(255,255,255,0.22); border-radius: 10px; overflow: hidden; z-index: 10001; box-shadow: 0 10px 34px rgba(0,0,0,0.55); cursor: move; }
 .img-lb-mini img { width: 100%; display: block; pointer-events: none; }
 .img-lb-mini-close { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border: none; border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff; cursor: pointer; font-size: 13px; }
@@ -2554,7 +2582,6 @@ ${IMG_LIGHTBOX_SCRIPT}
     tocUI = '<div class="export-toc-btn" id="exportTocBtn" title="目录" aria-label="目录">'
       + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><path d="M18 9a9 9 0 0 0-9 9"></path><path d="M6 15a9 9 0 0 0 9-9"></path></svg>'
       + '<div class="export-toc-panel" id="exportTocPanel">'
-      + '<div class="export-toc-header">' + t('tocTitle') + '</div>'
       + '<div class="export-toc-content">' + tocList + '</div>'
       + '</div>'
       + '</div>';
@@ -3523,6 +3550,17 @@ function getDarkSafeCSS() {
 var IMG_LIGHTBOX_SCRIPT = `
 (function(){
   function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+  var ICON = {
+    prev:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
+    next:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+    zoomin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
+    zoomout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
+    rotL:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
+    rotR:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>',
+    reset:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="1" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="1" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="23" y2="12"/></svg>',
+    pip:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="14" rx="2"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="17" x2="12" y2="20"/></svg>',
+    close:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+  };
   function init(root){
     if (!root || root.__imgLbBound) return;
     root.__imgLbBound = true;
@@ -3540,15 +3578,23 @@ var IMG_LIGHTBOX_SCRIPT = `
     ov.className = 'img-lightbox-overlay';
     ov.innerHTML =
       '<div class="img-lightbox-toolbar">' +
-        '<button class="img-lb-btn" data-act="prev" title="上一张">‹</button>' +
-        '<button class="img-lb-btn" data-act="in" title="放大">＋</button>' +
-        '<button class="img-lb-btn" data-act="out" title="缩小">－</button>' +
-        '<button class="img-lb-btn" data-act="rot-left" title="向左旋转（[）">↺</button>' +
-        '<button class="img-lb-btn" data-act="rot-right" title="向右旋转（]）">↻</button>' +
-        '<button class="img-lb-btn" data-act="reset" title="复位">⟲</button>' +
-        '<button class="img-lb-btn" data-act="pip" title="画中画">⧉</button>' +
-        '<button class="img-lb-btn" data-act="next" title="下一张">›</button>' +
-        '<button class="img-lb-btn" data-act="close" title="关闭">✕</button>' +
+        '<div class="img-lb-group">' +
+          '<button class="img-lb-btn" data-act="prev" title="上一张 (←)">' + ICON.prev + '</button>' +
+          '<button class="img-lb-btn" data-act="next" title="下一张 (→)">' + ICON.next + '</button>' +
+        '</div>' +
+        '<span class="img-lb-sep"></span>' +
+        '<div class="img-lb-group">' +
+          '<button class="img-lb-btn" data-act="in" title="放大">' + ICON.zoomin + '</button>' +
+          '<button class="img-lb-btn" data-act="out" title="缩小">' + ICON.zoomout + '</button>' +
+          '<button class="img-lb-btn" data-act="rot-left" title="向左旋转 90° ([)">' + ICON.rotL + '</button>' +
+          '<button class="img-lb-btn" data-act="rot-right" title="向右旋转 90° (])">' + ICON.rotR + '</button>' +
+          '<button class="img-lb-btn" data-act="reset" title="重置缩放与旋转">' + ICON.reset + '</button>' +
+        '</div>' +
+        '<span class="img-lb-sep"></span>' +
+        '<div class="img-lb-group">' +
+          '<button class="img-lb-btn" data-act="pip" title="画中画">' + ICON.pip + '</button>' +
+        '</div>' +
+        '<button class="img-lb-btn img-lb-close" data-act="close" title="关闭查看器 (Esc)">' + ICON.close + '</button>' +
       '</div>' +
       '<div class="img-lb-counter"></div>' +
       '<img class="img-lightbox-img">';
@@ -3573,8 +3619,8 @@ var IMG_LIGHTBOX_SCRIPT = `
       im.src = el.currentSrc || el.src;
       im.alt = el.alt || '';
       counter.textContent = (idx + 1) + ' / ' + imgs.length;
-      prevBtn.style.visibility = imgs.length > 1 ? 'visible' : 'hidden';
-      nextBtn.style.visibility = imgs.length > 1 ? 'visible' : 'hidden';
+      prevBtn.classList.toggle('is-disabled', imgs.length <= 1);
+      nextBtn.classList.toggle('is-disabled', imgs.length <= 1);
       reset();
     }
     showImg(idx);
