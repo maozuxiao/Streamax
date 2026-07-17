@@ -2510,7 +2510,10 @@ async function exportHTML() {
 .img-lightbox-img.grabbing { cursor: grabbing; }
 .img-lightbox-toolbar {
   position: absolute; top: 16px; right: 16px;
-  display: flex; align-items: center; gap: 16px;
+  box-sizing: border-box;
+  display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end;
+  gap: 16px; row-gap: 8px;
+  max-width: calc(100vw - 32px);
   padding: 10px 12px;
   background: rgba(22, 22, 26, 0.55);
   -webkit-backdrop-filter: blur(14px) saturate(150%);
@@ -2521,15 +2524,16 @@ async function exportHTML() {
   z-index: 10000;
 }
 .img-lb-group { display: flex; align-items: center; gap: 8px; }
-.img-lb-sep { width: 1px; align-self: stretch; min-height: 22px; background: rgba(255, 255, 255, 0.16); }
+.img-lb-sep { flex: 0 0 auto; width: 1px; align-self: stretch; min-height: 22px; background: rgba(255, 255, 255, 0.16); }
 .img-lb-btn {
-  width: 40px; height: 40px; border-radius: 11px;
+  box-sizing: border-box; flex: 0 0 auto;
+  width: 40px; height: 40px; min-width: 40px; border-radius: 11px;
   border: none; background: rgba(255, 255, 255, 0.08);
-  color: #fff; cursor: pointer; padding: 0;
+  color: #fff; cursor: pointer; padding: 0; font-size: 0; line-height: 0;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.16s ease, transform 0.12s ease, color 0.16s ease, box-shadow 0.16s ease;
 }
-.img-lb-btn svg { width: 20px; height: 20px; display: block; pointer-events: none; }
+.img-lb-btn svg { width: 20px; height: 20px; flex: 0 0 auto; display: block; pointer-events: none; }
 .img-lb-btn:hover { background: rgba(255, 255, 255, 0.2); }
 .img-lb-btn:active { transform: scale(0.92); background: rgba(255, 255, 255, 0.28); }
 .img-lb-btn:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.7); outline-offset: 2px; }
@@ -2541,6 +2545,10 @@ async function exportHTML() {
 }
 .img-lb-close:hover { background: rgba(229, 72, 77, 0.34); color: #ff8585; }
 .img-lb-close:active { transform: scale(0.92); background: rgba(229, 72, 77, 0.5); }
+@media (max-width: 560px) {
+  .img-lightbox-toolbar { gap: 10px; row-gap: 6px; padding: 8px; }
+  .img-lb-btn { width: 36px; height: 36px; min-width: 36px; }
+}
 .img-lb-mini { position: fixed; right: 20px; bottom: 20px; width: 220px; max-height: 240px; background: #111; border: 1px solid rgba(255,255,255,0.22); border-radius: 10px; overflow: hidden; z-index: 10001; box-shadow: 0 10px 34px rgba(0,0,0,0.55); cursor: move; }
 .img-lb-mini img { width: 100%; display: block; pointer-events: none; }
 .img-lb-mini-close { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border: none; border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff; cursor: pointer; font-size: 13px; }
@@ -3551,15 +3559,15 @@ var IMG_LIGHTBOX_SCRIPT = `
 (function(){
   function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
   var ICON = {
-    prev:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
-    next:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
-    zoomin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
-    zoomout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
-    rotL:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
-    rotR:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>',
-    reset:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="1" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="1" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="23" y2="12"/></svg>',
-    pip:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="14" rx="2"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="17" x2="12" y2="20"/></svg>',
-    close:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+    prev:   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
+    next:   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+    zoomin: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
+    zoomout:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
+    rotL:   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
+    rotR:   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>',
+    reset:  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="1" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="1" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="23" y2="12"/></svg>',
+    pip:    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="14" rx="2"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="17" x2="12" y2="20"/></svg>',
+    close:  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
   };
   function init(root){
     if (!root || root.__imgLbBound) return;
