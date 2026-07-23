@@ -128,6 +128,7 @@ var i18n = {
     fmtCopySimp: '复制内容并简化格式',
     fmtCopyPlain: '复制为纯文本',
     fmtPastePlain: '粘贴为纯文本',
+    fmtPasteMarkdown: '粘贴为 Markdown',
     fmtBold: '加粗',
     fmtItalic: '斜体',
     fmtUnderline: '下划线',
@@ -291,6 +292,7 @@ var i18n = {
     fmtCopySimp: 'Copy with simplified format',
     fmtCopyPlain: 'Copy as plain text',
     fmtPastePlain: 'Paste as plain text',
+    fmtPasteMarkdown: 'Paste as Markdown',
     fmtBold: 'Bold',
     fmtItalic: 'Italic',
     fmtUnderline: 'Underline',
@@ -590,6 +592,7 @@ function applyLang() {
   fmtCtx('ctxCopyHtml', 'fmtCopyHtml');
   fmtCtx('ctxCopyPlain', 'fmtCopyPlain');
   fmtCtx('ctxPastePlain', 'fmtPastePlain');
+  fmtCtx('ctxPasteMarkdown', 'fmtPasteMarkdown');
   // 重新渲染预览区，使 [TOC] 标题等动态文本随语言切换立即更新
   if (typeof updatePreview === 'function') updatePreview();
 }
@@ -1642,6 +1645,93 @@ function saveToStorage() {
   localStorage.setItem('bloom-editor-filename', fileNameEl.textContent);
 }
 
+// ===== 富文本粘贴：剪贴板 HTML -> Markdown 转换 =====
+var _turndownService = null;
+function getTurndownService() {
+  if (_turndownService) return _turndownService;
+  if (typeof TurndownService === 'undefined') return null;
+  var service = new TurndownService({
+    headingStyle: 'atx',
+    hr: '---',
+    bulletListMarker: '-',
+    codeBlockStyle: 'fenced',
+    emDelimiter: '*',
+    strongDelimiter: '**',
+    linkStyle: 'inlined'
+  });
+  // GFM 插件：表格 / 删除线 / 任务列表
+  if (typeof turndownPluginGfm !== 'undefined') {
+    service.use(turndownPluginGfm.gfm);
+  }
+  // 直接丢弃 script / style 节点（与 htmlToMarkdown 的正则双保险）
+  service.remove(['script', 'style']);
+  // 高亮 <mark> -> ==文本==（编辑器已支持 ==高亮==）
+  service.addRule('highlight', {
+    filter: 'mark',
+    replacement: function (content) { return '==' + content + '=='; }
+  });
+  _turndownService = service;
+  return service;
+}
+
+// 将剪贴板富文本 HTML 转 Markdown（先剥离 script/style/注释）
+function htmlToMarkdown(html) {
+  if (!html) return null;
+  html = html.replace(/<script[\s\S]*?<\/script>/gi, '')
+             .replace(/<style[\s\S]*?<\/style>/gi, '')
+             .replace(/<!--[\s\S]*?-->/g, '');
+  var service = getTurndownService();
+  if (!service) return null;
+  try {
+    return service.turndown(html);
+  } catch (err) {
+    return null;
+  }
+}
+
+// 拦截主编辑区粘贴：有 HTML 格式则转 Markdown，否则保留浏览器默认纯文本行为
+editor.addEventListener('paste', function (e) {
+  if (!e.clipboardData) return;
+  var types = e.clipboardData.types;
+  if (types && Array.prototype.indexOf.call(types, 'text/html') !== -1) {
+    var html = e.clipboardData.getData('text/html');
+    if (html && html.trim()) {
+      var md = htmlToMarkdown(html);
+      if (md !== null) {
+        e.preventDefault();
+        fmtInsertAtCursor(md);
+      }
+    }
+  }
+});
+
+// 右键菜单「粘贴为 Markdown」：经 Clipboard API 读取富文本后转换
+function fmtPasteMarkdownText() {
+  document.getElementById('fmtContextMenu').classList.remove('show');
+  if (navigator.clipboard && navigator.clipboard.read) {
+    navigator.clipboard.read().then(function (items) {
+      for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        if (item.types && Array.prototype.indexOf.call(item.types, 'text/html') !== -1) {
+          item.getType('text/html').then(function (blob) {
+            var reader = new FileReader();
+            reader.onload = function () {
+              var md = htmlToMarkdown(reader.result);
+              if (md !== null) fmtInsertAtCursor(md);
+              else showToast(t('fmtToastPasteFail'));
+            };
+            reader.readAsText(blob);
+          }).catch(function () { showToast(t('fmtToastPasteFail')); });
+          return;
+        }
+      }
+      showToast(t('fmtToastPasteFail'));
+    }).catch(function () { showToast(t('fmtToastPasteFail')); });
+  } else {
+    showToast(t('fmtToastPasteFail'));
+  }
+}
+
 // ===== 主题下拉菜单切换 =====
 function toggleThemeDropdown() {
   var selector = document.getElementById('themeSelector');
@@ -2599,7 +2689,7 @@ ${IMG_LIGHTBOX_SCRIPT}
     + '<span class="wicon wicon-restore"><svg class="wicon-svg" viewBox="0 0 1228 1024" xmlns="http://www.w3.org/2000/svg"><path d="M1164.151467 896.750933V1024H0v-127.249067h1164.151467zM1137.322667 0l-297.233067 292.386133 297.233067 292.386134L1228.8 494.7968l-205.824-202.410667L1228.8 89.975467 1137.322667 0zM582.0416 451.447467v127.249066H0V451.447467h582.0416z m0-445.371734v127.249067H0V6.144h582.0416z" fill="currentColor" p-id="7098"></path></svg></span>'
     + '</div>';
 
-  var htmlDoc = '<!DOCTYPE html>\n<html lang="zh-CN" color-scheme="' + (_currentThemeMode === 'dark' ? 'dark' : 'light') + '">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">\n<title>' + fileNameEl.textContent + '<\/title>\n<style>\n' + cssContent + '\n' + footnoteStyles + '\n' + exportUIStyles + '\n' + getExportExtraCSS() + '\n<\/style>\n' +
+  var htmlDoc = '<!DOCTYPE html>\n<html lang="zh-CN" color-scheme="' + (_currentThemeMode === 'dark' ? 'dark' : 'light') + '">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">\n<title>' + getExportBaseName() + '<\/title>\n<style>\n' + cssContent + '\n' + footnoteStyles + '\n' + exportUIStyles + '\n' + getExportExtraCSS() + '\n<\/style>\n' +
     // 追加相对路径主题样式：从应用目录打开导出文件时，与预览区加载同一份主题（含字号），
     // 保证导出 HTML 的字体大小/配色与仅预览模式完全一致。
     '<link rel="stylesheet" href="' + _themeCssFile + '">\n<\/head>\n<body>\n<div id="write" class="markdown-body">\n' + htmlContent + '\n<\/div>\n' + tocUI + widthUI + footnoteScript + exportUIScript + '\n<\/body>\n<\/html>';
@@ -2621,7 +2711,7 @@ async function printPreview() {
   htmlContent = convertFootnotesForPrint(htmlContent);
 
   var printWin = window.open('', '_blank');
-  var printTitle = fileNameEl.textContent.replace(/\.md$/i, '');
+  var printTitle = getExportBaseName();
   var _ptheme = themeList[_currentThemeName] || themeList['bloom-petal'];
   var _pthemeCssRel = _currentThemeMode === 'dark' ? _ptheme.dark : _ptheme.light;
   var _pthemeCssFile = new URL(_pthemeCssRel, location.href).href;
@@ -3189,14 +3279,14 @@ function extractTitleFromMarkdown(text) {
  * 1. 如果是从本地打开的文件，使用原文件名（去掉扩展名）
  * 2. 如果是未命名文件，自动提取 Markdown 第一个标题作为文件名
  */
-function getExportName(ext) {
+function getExportBaseName() {
   var name;
 
   // 规则1：优先使用本地打开的文件名（去掉扩展名）
   if (window._openedFileName) {
     name = window._openedFileName.replace(/\.(md|markdown|txt|text)$/i, '');
   }
-  // 规则2：未命名/未打开文件，从 Markdown 内容提取标题
+  // 规则2：未打开文件时，从 Markdown 内容提取第一个标题作为名称
   else if (fileNameEl.textContent === t('unnamed') || fileNameEl.textContent === t('noFileOpen')) {
     name = extractTitleFromMarkdown(editor.value);
     if (!name) name = t('unnamed');
@@ -3211,7 +3301,11 @@ function getExportName(ext) {
   // 限制长度，避免文件名过长
   if (name.length > 100) name = name.substring(0, 100);
 
-  return name + ext;
+  return name;
+}
+
+function getExportName(ext) {
+  return getExportBaseName() + ext;
 }
 
 function downloadBlob(content, filename, mimeType) {

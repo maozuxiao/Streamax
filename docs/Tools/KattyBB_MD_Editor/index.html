@@ -2181,6 +2181,8 @@ body {
 <!-- Toast 通知 -->
 <div class="toast" id="toast"></div>
 
+<script src="js/lib/turndown.js"></script>
+<script src="js/lib/turndown-plugin-gfm.js"></script>
 <script src="js/app.js"></script>
 
 <!-- 插入弹窗 -->
@@ -2208,6 +2210,7 @@ body {
         <div class="fmt-ctx-item" onclick="fmtCopyPlainText()"><span id="ctxCopyPlain">复制为纯文本</span></div>
         <div class="fmt-ctx-sep"></div>
         <div class="fmt-ctx-item" onclick="fmtPastePlainText()"><span id="ctxPastePlain">粘贴为纯文本</span><span class="fmt-ctx-key">Ctrl+Shift+V</span></div>
+        <div class="fmt-ctx-item" onclick="fmtPasteMarkdownText()"><span id="ctxPasteMarkdown">粘贴为 Markdown</span></div>
       </div>
     </div>
     <div class="fmt-ctx-item" onclick="fmtDelete()" id="ctxDelete" title="删除"><svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4.5A1.5 1.5 0 0 1 9.5 3h1A1.5 1.5 0 0 1 12 4.5V6M6.5 6l.7 9.5A1.5 1.5 0 0 0 8.7 17h2.6a1.5 1.5 0 0 0 1.5-1.5L13.5 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
