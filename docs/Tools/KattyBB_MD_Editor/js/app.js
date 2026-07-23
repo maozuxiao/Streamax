@@ -2417,6 +2417,8 @@ async function exportHTML() {
   var _theme = themeList[_currentThemeName] || themeList['bloom-petal'];
   var _themeCssRel = _currentThemeMode === 'dark' ? _theme.dark : _theme.light;
   var _themeCssFile = new URL(_themeCssRel, location.href).href;
+  // 标签页图标：解析为绝对路径，保证导出 HTML 保存到下载目录后图标仍有效
+  var _faviconUrl = new URL('assets/Markdown.svg', location.href).href;
   
   var footnoteStyles = `
 .footnote-tooltip {
@@ -2689,7 +2691,7 @@ ${IMG_LIGHTBOX_SCRIPT}
     + '<span class="wicon wicon-restore"><svg class="wicon-svg" viewBox="0 0 1228 1024" xmlns="http://www.w3.org/2000/svg"><path d="M1164.151467 896.750933V1024H0v-127.249067h1164.151467zM1137.322667 0l-297.233067 292.386133 297.233067 292.386134L1228.8 494.7968l-205.824-202.410667L1228.8 89.975467 1137.322667 0zM582.0416 451.447467v127.249066H0V451.447467h582.0416z m0-445.371734v127.249067H0V6.144h582.0416z" fill="currentColor" p-id="7098"></path></svg></span>'
     + '</div>';
 
-  var htmlDoc = '<!DOCTYPE html>\n<html lang="zh-CN" color-scheme="' + (_currentThemeMode === 'dark' ? 'dark' : 'light') + '">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">\n<title>' + getExportBaseName() + '<\/title>\n<style>\n' + cssContent + '\n' + footnoteStyles + '\n' + exportUIStyles + '\n' + getExportExtraCSS() + '\n<\/style>\n' +
+  var htmlDoc = '<!DOCTYPE html>\n<html lang="zh-CN" color-scheme="' + (_currentThemeMode === 'dark' ? 'dark' : 'light') + '">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">\n<link rel="icon" type="image/svg+xml" href="' + _faviconUrl + '">\n<title>' + getExportBaseName() + '<\/title>\n<style>\n' + cssContent + '\n' + footnoteStyles + '\n' + exportUIStyles + '\n' + getExportExtraCSS() + '\n<\/style>\n' +
     // 追加相对路径主题样式：从应用目录打开导出文件时，与预览区加载同一份主题（含字号），
     // 保证导出 HTML 的字体大小/配色与仅预览模式完全一致。
     '<link rel="stylesheet" href="' + _themeCssFile + '">\n<\/head>\n<body>\n<div id="write" class="markdown-body">\n' + htmlContent + '\n<\/div>\n' + tocUI + widthUI + footnoteScript + exportUIScript + '\n<\/body>\n<\/html>';
