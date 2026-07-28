@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CAN 数据字段映射验证工具</title>
+<link rel="shortcut icon" href="https://www.streamax.com/static/en/img/favicon.ico" type="image/x-icon">
+<title data-i18n="title">CAN 数据字段映射验证工具</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -174,6 +175,65 @@ body {
 }
 .error-msg.show { display: block; }
 
+.header { position: relative; }
+.header-logo {
+  position: absolute;
+  top: 20px;
+  left: 28px;
+  display: flex;
+  align-items: center;
+}
+.header-logo img {
+  height: 16px;
+  width: auto;
+  filter: brightness(0) invert(1);
+}
+
+.lang-switch {
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  display: inline-flex;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 20px;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+}
+.lang-switch button {
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.8);
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.lang-switch button.active {
+  background: #fff;
+  color: #0d47a1;
+  font-weight: 600;
+}
+.lang-switch button:hover:not(.active) { background: rgba(255,255,255,0.1); color: #fff; }
+
+.notice-warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #8a6d00;
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin: -10px auto 26px;
+  max-width: 1100px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.notice-warning .notice-icon { font-size: 20px; flex-shrink: 0; }
+
 input[type="file"] { display: none; }
 
 @media (max-width: 768px) {
@@ -192,15 +252,27 @@ input[type="file"] { display: none; }
 <body>
 
 <div class="header">
-  <h1>CAN 数据字段映射验证工具</h1>
-  <p>拖拽上传 Excel 文件，自动完成字段映射与数据有效性检查</p>
+  <div class="lang-switch">
+    <button type="button" data-lang="zh" id="langZh" onclick="toggleLang('zh')">中文</button>
+    <button type="button" data-lang="en" id="langEn" onclick="toggleLang('en')">EN</button>
+  </div>
+  <div class="header-logo">
+    <img src="https://www.streamax.com/static/en/img/logo.png" alt="Streamax">
+  </div>
+  <h1 data-i18n="headerTitle">CAN 数据字段映射验证工具</h1>
+  <p data-i18n="headerSubtitle">拖拽上传 Excel 文件，自动完成字段映射与数据有效性检查</p>
+</div>
+
+<div class="notice-warning">
+  <span class="notice-icon">&#9888;</span>
+  <span data-i18n="notice">使用该工具时，FT 系统语言提前选择为英语再导出轨迹文件</span>
 </div>
 
 <div class="container">
   <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
     <div class="icon">&#128196;</div>
-    <div class="title">拖拽 Excel 文件到此处</div>
-    <div class="subtitle">支持 .xlsx / .xls 格式，或点击选择文件</div>
+    <div class="title" data-i18n="dropTitle">拖拽 Excel 文件到此处</div>
+    <div class="subtitle" data-i18n="dropSubtitle">支持 .xlsx / .xls 格式，或点击选择文件</div>
   </div>
   <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
 
@@ -217,15 +289,15 @@ input[type="file"] { display: none; }
 
   <div class="result-card" id="resultCard">
     <div class="result-header">
-      <h3>字段映射验证结果</h3>
+      <h3 data-i18n="resultHeader">字段映射验证结果</h3>
       <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
         <div class="result-stats" id="resultStats"></div>
         <div class="btn-group" id="resultActions" style="display:none;">
-          <button class="btn btn-copy" id="btnCopy" onclick="copyResults()" title="复制结果到剪贴板">
-            <span>&#128203;</span> 复制结果
+          <button class="btn btn-copy" id="btnCopy" onclick="copyResults()" data-i18n-title="copyTip" title="复制结果到剪贴板">
+            <span>&#128203;</span> <span data-i18n="copy">复制结果</span>
           </button>
-          <button class="btn btn-outline" id="btnExport" onclick="exportExcel()" title="导出为 Excel 文件">
-            <span>&#128190;</span> 导出 Excel
+          <button class="btn btn-outline" id="btnExport" onclick="exportExcel()" data-i18n-title="exportTip" title="导出为 Excel 文件">
+            <span>&#128190;</span> <span data-i18n="export">导出 Excel</span>
           </button>
         </div>
       </div>
@@ -233,8 +305,8 @@ input[type="file"] { display: none; }
     <div class="result-body" id="resultBody"></div>
     <div class="result-footer">
       <div class="legend">
-        <div class="legend-item"><span class="stat-dot ok"></span> 有有效数据</div>
-        <div class="legend-item"><span class="stat-dot fail"></span> 无有效数据</div>
+        <div class="legend-item"><span class="stat-dot ok"></span> <span data-i18n="legendOk">有有效数据</span></div>
+        <div class="legend-item"><span class="stat-dot fail"></span> <span data-i18n="legendFail">无有效数据</span></div>
       </div>
       <span class="summary-text" id="summaryText"></span>
     </div>
@@ -242,6 +314,144 @@ input[type="file"] { display: none; }
 </div>
 
 <script>
+// ============ 国际化 (i18n) ============
+const I18N = {
+  zh: {
+    title: 'CAN 数据字段映射验证工具',
+    headerTitle: 'CAN 数据字段映射验证工具',
+    headerSubtitle: '拖拽上传 Excel 文件，自动完成字段映射与数据有效性检查',
+    notice: '使用该工具时，FT 系统语言提前选择为英语再导出轨迹文件',
+    dropTitle: '拖拽 Excel 文件到此处',
+    dropSubtitle: '支持 .xlsx / .xls 格式，或点击选择文件',
+    dropLoadedTitle: '文件已加载',
+    dropLoadedSubtitle: '拖拽新文件重新分析，或点击更换文件',
+    resultHeader: '字段映射验证结果',
+    copy: '复制结果',
+    export: '导出 Excel',
+    copied: '已复制',
+    copyTip: '复制结果到剪贴板',
+    exportTip: '导出为 Excel 文件',
+    legendOk: '有有效数据',
+    legendFail: '无有效数据',
+    statOk: '可用字段',
+    statFail: '缺失字段',
+    loaded: '已加载',
+    summary: '共 {rows} 行 x {cols} 列 | {ok} 个字段可用，{fail} 个字段缺失',
+    fileMeta: '工作表: {sheet} | 总行数: {rows} | 列数: {cols}',
+    errFormat: '不支持的文件格式，请上传 .xlsx 或 .xls 文件',
+    errData: '文件数据不足，表头或数据行缺失',
+    errParse: '文件解析失败: ',
+    colMissing: ' (列不存在)',
+    colMissingShort: '列不存在',
+    errNone: '无有效数据',
+    copyHeader: '序号\t字段组一\t状态\t有效行数\t映射自(字段组二)',
+    copySep: '----\t------\t----\t------\t------------',
+    copyTotal: '总计: {ok} 个字段可用, {fail} 个字段缺失',
+    copySource: '数据来源: {file} (共 {rows} 行 x {cols} 列)',
+    exportSheet: '字段映射验证结果',
+    exportNo: '序号',
+    exportField: '字段组一',
+    exportStatus: '状态',
+    exportValid: '有效行数',
+    exportFrom: '映射自(字段组二)',
+    exportTotal: '总计:',
+    exportSource: '数据来源:',
+    exportFileSuffix: '_映射结果.xlsx'
+  },
+  en: {
+    title: 'CAN Data Field Mapping Verification Tool',
+    headerTitle: 'CAN Data Field Mapping Verification Tool',
+    headerSubtitle: 'Drag and drop an Excel file to auto-complete field mapping and data validity checks',
+    notice: 'When using this tool, set the FT system language to English before exporting the track file',
+    dropTitle: 'Drag Excel file here',
+    dropSubtitle: 'Supports .xlsx / .xls, or click to select a file',
+    dropLoadedTitle: 'File loaded',
+    dropLoadedSubtitle: 'Drag a new file to re-analyze, or click to replace',
+    resultHeader: 'Field Mapping Verification Results',
+    copy: 'Copy Result',
+    export: 'Export Excel',
+    copied: 'Copied',
+    copyTip: 'Copy results to clipboard',
+    exportTip: 'Export as Excel file',
+    legendOk: 'Has valid data',
+    legendFail: 'No valid data',
+    statOk: 'Available fields',
+    statFail: 'Missing fields',
+    loaded: 'Loaded',
+    summary: 'Total {rows} rows x {cols} cols | {ok} fields available, {fail} fields missing',
+    fileMeta: 'Sheet: {sheet} | Total rows: {rows} | Columns: {cols}',
+    errFormat: 'Unsupported file format. Please upload a .xlsx or .xls file',
+    errData: 'Insufficient file data: header or data rows are missing',
+    errParse: 'File parsing failed: ',
+    colMissing: ' (column not found)',
+    colMissingShort: 'column not found',
+    errNone: 'No valid data',
+    copyHeader: 'No.\tField Group 1\tStatus\tValid Rows\tMapped From (Field Group 2)',
+    copySep: '--\t------------\t------\t----------\t------------------------',
+    copyTotal: 'Total: {ok} fields available, {fail} fields missing',
+    copySource: 'Source: {file} (Total {rows} rows x {cols} cols)',
+    exportSheet: 'Field Mapping Result',
+    exportNo: 'No.',
+    exportField: 'Field Group 1',
+    exportStatus: 'Status',
+    exportValid: 'Valid Rows',
+    exportFrom: 'Mapped From (Field Group 2)',
+    exportTotal: 'Total:',
+    exportSource: 'Source:',
+    exportFileSuffix: '_mapping_result.xlsx'
+  }
+};
+
+var currentLang = 'zh';
+
+function t(key, params) {
+  var s = (I18N[currentLang] && I18N[currentLang][key]) || (I18N.zh[key]) || key;
+  if (params) {
+    for (var p in params) {
+      s = s.replace(new RegExp('\\{' + p + '\\}', 'g'), params[p]);
+    }
+  }
+  return s;
+}
+
+function detectLang() {
+  var navLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+  return navLang.indexOf('zh') === 0 ? 'zh' : 'en';
+}
+
+function applyLanguage(lang) {
+  currentLang = lang;
+  document.documentElement.lang = (lang === 'zh') ? 'zh-CN' : 'en';
+
+  // title & static text nodes
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var k = el.getAttribute('data-i18n');
+    if (k) el.textContent = t(k);
+  });
+  // tooltips
+  document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
+    var k = el.getAttribute('data-i18n-title');
+    if (k) el.setAttribute('title', t(k));
+  });
+  // active state on switch buttons
+  document.getElementById('langZh').classList.toggle('active', lang === 'zh');
+  document.getElementById('langEn').classList.toggle('active', lang === 'en');
+
+  // re-render result card if it is currently shown
+  if (currentContext) {
+    renderResults(currentContext.results, currentContext.okCount, currentContext.failCount,
+                  currentContext.totalRows, currentContext.totalCols);
+  }
+  // restore drop zone text if a file is loaded
+  var dz = document.getElementById('dropZone');
+  if (dz.classList.contains('file-loaded')) {
+    dz.querySelector('.title').textContent = t('dropLoadedTitle');
+    dz.querySelector('.subtitle').textContent = t('dropLoadedSubtitle');
+  }
+}
+
+function toggleLang(lang) { applyLanguage(lang); }
+
 // ============ 字段映射配置 ============
 const FIELD_MAPPING = [
   { group1: 'Speed',                         group2: ['OBD speed(km/h)'] },
@@ -311,7 +521,7 @@ function handleFileSelect(e) { if (e.target.files.length) processFile(e.target.f
 function processFile(file) {
   hideError();
   if (!file.name.match(/\.(xlsx|xls)$/i)) {
-    showError('不支持的文件格式，请上传 .xlsx 或 .xls 文件');
+    showError(t('errFormat'));
     return;
   }
 
@@ -325,7 +535,7 @@ function processFile(file) {
       var rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
 
       if (rows.length < 2) {
-        showError('文件数据不足，表头或数据行缺失');
+        showError(t('errData'));
         return;
       }
 
@@ -335,20 +545,20 @@ function processFile(file) {
       // 显示文件信息
       document.getElementById('fileName').textContent = file.name;
       document.getElementById('fileMeta').textContent =
-        '工作表: ' + sheetName + ' | 总行数: ' + dataRows.length + ' | 列数: ' + headers.length;
-      document.getElementById('fileBadge').textContent = '已加载';
+        t('fileMeta', { sheet: sheetName, rows: dataRows.length, cols: headers.length });
+      document.getElementById('fileBadge').textContent = t('loaded');
       document.getElementById('fileInfo').classList.add('show');
 
       // Drop zone 状态
       var dz = document.getElementById('dropZone');
       dz.classList.add('file-loaded');
-      dz.querySelector('.title').textContent = '文件已加载';
-      dz.querySelector('.subtitle').textContent = '拖拽新文件重新分析，或点击更换文件';
+      dz.querySelector('.title').textContent = t('dropLoadedTitle');
+      dz.querySelector('.subtitle').textContent = t('dropLoadedSubtitle');
 
       // 执行分析
       analyzeData(headers, dataRows);
     } catch (err) {
-      showError('文件解析失败: ' + err.message);
+      showError(t('errParse') + err.message);
     }
   };
   reader.readAsArrayBuffer(file);
@@ -371,7 +581,7 @@ function analyzeData(headers, dataRows) {
       var foundCol = fuzzyFindColumn(headers, targetCol);
       if (foundCol === null || !(foundCol in headerIndex)) {
         allOk = false;
-        mappedNames.push(targetCol + ' (列不存在)');
+        mappedNames.push(targetCol + t('colMissing'));
         validCounts.push(0);
       } else {
         var colIdx = headerIndex[foundCol];
@@ -412,8 +622,8 @@ function renderResults(results, okCount, failCount, totalRows, totalCols) {
 
   // Stats
   document.getElementById('resultStats').innerHTML =
-    '<div class="stat stat-ok"><span class="stat-dot ok"></span> 可用字段: ' + okCount + '</div>' +
-    '<div class="stat stat-fail"><span class="stat-dot fail"></span> 缺失字段: ' + failCount + '</div>';
+    '<div class="stat stat-ok"><span class="stat-dot ok"></span> ' + t('statOk') + ': ' + okCount + '</div>' +
+    '<div class="stat stat-fail"><span class="stat-dot fail"></span> ' + t('statFail') + ': ' + failCount + '</div>';
 
   // Body
   var bodyHtml = '';
@@ -431,8 +641,7 @@ function renderResults(results, okCount, failCount, totalRows, totalCols) {
 
   // Summary
   document.getElementById('summaryText').textContent =
-    '共 ' + totalRows + ' 行 x ' + totalCols + ' 列 | ' +
-    okCount + ' 个字段可用，' + failCount + ' 个字段缺失';
+    t('summary', { rows: totalRows, cols: totalCols, ok: okCount, fail: failCount });
 
   // Show actions
   document.getElementById('resultActions').style.display = 'flex';
@@ -443,20 +652,20 @@ function renderResults(results, okCount, failCount, totalRows, totalCols) {
 function copyResults() {
   if (!currentContext) return;
   var lines = [];
-  lines.push('序号\t字段组一\t状态\t有效行数\t映射自(字段组二)');
-  lines.push('----\t------\t----\t------\t------------');
+  lines.push(t('copyHeader'));
+  lines.push(t('copySep'));
   currentContext.results.forEach(function(r) {
     lines.push(r.index + '\t' + r.group1 + '\t' + (r.ok ? '✓' : '✗') + '\t' + r.validCount + '\t' + r.mappedFrom);
   });
   lines.push('');
-  lines.push('总计: ' + currentContext.okCount + ' 个字段可用, ' + currentContext.failCount + ' 个字段缺失');
-  lines.push('数据来源: ' + currentContext.fileName + ' (共 ' + currentContext.totalRows + ' 行 x ' + currentContext.totalCols + ' 列)');
+  lines.push(t('copyTotal', { ok: currentContext.okCount, fail: currentContext.failCount }));
+  lines.push(t('copySource', { file: currentContext.fileName, rows: currentContext.totalRows, cols: currentContext.totalCols }));
 
   var text = lines.join('\n');
   navigator.clipboard.writeText(text).then(function() {
     var btn = document.getElementById('btnCopy');
     var origHTML = btn.innerHTML;
-    btn.innerHTML = '<span>&#10003;</span> 已复制';
+    btn.innerHTML = '<span>&#10003;</span> ' + t('copied');
     btn.classList.add('copied');
     setTimeout(function() {
       btn.innerHTML = origHTML;
@@ -472,10 +681,10 @@ function copyResults() {
     document.execCommand('copy');
     document.body.removeChild(ta);
     var btn = document.getElementById('btnCopy');
-    btn.innerHTML = '<span>&#10003;</span> 已复制';
+    btn.innerHTML = '<span>&#10003;</span> ' + t('copied');
     btn.classList.add('copied');
     setTimeout(function() {
-      btn.innerHTML = '<span>&#128203;</span> 复制结果';
+      btn.innerHTML = '<span>&#128203;</span> ' + t('copy');
       btn.classList.remove('copied');
     }, 2000);
   });
@@ -487,14 +696,14 @@ function exportExcel() {
   var ctx = currentContext;
 
   var aoa = [
-    ['序号', '字段组一', '状态', '有效行数', '映射自(字段组二)'],
+    [t('exportNo'), t('exportField'), t('exportStatus'), t('exportValid'), t('exportFrom')],
   ];
   ctx.results.forEach(function(r) {
     aoa.push([r.index, r.group1, r.ok ? '✓' : '✗', r.validCount, r.mappedFrom]);
   });
   aoa.push([]);
-  aoa.push(['总计:', '', ctx.okCount + ' 个字段可用, ' + ctx.failCount + ' 个字段缺失', '', '']);
-  aoa.push(['数据来源:', ctx.fileName, '共 ' + ctx.totalRows + ' 行 x ' + ctx.totalCols + ' 列', '', '']);
+  aoa.push(['', '', t('copyTotal', { ok: ctx.okCount, fail: ctx.failCount }), '', '']);
+  aoa.push(['', t('copySource', { file: ctx.fileName, rows: ctx.totalRows, cols: ctx.totalCols }), '', '', '']);
 
   var ws = XLSX.utils.aoa_to_sheet(aoa);
 
@@ -508,10 +717,10 @@ function exportExcel() {
   ];
 
   var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '字段映射验证结果');
+  XLSX.utils.book_append_sheet(wb, ws, t('exportSheet'));
 
   var baseName = ctx.fileName.replace(/\.(xlsx|xls)$/i, '');
-  XLSX.writeFile(wb, baseName + '_映射结果.xlsx');
+  XLSX.writeFile(wb, baseName + t('exportFileSuffix'));
 }
 
 // ============ 拖拽支持 ============
@@ -554,6 +763,9 @@ function showError(msg) {
 function hideError() {
   document.getElementById('errorMsg').classList.remove('show');
 }
+
+// ============ 初始化语言 ============
+applyLanguage(detectLang());
 </script>
 </body>
 </html>
