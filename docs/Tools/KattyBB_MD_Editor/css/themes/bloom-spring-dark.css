@@ -422,29 +422,28 @@ content,
   transform: translateY(1px);
 }
 
-/* Tables */
+/* Tables — aligned with editor preview (.markdown-body) */
 #write table {
   border-collapse: separate;
   border-spacing: 0;
   width: 100%;
-  margin: 2.1em 0;
-  background: var(--surface);
+  margin: 2em 0;
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 10px 36px rgba(var(--black-rgb), 0.25);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
 #write th,
 #write td {
-  padding: 0.85em 1.1em;
+  padding: 0.75em 1em;
   border-bottom: 1px solid var(--border);
 }
 
 #write th {
   text-align: left;
-  background: linear-gradient(180deg, rgba(var(--white-rgb), 0.04), transparent);
-  font-weight: 700;
+  background: var(--surface);
+  font-weight: 600;
   color: var(--text);
 }
 
@@ -453,9 +452,8 @@ content,
 }
 
 #write tr:nth-child(even) td {
-  background: rgba(var(--accent-rgb), 0.03);
+  background: rgba(var(--accent-rgb), 0.02);
 }
-
 #write tr:hover td {
   background: rgba(var(--accent-rgb), 0.05);
 }

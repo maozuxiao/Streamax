@@ -14,4 +14,5 @@
 | 1.6     | 2026-07-23 | 解决label 关联问题                                           |
 | 1.7     | 2026-07-23 | 1. 新增复制粘贴富文本自动转为 Markdown（支持 Word/网页/Excel 等带格式内容，含 GFM 表格、任务列表、删除线，自动剥离 script/style 等脏内容）<br />2. 优化未打开文件时导出 HTML 与打印 PDF 以编辑器第一个标题命名（HTML title 与文件名前缀一致） |
 | 1.8     | 2026-07-23 | 1. 优化导出 HTML 浏览器标签栏图标，使用 assets/Markdown.svg（绝对路径，保存到下载目录后图标仍有效） |
+| 1.9     | 2026-08-04 | 1. 统一主题实时预览与导出 HTML 的渲染样式<br />2. 修复 everforest-light/everforest-dark 主题块引用（blockquote）内列表横向压缩、序号被截断的问题<br />3. 对齐 everforest 主题 H2 下边框与斜体（em）样式，使渲染窗口与导出 HTML 一致<br />4. 对齐 bloom 全系列主题导出 HTML 表格样式与编辑器实时渲染表格样式（仅表格，其他不变） |
 

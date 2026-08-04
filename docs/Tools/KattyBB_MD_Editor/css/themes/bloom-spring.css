@@ -404,7 +404,7 @@ content,
   transform: translateY(1px);
 }
 
-/* Tables */
+/* Tables — aligned with editor preview (.markdown-body) */
 #write table {
   border-collapse: separate;
   border-spacing: 0;
@@ -413,7 +413,7 @@ content,
   border: 1px solid var(--border);
   border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(var(--black-rgb), 0.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
 #write th,
@@ -436,7 +436,6 @@ content,
 #write tr:nth-child(even) td {
   background: rgba(var(--accent-rgb), 0.02);
 }
-
 /* Code */
 #write code {
   font-family: var(--font-mono);

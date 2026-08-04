@@ -157,6 +157,39 @@ body,
   color: var(--text-muted);
 }
 
+/* 预览/导出 h2、em 对齐（让 #preview.markdown-body 实时渲染与导出的 #write 一致） */
+body .markdown-body h1,
+body .markdown-body h2,
+body .markdown-body h3,
+body .markdown-body h4,
+body .markdown-body h5,
+body .markdown-body h6 {
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+  margin: 2.2rem 0 1rem;
+  letter-spacing: 0;
+}
+body .markdown-body h1 { font-size: 2.1rem; border-bottom: 0; padding-bottom: 0; }
+body .markdown-body h2 {
+  font-size: 1.8rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.35rem;
+}
+body .markdown-body h3 {
+  font-size: 1.5rem;
+  border-bottom: 1px dashed var(--ef-bg-4);
+  padding-bottom: 0.25rem;
+}
+body .markdown-body h4 { font-size: 1.25rem; }
+body .markdown-body h5 { font-size: 1.1rem; }
+body .markdown-body h6 { font-size: 1rem; color: var(--text-muted); }
+
+/* 去掉 style.css h1/h2 的 accent 渐变下划线伪元素 */
+body .markdown-body h1::after,
+body .markdown-body h2::after,
+body .markdown-body h3::after,
+body .markdown-body h4::after { display: none; }
 
 /* Paragraph / Lists */
 #write p {
@@ -166,6 +199,8 @@ body,
 #write strong { color: var(--ef-green); font-weight: 600; }
 
 #write em { color: var(--ef-purple); font-style: italic; }
+
+body .markdown-body em { color: var(--ef-purple); font-style: italic; }
 
 #write del {
   color: var(--text-muted);
@@ -907,15 +942,55 @@ body,
 /* Blockquote — vertical center alignment fix */
 #write blockquote {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
   min-height: 3.0em;
   line-height: 1.6;
   box-sizing: border-box;
 }
 
 #write blockquote > p,
-#write blockquote > :not(blockquote) {
+#write blockquote > :not(blockquote):not(ul):not(ol) {
   margin: 0;
+}
+
+#write blockquote > ul,
+#write blockquote > ol {
+  margin: 0 0 1rem 1.5rem;
+}
+
+/* ---- Preview/Export blockquote parity (match export baseline) ---- */
+/* 覆盖 style.css 的通用圆角卡片样式，使实时预览与导出 HTML 一致 */
+.markdown-body blockquote {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  min-height: 3.0em;
+  margin: 1.25rem 0;
+  padding: 0.8rem 1rem;
+  border-left: 4px solid var(--ef-aqua);
+  background: var(--ef-bg-2);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+.markdown-body blockquote p:first-child,
+.markdown-body blockquote p:last-child {
+  margin: 0;
+}
+
+.markdown-body blockquote > :not(blockquote):not(ul):not(ol) {
+  margin: 0;
+}
+
+.markdown-body blockquote > ul,
+.markdown-body blockquote > ol {
+  margin: 0 0 1rem 1.5rem;
 }
 
 /* ==== Export View & Print Background ==== */
