@@ -1559,6 +1559,7 @@ const savedContent = localStorage.getItem('bloom-editor-content');
 const savedFileName = localStorage.getItem('bloom-editor-filename');
 if (savedContent) {
   editor.value = savedContent;
+  resetUndo(); // 存档恢复为程序化赋值，需重置撤销基准，避免一次撤销清空整篇
   fileNameEl.textContent = savedFileName || t('unnamed');
   // 如果恢复的文件名不是未命名/未打开，说明之前打开过本地文件（兼容中英文历史数据）
   if (savedFileName && ['未命名','未打开文件','Untitled','No file open'].indexOf(savedFileName) === -1) {
@@ -1627,6 +1628,7 @@ fileInput.addEventListener('change', (e) => {
   const reader = new FileReader();
   reader.onload = (event) => {
     editor.value = event.target.result;
+    resetUndo(); // 打开文件为外部替换，重置撤销基准
     fileNameEl.textContent = file.name;
     window._openedFileName = file.name.replace(/\.(md|markdown|txt|text)$/i, '');
     saveToStorage();
@@ -2203,6 +2205,7 @@ function showToast(msg) {
 function clearEditor() {
   if (editor.value.trim() === '') return;
   editor.value = '';
+  resetUndo(); // 清空为外部替换，重置撤销基准（清空本身不可被撤销恢复）
   fileNameEl.textContent = t('noFileOpen');
   window._openedFileName = '';
   saveToStorage();
@@ -4215,6 +4218,7 @@ function loadDroppedFile(file) {
   var reader = new FileReader();
   reader.onload = function(event) {
     editor.value = event.target.result;
+    resetUndo(); // 拖放文件为外部替换，重置撤销基准
     fileNameEl.textContent = file.name;
     window._openedFileName = file.name.replace(/\.(md|markdown|txt|text)$/i, '');
     saveToStorage();
@@ -6095,9 +6099,40 @@ var _undoMaxSize = 100;
 var _undoDebounce = null;
 var _lastContent = '';
 
+// 不变式：_undoStack 栈顶恒等于编辑器当前内容，栈底为文档初始内容。
+// 因此撤销需先弹出栈顶（当前态），再取新栈顶才是"上一步"。
+
+/**
+ * 将当前编辑器内容重置为撤销栈的唯一基准（栈底=栈顶=当前内容，清空重做栈）。
+ * 用于"外部程序化改写编辑器"的场景（如加载存档、打开文件、拖放文件、清空），
+ * 这些赋值不会触发 input 事件，若不重置会导致栈底仍是旧的空/过期内容，
+ * 一次撤销便把整个已加载文档弹掉（表现为"内容全部消失"）。
+ */
+function resetUndo() {
+  if (_undoDebounce) { clearTimeout(_undoDebounce); _undoDebounce = null; }
+  _undoStack = [editor.value];
+  _lastContent = editor.value;
+  _redoStack = [];
+}
+
+/** 立即结算防抖中尚未入栈的快照，避免最后一次输入丢失 */
+function flushUndoPoint() {
+  if (!_undoDebounce) return;
+  clearTimeout(_undoDebounce);
+  _undoDebounce = null;
+  var content = editor.value;
+  if (content !== _lastContent) {
+    _undoStack.push(content);
+    _lastContent = content;
+    if (_undoStack.length > _undoMaxSize) _undoStack.shift();
+    _redoStack = [];
+  }
+}
+
 function saveUndoPoint() {
   clearTimeout(_undoDebounce);
   _undoDebounce = setTimeout(function() {
+    _undoDebounce = null;
     var content = editor.value;
     if (content !== _lastContent) {
       _undoStack.push(content);
@@ -6109,20 +6144,24 @@ function saveUndoPoint() {
 }
 
 function fmtUndo() {
+  // 快速连按时，最后一次输入可能仍在防抖窗口内，先落盘
+  flushUndoPoint();
   if (_undoStack.length <= 1) return;
-  var current = editor.value;
+  var current = _undoStack.pop();
   _redoStack.push(current);
-  var prev = _undoStack.pop();
+  var prev = _undoStack[_undoStack.length - 1];
   _lastContent = prev;
   editor.value = prev;
   fmtAfterEdit();
 }
 
 function fmtRedo() {
+  flushUndoPoint();
   if (_redoStack.length === 0) return;
-  var current = editor.value;
-  _undoStack.push(current);
+  // 与 fmtUndo 对称：重做即把下一状态重新压回栈顶
   var next = _redoStack.pop();
+  _undoStack.push(next);
+  if (_undoStack.length > _undoMaxSize) _undoStack.shift();
   _lastContent = next;
   editor.value = next;
   fmtAfterEdit();
@@ -6145,8 +6184,8 @@ editor.addEventListener('keydown', function(e) {
   }
 });
 
-_undoStack.push(editor.value);
-_lastContent = editor.value;
+// 初始基准：以加载完成后的真实内容为准（存档恢复在更早处已通过 resetUndo 同步）
+resetUndo();
 
 
 // ===== Site Pet =====
