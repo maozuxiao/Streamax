@@ -866,6 +866,9 @@ body {
 /* [TOC] 目录内的 mark/code 与正文预览区保持一致 */
 .markdown-body .toc mark { background: linear-gradient(120deg, rgba(var(--accent-rgb), 0.25), rgba(var(--accent-rgb), 0.12)); color: inherit; padding: 0.12em 0.26em; border-radius: 9px; border: 1px solid rgba(var(--accent-rgb), 0.32); }
 .markdown-body .toc code { font-family: var(--font-mono); font-size: 0.88em; padding: 0.2em 0.45em; border-radius: 7px; background: rgba(var(--accent-rgb), 0.14); color: var(--accent); font-weight: 600; border: 1px solid rgba(var(--accent-rgb), 0.32); }
+/* 目录项标题中的内层 markdown 链接被降级为不可点击文本（避免 <a> 嵌套、样式错乱） */
+.markdown-body .toc .toc-inner-link,
+.toc-float-content .toc-inner-link { color: inherit; text-decoration: none !important; border-bottom: none !important; cursor: default; pointer-events: none; font-size: inherit; }
 
 /* GitHub 风格警报框 */
 .markdown-body .alert {

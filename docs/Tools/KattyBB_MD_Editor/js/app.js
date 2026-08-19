@@ -742,6 +742,29 @@ function slugifyText(text) {
     .replace(/^-|-$/g, '');
 }
 
+// 原始 markdown 标题文本 → slug（用于 TOC / 悬浮目录 / 导出目录的锚点）。
+// 必须与 renderer.heading 生成的 hN id 完全一致，否则 TOC 点击无法跳转。
+// renderer.heading 的算法是：渲染 HTML → 解码实体 → 去标签 → slugifyText；
+// 在原始 markdown 文本层面，等价的预处理是：先剥掉行内 markdown 链接的
+// 链接地址部分（[text](url) → text，[text] → text），再 slugifyText。
+// 否则标题里含 [链接](url) 时，TOC 的 slug 会混入括号/url，与预览 hN id 不符。
+function slugifyTitle(rawTitle) {
+  var text = String(rawTitle == null ? '' : rawTitle).trim();
+  // 剥掉行内链接：[显示文字](url) / [显示文字][ref] / [显示文字] 只保留显示文字
+  text = text.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');   // [text](url) -> text
+  text = text.replace(/\[([^\]]*)\]\[[^\]]*\]/g, '$1');   // [text][ref] -> text
+  text = text.replace(/\[([^\]]*)\]/g, '$1');             // 裸 [text] -> text
+  // 同步处理自动链接 <url> 与强调符号 ** / == 等（slug 中本就会被非词字符规则忽略，
+  // 但保留显示文字以免丢失 CJK/单词字符）
+  text = text.replace(/<[^>]+>/g, '');
+  return slugifyText(text);
+}
+
+// 从已渲染的 HTML 片段中提取纯文本（用于目录项 tooltip title 等）。
+function textFromHtml(html) {
+  return decodeHtmlEntities(String(html == null ? '' : html).replace(/<[^>]+>/g, ''));
+}
+
 // 解码常见 HTML 实体（命名 + 十进制/十六进制数字实体）
 function decodeHtmlEntities(str) {
   if (typeof str !== 'string') return str;
@@ -1193,6 +1216,17 @@ function renderTocTitle(title) {
   return html;
 }
 
+// 标题内若含 markdown 链接（如 [文本](url)），renderTocTitle 会渲染出真实 <a>。
+// 在 TOC / 悬浮目录 / 导出目录中，标题本身已被外层 <a href="#slug"> 包裹用于
+// 锚点跳转；若保留内层 <a>，则形成 <a> 嵌套，不仅非法，还会破坏样式与跳转。
+// 因此把目录里的内层 <a> 降级为不可点击的 <span class="toc-inner-link">，仅保留
+// 显示文本与 code 等格式，让目录项样式统一、锚点稳定。
+function neutralizeTocLinks(html) {
+  return String(html == null ? '' : html)
+    .replace(/<a\b[^>]*>/gi, '<span class="toc-inner-link">')
+    .replace(/<\/a>/gi, '</span>');
+}
+
 // 生成 TOC HTML（任务6）
 function generateTOC(fullText) {
   var headings = extractHeadings(fullText);
@@ -1202,8 +1236,12 @@ function generateTOC(fullText) {
   headings.forEach(function(h) {
     var level = h.match(/^#+/)[0].length;
     var title = h.replace(/^#+\s+/, '').replace(/[#]+$/, '').trim();
-    var slug = title.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '');
-    tocHtml += '<li class="toc-level-' + level + '"><a href="#' + slug + '">' + renderTocTitle(title) + '</a></li>';
+    var slug = slugifyTitle(title);
+    // 标题内的真实 markdown 链接在目录中需降级为不可点击文本，避免 <a> 嵌套
+    // 破坏样式与锚点跳转。
+    var inner = neutralizeTocLinks(renderTocTitle(title));
+    var linkTitle = textFromHtml(inner).replace(/"/g, '&quot;');
+    tocHtml += '<li class="toc-level-' + level + '"><a href="#' + slug + '" title="' + linkTitle + '">' + inner + '</a></li>';
   });
   tocHtml += '</ul></div>';
   return tocHtml;
@@ -2071,8 +2109,10 @@ function updateTocFloat() {
   headings.forEach(function(h) {
     var level = h.match(/^#+/)[0].length;
     var title = h.replace(/^#+\s+/, '').replace(/[#]+$/, '').trim();
-    var slug = title.toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '');
-    tocHtml += '<li class="toc-level-' + level + '"><a href="#' + slug + '" onclick="scrollToHeading(\'' + slug + '\'); return false;">' + renderTocTitle(title) + '</a></li>';
+    var slug = slugifyTitle(title);
+    var inner = neutralizeTocLinks(renderTocTitle(title));
+    var linkTitle = textFromHtml(inner).replace(/"/g, '&quot;');
+    tocHtml += '<li class="toc-level-' + level + '"><a href="#' + slug + '" title="' + linkTitle + '" onclick="scrollToHeading(\'' + slug + '\'); return false;">' + inner + '</a></li>';
   });
   tocHtml += '</ul>';
 
@@ -2203,7 +2243,10 @@ function showToast(msg) {
 
 // ===== 清空编辑器 =====
 function clearEditor() {
-  if (editor.value.trim() === '') return;
+  var isEmpty = editor.value.trim() === '';
+  // 注意：即使编辑器已为空也要清除文件名，否则打开过文件后「清空」不清除
+  // filename，造成「已打开文件却显示无内容」的状态残留（问题1修复）。
+  // 仅当确实含有可清空内容时才重置撤销基准并提示，避免空清空也刷一次撤销栈。
   editor.value = '';
   resetUndo(); // 清空为外部替换，重置撤销基准（清空本身不可被撤销恢复）
   fileNameEl.textContent = t('noFileOpen');
@@ -2211,7 +2254,7 @@ function clearEditor() {
   saveToStorage();
   updatePreviewNow();
   updateStatus();
-  showToast(t('contentCleared'));
+  if (!isEmpty) showToast(t('contentCleared'));
 }
 
 /**
@@ -2276,10 +2319,11 @@ function buildExportTocList(html) {
     if (!id) continue;
     // 使用已渲染的 innerHTML（保留 <mark>/<code> 等格式），与锚点目录 renderTocTitle 的渲染一致；
     // 不再用 textContent + escapeHtml，否则 ==高亮==、行内代码等会丢失格式。
-    var inner = h.innerHTML.trim();
+    var inner = neutralizeTocLinks(h.innerHTML.trim());
     if (!inner) continue;
     var lvl = h.tagName.substring(1);
-    list += '<li class="toc-level-' + lvl + '"><a href="#' + id + '" onclick="exportTocGo(\'' + id + '\');return false;">' + inner + '</a></li>';
+    var linkTitle = textFromHtml(inner).replace(/"/g, '&quot;');
+    list += '<li class="toc-level-' + lvl + '"><a href="#' + id + '" title="' + linkTitle + '" onclick="exportTocGo(\'' + id + '\');return false;">' + inner + '</a></li>';
   }
   list += '</ul>';
   return list;
