@@ -641,6 +641,19 @@ var originalCodeRenderer = renderer.code;
 // ===== highlight.js 语法高亮（按需加载）=====
 var _hljsLoaded = false;
 var _hljsLoading = false;
+// highlight.js 主题随明暗模式切换：夜间用 github-dark，日间用 github
+function getHljsThemeUrl() {
+  return _currentThemeMode === 'dark'
+    ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
+    : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
+}
+
+// 切换/更新 hljs 主题 link（若不存在则忽略，由 loadHighlightJS 创建）
+function applyHljsTheme() {
+  var link = document.getElementById('hljs-theme');
+  if (link) link.href = getHljsThemeUrl();
+}
+
 function loadHighlightJS(callback) {
   if (_hljsLoaded) { if (callback) callback(); return; }
   if (_hljsLoading) { if (callback) setTimeout(function() { loadHighlightJS(callback); }, 50); return; }
@@ -649,7 +662,7 @@ function loadHighlightJS(callback) {
   var link = document.createElement('link');
   link.rel = 'stylesheet';
   link.id = 'hljs-theme';
-  link.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
+  link.href = getHljsThemeUrl();
   document.head.appendChild(link);
   
   var script = document.createElement('script');
@@ -1901,6 +1914,9 @@ function applyTheme() {
     compatCSS = everforestCompat;
   }
   compatStyle.textContent = compatCSS;
+  
+  // 随明暗模式切换代码块高亮主题（夜间用 github-dark，避免对比度过低看不清）
+  applyHljsTheme();
 }
 
 // ===== 更新主题UI状态 =====
