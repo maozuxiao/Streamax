@@ -1,8 +1,8 @@
-version: 1.0.11
+version: 1.0.12
 files:
-  - url: MC物料查询 Setup 1.0.11.exe
-    sha512: y8tMhwjO2Ol1UwYpe0Li0H1xEypsQj3RT9Sasni23Wgf9kamJv9oZNJi+lBMedUtakbp16o+z3K2lc6aJvXAzQ==
-    size: 95997773
-path: MC物料查询 Setup 1.0.11.exe
-sha512: y8tMhwjO2Ol1UwYpe0Li0H1xEypsQj3RT9Sasni23Wgf9kamJv9oZNJi+lBMedUtakbp16o+z3K2lc6aJvXAzQ==
-releaseDate: '2026-08-24T11:30:44.422Z'
+  - url: MC物料查询 Setup 1.0.12.exe
+    sha512: dk4zBOR8qrvUPQ+Vtu/JCrAAirEWuSfppsMWyl1TFouBSUYk1jj4sksHqErieI9UZtFFUSEj/2khQpIyp0qUHQ==
+    size: 95997931
+path: MC物料查询 Setup 1.0.12.exe
+sha512: dk4zBOR8qrvUPQ+Vtu/JCrAAirEWuSfppsMWyl1TFouBSUYk1jj4sksHqErieI9UZtFFUSEj/2khQpIyp0qUHQ==
+releaseDate: '2026-08-24T11:58:06.701Z'
