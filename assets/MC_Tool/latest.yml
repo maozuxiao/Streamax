@@ -1,8 +1,8 @@
 version: 1.0.24
 files:
-  - url: MC物料查询 Setup 1.0.24.exe
-    sha512: djo0nx9clRUV2Ubh50deRibfEUk3c257kBdFEbZ4yibvl7bZ8/d8CG9Tlf7fuqW8j6Rhm9hoJk5+27wf2KP6iA==
-    size: 95999057
-path: MC物料查询 Setup 1.0.24.exe
-sha512: djo0nx9clRUV2Ubh50deRibfEUk3c257kBdFEbZ4yibvl7bZ8/d8CG9Tlf7fuqW8j6Rhm9hoJk5+27wf2KP6iA==
-releaseDate: '2026-08-27T21:42:12.322Z'
+  - url: mc-material-query-setup-1.0.24.exe
+    sha512: JcWYO+k1YGo/L8jN0iLU7zsBiEGZDyYnDQGriDI9l/f057gXeP7DGw/x8AGMhpHmg2hHYN21bgG0kOo2u5IqgA==
+    size: 95999231
+path: mc-material-query-setup-1.0.24.exe
+sha512: JcWYO+k1YGo/L8jN0iLU7zsBiEGZDyYnDQGriDI9l/f057gXeP7DGw/x8AGMhpHmg2hHYN21bgG0kOo2u5IqgA==
+releaseDate: '2026-08-28T05:20:25.728Z'
