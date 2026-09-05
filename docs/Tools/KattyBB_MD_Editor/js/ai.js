@@ -348,12 +348,13 @@
     fb.classList.add('show')
   }
 
-  function hideFloatBar() {
+  function hideFloatBar(now) {
     var fb = $('aiFloatBar')
     if (!fb || fb.hidden) return
     fb.classList.remove('show')
     fb.classList.remove('busy')
     clearTimeout(hideFloatBar._t)
+    if (now) { fb.hidden = true; return }
     hideFloatBar._t = setTimeout(function () {
       if (!fb.classList.contains('show')) fb.hidden = true
     }, 140)
@@ -871,6 +872,9 @@
 
     if (ed) {
       ed.addEventListener('mouseup', function (e) {
+        // 只响应左键。右键的 mouseup 也会走到这里，导致 AI 指令条在格式菜单
+        // 弹出的同时重新浮出，两者重叠（见 1.10.1）
+        if (e.button !== 0) return
         lastMouse = { x: e.clientX, y: e.clientY }
         schedule()
       })
@@ -891,6 +895,10 @@
       if (fb.contains(e.target)) return
       hideFloatBar()
     })
+
+    // 右键会弹出 app.js 的格式菜单 #fmtContextMenu，与 AI 指令条位置重叠，
+    // 立即收起指令条（跳过淡出动画，避免两帧的重叠残影）
+    document.addEventListener('contextmenu', function () { hideFloatBar(true) })
 
     // ---- 指令条按钮 ----
     var floatClose = $('aiFloatClose')
