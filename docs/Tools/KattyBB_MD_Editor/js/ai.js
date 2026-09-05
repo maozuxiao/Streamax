@@ -117,6 +117,7 @@
       channelTitleDirect: '直连模式',
       channelTitleNone: 'AI 不可用',
       openExtOptions: '打开扩展设置',
+      reprobe: '重新检测',
       channelSection: '通道状态',
       retry: '重试',
       accept: '接受并替换',
@@ -164,6 +165,7 @@
       channelTitleDirect: 'Direct mode',
       channelTitleNone: 'AI unavailable',
       openExtOptions: 'Open extension options',
+      reprobe: 'Re-detect',
       channelSection: 'Channel',
       retry: 'Retry',
       accept: 'Accept & replace',
@@ -813,6 +815,7 @@
     set('aiSecDirectTitle', t('directTitle'))
     set('aiSecPromptsTitle', t('promptsTitle'))
     set('aiOpenExtOptions', t('openExtOptions'))
+    set('aiReprobe', t('reprobe'))
     set('aiDirectSave', t('directSave'))
     set('aiDirectHint', t('directHint'))
     set('aiPromptAdd', t('promptAdd'))
@@ -955,6 +958,19 @@
       if (global.KattyAI && global.KattyAI.openOptions) global.KattyAI.openOptions()
       else toast(t('channelNone'))
     })
+    var reprobe = $('aiReprobe')
+    if (reprobe) reprobe.addEventListener('click', function () {
+      probeTries = 0
+      probe()
+    })
+
+    // 装完扩展后从别的窗口/标签切回来时，立即重新握手，省得用户手动刷新
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState !== 'visible') return
+      clearTimeout(probeTimer)
+      probeTries = 0
+      probe()
+    })
     var directSave = $('aiDirectSave')
     if (directSave) directSave.addEventListener('click', function () {
       if (!global.KattyAI) return
@@ -1000,18 +1016,45 @@
     probe()
   }
 
+  /**
+   * 探测通道。
+   *
+   * 为什么要重试：content script 由扩展注入，时机不受页面控制。页面加载完成时它可能
+   * 还没就绪，首次 ping 会石沉大海，SDK 就把结果缓存成 'none' 且不再重试——表现为
+   * 「扩展明明装好配好了，页面却一直显示 AI 不可用」。
+   * 所以这里每次都先 resetProbe() 清缓存强制重发 ping，探测不到就按 2s 间隔重试，
+   * 并在页面重新可见时（比如装完扩展切回来）立即再探一次。
+   */
+  var PROBE_RETRY_MAX = 15
+  var PROBE_RETRY_MS = 2000
+  var probeTries = 0
+  var probeTimer = null
+
+  function scheduleProbeRetry() {
+    probeTries++
+    clearTimeout(probeTimer)
+    probeTimer = setTimeout(probe, PROBE_RETRY_MS)
+  }
+
   function probe() {
     if (typeof global.KattyAI === 'undefined' || !global.KattyAI.probe) {
       state.probeInfo = { mode: 'none' }
       refreshChannel()
       return
     }
+    global.KattyAI.resetProbe()   // 清掉缓存的探测结果，强制重新握手
     global.KattyAI.probe().then(function (info) {
       state.probeInfo = info
       refreshChannel()
+      if (info.mode === 'none') {
+        if (probeTries < PROBE_RETRY_MAX) scheduleProbeRetry()
+      } else {
+        probeTries = 0
+      }
     }).catch(function () {
       state.probeInfo = { mode: 'none' }
       refreshChannel()
+      if (probeTries < PROBE_RETRY_MAX) scheduleProbeRetry()
     })
   }
 
