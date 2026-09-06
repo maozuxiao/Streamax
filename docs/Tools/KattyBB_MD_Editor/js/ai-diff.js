@@ -20,7 +20,8 @@
     driftTitle: '文档已变更',
     driftText: '选中的内容在生成期间被修改过了，为避免覆盖你的改动，已取消本次替换。请重新选择后再试。',
     driftOk: '知道了',
-    title: '确认替换'
+    title: '确认替换',
+    readOnlyDenied: '只读文档不可修改'
   }
 
   function setLabels(obj) {
@@ -254,6 +255,14 @@
     if (!current) return false
     var ed = document.getElementById('editor')
     if (!ed) return false
+
+    // 只读态（?file=...&ro=1 载入的远程文档）禁止写入。
+    // editor.readOnly 只拦截用户输入，拦不住程序化赋值，必须在这里显式判断，
+    // 否则 AI 的「应用到文档」会绕过只读语义把远程文档改掉。
+    if (ed.readOnly || global._remoteReadOnly) {
+      if (typeof global.showToast === 'function') global.showToast(LABELS.readOnlyDenied)
+      return false
+    }
 
     // 选区漂移校验：diff 预览期间用户可能改动过文档
     if (ed.value.substring(current.start, current.end) !== current.oldText) {

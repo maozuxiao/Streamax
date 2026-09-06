@@ -109,6 +109,7 @@
       diffNew: '改写后',
       replaced: '已替换，可按 Ctrl+Z 撤销',
       needSelection: '请先在编辑器中选中一段文字',
+      readOnlyDenied: '只读文档不可修改',
       channelExtension: '已连接扩展「{v}」· {provider} · {model}',
       channelExtensionNoKey: '扩展已安装，但供应商「{provider}」未配置，请在扩展设置中填写 API Key',
       channelDirect: '未检测到扩展，当前使用直连：{model}',
@@ -157,6 +158,7 @@
       diffNew: 'Rewritten',
       replaced: 'Replaced — press Ctrl+Z to undo',
       needSelection: 'Select some text in the editor first',
+      readOnlyDenied: 'Read-only document cannot be modified',
       channelExtension: 'Connected to extension v{v} · {provider} · {model}',
       channelExtensionNoKey: 'Extension installed, but provider "{provider}" is not configured — set an API Key in extension options',
       channelDirect: 'Extension not detected; using direct connection: {model}',
@@ -479,6 +481,9 @@
 
   function openDiffFor(sel, newText, retryFn) {
     if (!global.AiDiff) return
+    // 只读文档（?file=...&ro=1 载入的远程文档）不允许替换
+    var roEd = document.getElementById('editor')
+    if (roEd && roEd.readOnly) { toast(t('readOnlyDenied')); return }
     global.AiDiff.open({
       oldText: sel.text,
       newText: newText,
@@ -495,6 +500,9 @@
   }
 
   function addApplyButton(msg, sel, text, retryFn) {
+    // 只读文档根本不该出现「应用到文档」入口
+    var roEd = document.getElementById('editor')
+    if (roEd && roEd.readOnly) return
     var old = msg.wrap.querySelector('.ai-apply')
     if (old) old.parentNode.removeChild(old)
     var btn = document.createElement('button')
@@ -835,7 +843,8 @@
         ? 'The selected text was modified while generating. To avoid overwriting your edits, the replacement was cancelled. Please select again.'
         : '选中的内容在生成期间被修改过了，为避免覆盖你的改动，已取消本次替换。请重新选择后再试。',
       driftOk: curLang() === 'en' ? 'OK' : '知道了',
-      title: curLang() === 'en' ? 'Confirm replacement' : '确认替换'
+      title: curLang() === 'en' ? 'Confirm replacement' : '确认替换',
+      readOnlyDenied: t('readOnlyDenied')
     }
     if (global.AiDiff && global.AiDiff.setLabels) global.AiDiff.setLabels(labels)
 

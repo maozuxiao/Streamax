@@ -94,6 +94,10 @@ var i18n = {
     // Toast 消息
     fileOpened: '文件已打开',
     fileReadError: '读取文件失败',
+    remoteLoaded: '远程文档已载入',
+    remoteFailed: '远程文档加载失败',
+    remoteHostDenied: '该来源不在允许列表中',
+    readOnly: '只读',
     themeSwitched: '已切换主题',
     darkMode: '已切换到夜间模式',
     lightMode: '已切换到日间模式',
@@ -258,6 +262,10 @@ var i18n = {
     statusLines: 'Lines',
     fileOpened: 'File opened',
     fileReadError: 'Failed to read file',
+    remoteLoaded: 'Remote document loaded',
+    remoteFailed: 'Failed to load remote document',
+    remoteHostDenied: 'Source host is not allowed',
+    readOnly: 'Read-only',
     themeSwitched: 'Theme switched',
     darkMode: 'Switched to dark mode',
     lightMode: 'Switched to light mode',
@@ -1620,6 +1628,32 @@ if (savedContent) {
 updatePreviewNow();
 initFootnoteInteraction();
 
+// ===== 远程文档引导（?file= / ?url= + &ro=1）=====
+// 必须放在存档恢复之后，否则远程内容会被上面的 localStorage 恢复覆盖。
+;(function bootstrapRemoteFile() {
+  var qs
+  try {
+    qs = new URLSearchParams(location.search)
+  } catch (e) {
+    return
+  }
+  var raw = qs.get('file') || qs.get('url')
+  if (!raw) return
+  var u
+  try {
+    u = new URL(raw, location.href)
+  } catch (e) {
+    return
+  }
+  // 先做 blob → raw 转换，再校验白名单：github.com 不在白名单内，也永不被 fetch
+  u = normalizeRemoteUrl(u)
+  if (!isAllowedRemoteUrl(u)) {
+    showToast(t('remoteHostDenied'))
+    return
+  }
+  loadRemoteMarkdown(u.href, remoteFileNameOf(u), qs.get('ro') === '1')
+})()
+
 // ===== 初始化视图模式和宽屏状态 =====
 var _isWideScreen = localStorage.getItem('kattybb-wide-screen') === 'true';
 applyViewMode();
@@ -1678,6 +1712,7 @@ fileInput.addEventListener('change', (e) => {
 
   const reader = new FileReader();
   reader.onload = (event) => {
+    resetRemoteState(); // 打开本地文件，清掉上一个远程文档的基准
     editor.value = event.target.result;
     resetUndo(); // 打开文件为外部替换，重置撤销基准
     fileNameEl.textContent = file.name;
@@ -1987,7 +2022,8 @@ function updatePreview() {
   _lockPreviewUpdate();
   
   var processed = preprocessMarkdown(editor.value);
-  preview.innerHTML = marked.parse(processed, { renderer: renderer });
+  // 清洗必须在 innerHTML 之前：img 的 onerror 在插入 DOM 的瞬间就会触发，事后清理来不及
+  preview.innerHTML = sanitizeMdHtml(marked.parse(processed, { renderer: renderer }));
   renderFootnotesInPreview();
   renderKaTeX();
   updateTocFloat();
@@ -2263,6 +2299,7 @@ function clearEditor() {
   // 注意：即使编辑器已为空也要清除文件名，否则打开过文件后「清空」不清除
   // filename，造成「已打开文件却显示无内容」的状态残留（问题1修复）。
   // 仅当确实含有可清空内容时才重置撤销基准并提示，避免空清空也刷一次撤销栈。
+  resetRemoteState(); // 清空即回到本地编辑，清掉远程基准
   editor.value = '';
   resetUndo(); // 清空为外部替换，重置撤销基准（清空本身不可被撤销恢复）
   fileNameEl.textContent = t('noFileOpen');
@@ -4277,6 +4314,7 @@ editor.addEventListener('keydown', function(e) {
 function loadDroppedFile(file) {
   var reader = new FileReader();
   reader.onload = function(event) {
+    resetRemoteState(); // 拖放本地文件，清掉上一个远程文档的基准
     editor.value = event.target.result;
     resetUndo(); // 拖放文件为外部替换，重置撤销基准
     fileNameEl.textContent = file.name;
@@ -4291,6 +4329,211 @@ function loadDroppedFile(file) {
   };
   reader.readAsText(file);
 }
+
+// ===== 远程 Markdown 加载（?file= / ?url=，可选 &ro=1 只读阅读）=====
+// 供 Katty 等站点的文档卡片直接跳转到本编辑器打开阅读。
+var _remoteBase = ''       // 远程文件所在目录；非空时 renderer 启用相对资源解析
+var _remoteRoot = ''       // owner/repo/branch 层，用于解析 /docs/x.md 这类根相对引用
+var _remoteReadOnly = false
+
+/**
+ * 来源白名单：仅允许同源、*.github.io、raw.githubusercontent.com，且强制 https。
+ * 目的是避免把本工具变成任意 URL 的抓取代理。
+ * ⚠ 正则必须写成 /(^|\.)github\.io$/——用 indexOf('github.io') 会把 evilgithub.io 判为通过。
+ */
+function isAllowedRemoteUrl(u) {
+  if (!u) return false
+  var p = u.protocol
+  var h = u.hostname
+  if (p === 'https:') {
+    // ok
+  } else if (p === 'http:' && (h === 'localhost' || h === '127.0.0.1')) {
+    // 本地调试放行
+  } else {
+    return false
+  }
+  if (h === location.hostname) return true
+  // 本地调试：仅删掉这一行的话，http://localhost 能过协议关却过不了主机名关
+  if (h === 'localhost' || h === '127.0.0.1') return true
+  if (h === 'raw.githubusercontent.com') return true
+  if (/(^|\.)github\.io$/.test(h)) return true
+  return false
+}
+
+/**
+ * github.com/{owner}/{repo}/blob|raw/{branch}/{path} → raw.githubusercontent.com 同路径。
+ * 必须在白名单校验之前调用：github.com 本身不在白名单内，也永远不会被 fetch，只作为转换输入。
+ * 已知限制：分支名含斜杠（如 feature/foo）会截错，此类请直接使用 raw 地址。
+ */
+function normalizeRemoteUrl(u) {
+  var h = u.hostname
+  if (h !== 'github.com' && h !== 'www.github.com') return u
+  var m = u.pathname.match(/^\/([^/]+)\/([^/]+)\/(?:blob|raw)\/([^/]+)\/(.+)$/)
+  if (!m) return u
+  try {
+    return new URL('https://raw.githubusercontent.com/' + m[1] + '/' + m[2] + '/' + m[3] + '/' + m[4])
+  } catch (e) {
+    return u
+  }
+}
+
+/** 文件名取 pathname 末段并解码 */
+function remoteFileNameOf(u) {
+  var seg = String(u.pathname || '').split('/').filter(Boolean).pop() || 'remote.md'
+  try {
+    return decodeURIComponent(seg)
+  } catch (e) {
+    return seg
+  }
+}
+
+/**
+ * base = 远程文件所在目录（解析 ./assets/a.png 这类相对引用）
+ * root = owner/repo/branch 层（解析 /docs/x.md 这类 GitHub 根相对引用；
+ *        注意不能用 new URL('/docs/x.md', base)，那会丢掉 owner/repo/branch）
+ */
+function remoteBaseOf(u) {
+  var seg = String(u.pathname || '').split('/').filter(Boolean)
+  seg.pop()
+  return {
+    base: u.origin + '/' + seg.join('/') + '/',
+    root: u.origin + '/' + seg.slice(0, 3).join('/') + '/'
+  }
+}
+
+/**
+ * 远程内容的轻量清洗。
+ * updatePreview 是 preview.innerHTML = marked.parse(...)，而项目没有 DOMPurify。
+ * 远程文档中写 <img src=x onerror="..."> 即可在本页执行脚本，且同源能读 localStorage
+ * （那里存着本地草稿，以及配置过直连时的 AI Key）。
+ * 必须在 innerHTML 之前处理——img 的 onerror 在插入 DOM 的瞬间就会触发，事后清理来不及。
+ *
+ * 只扫描真正的标签（以 <字母 开头），因此代码块里被转义成 &lt;div onclick="x"&gt;
+ * 的示例文本不会被误伤。
+ */
+function sanitizeMdHtml(html) {
+  if (!html) return html
+  return html
+    // 成对出现的危险元素连同内容一起移除（只删标签会把脚本内容留成可见文本）
+    .replace(/<\s*(script|iframe|object|embed)\b[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
+    // 未闭合的标签兜底移除
+    .replace(/<\s*(script|iframe|object|embed)\b[^>]*>/gi, '')
+    .replace(/<\s*\/\s*(script|iframe|object|embed)\s*>/gi, '')
+    .replace(/<[a-zA-Z][^>]*>/g, function (tag) {
+      return tag
+        .replace(/\son[a-z][a-z0-9_-]*\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+        .replace(/\s(href|src)\s*=\s*(["'])\s*(javascript|data):[^"']*\2/gi, ' $1=""')
+    })
+}
+
+/**
+ * 载入远程 Markdown。收尾动作与 loadDroppedFile 完全一致（含 resetUndo），
+ * 差异只在内容来源、落盘策略与设置 _remoteBase。
+ */
+function loadRemoteMarkdown(url, name, readOnly) {
+  fetch(url, { credentials: 'omit' })
+    .then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status)
+      return res.text()
+    })
+    .then(function (text) {
+      editor.value = text
+      resetUndo()   // 外部替换，必须重置撤销基准，否则一次撤销会清空整篇
+      fileNameEl.textContent = readOnly ? name + ' · ' + t('readOnly') : name
+      window._openedFileName = name.replace(/\.(md|markdown|txt|text)$/i, '')
+      var b = remoteBaseOf(new URL(url, location.href))
+      _remoteBase = b.base
+      _remoteRoot = b.root
+      _remoteReadOnly = !!readOnly
+      // readOnly 必须早于任何可能触发 input 的操作：
+      // input 监听会立刻 saveToStorage()，那样本地草稿就被冲掉了
+      if (readOnly) {
+        editor.readOnly = true
+      } else {
+        saveToStorage()
+      }
+      updatePreviewNow()
+      updateStatus()
+      showToast(t('remoteLoaded') + ': ' + name)
+    })
+    .catch(function () {
+      showToast(t('remoteFailed'))
+    })
+}
+
+/**
+ * 切回本地内容时必须清空远程状态。
+ * 否则打开本地文件后 _remoteBase 仍指向上一个远程文档，本地的相对链接会被误解析到远程基准——
+ * 「本地行为零变化」这条验收就失效了。
+ */
+function resetRemoteState() {
+  _remoteBase = ''
+  _remoteRoot = ''
+  _remoteReadOnly = false
+  if (editor) editor.readOnly = false
+}
+
+/** 把远程文档里的相对引用解析为绝对地址。仅在 _remoteBase 非空时生效。 */
+function resolveRemoteRef(ref) {
+  if (!_remoteBase || !ref) return ref
+  if (/^(https?:)?\/\//i.test(ref)) return ref     // 绝对外链
+  if (ref.charAt(0) === '#') return ref            // 纯锚点，走既有 slug 逻辑
+  // GitHub 根相对链接：不能用 new URL('/docs/x.md', base)，那会丢掉 owner/repo/branch
+  if (ref.charAt(0) === '/') return _remoteRoot + ref.replace(/^\/+/, '')
+  try {
+    return new URL(ref, _remoteBase).href
+  } catch (e) {
+    return ref
+  }
+}
+
+/** 是否为「应留在编辑器内继续打开」的站内 md 文档 */
+function isRemoteMdUrl(absUrl) {
+  if (!/\.(md|markdown)(\?|#|$)/i.test(absUrl)) return false
+  try {
+    return isAllowedRemoteUrl(new URL(absUrl, location.href))
+  } catch (e) {
+    return false
+  }
+}
+
+/**
+ * 给 renderer 打远程补丁。
+ * link 用包装方式保留既有实现（锚点 slug 化、target=_blank），只在其之前调整 href；
+ * image 原本没有自定义实现，marked v15 的签名是 image({href,title,text,tokens})。
+ */
+;(function patchRendererForRemote() {
+  if (typeof renderer === 'undefined' || !renderer) return
+
+  renderer.image = function (token) {
+    var href = (token && token.href) || ''
+    var title = (token && token.title) || null
+    var text = (token && token.text) || ''
+    if (token && token.tokens && this.parser) {
+      try {
+        text = this.parser.parseInline(token.tokens, this.parser.textRenderer)
+      } catch (e) { /* 解析失败则沿用原 text */ }
+    }
+    var src = _remoteBase ? resolveRemoteRef(href) : href
+    var out = '<img src="' + src + '" alt="' + text + '"'
+    if (title) out += ' title="' + title.replace(/"/g, '&quot;') + '"'
+    return out + '>'
+  }
+
+  var originalLink = renderer.link
+  renderer.link = function (token) {
+    if (token && typeof token === 'object' && _remoteBase) {
+      var abs = resolveRemoteRef(token.href || '')
+      var href = abs
+      if (isRemoteMdUrl(abs)) {
+        // 站内 md 改写为本编辑器地址，点击即在编辑器内继续打开（整页重载，阅读场景可接受）
+        href = location.pathname + '?file=' + encodeURIComponent(abs) + '&ro=' + (_remoteReadOnly ? '1' : '0')
+      }
+      token = Object.assign({}, token, { href: href })
+    }
+    return originalLink.call(this, token)
+  }
+})()
 
 // 编辑器面板拖放
 editor.addEventListener('dragover', function(e) {
