@@ -1940,6 +1940,47 @@ body.ai-panel-open .toc-float-btn { right: 360px; }
 .ai-send:active { transform: scale(.94); }
 .ai-send svg { width: 15px; height: 15px; }
 
+/* 快捷指令：输入框旁的按钮 + 上方浮层（交互参照 mc-tool ChatPanel：
+   点预设填入输入框、不自动发送；支持把当前输入存为指令；点外部关闭） */
+.ai-composer { position: relative; }   /* 供指令浮层定位 */
+.ai-prompt-btn {
+  width: 34px; height: 34px; flex: none;
+  border: 1px solid var(--ai-border); border-radius: 8px;
+  background: var(--ai-bg-soft); color: var(--ai-muted);
+  display: grid; place-items: center; cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.ai-prompt-btn:hover, .ai-prompt-btn.active {
+  color: var(--ai-accent); border-color: var(--ai-accent); background: transparent;
+}
+.ai-prompt-btn svg { width: 16px; height: 16px; }
+
+.ai-prompt-pop {
+  position: absolute; left: 10px; right: 10px; bottom: calc(100% + 8px);
+  z-index: 5; max-height: 262px; display: flex; flex-direction: column;
+  background: var(--ai-bg); border: 1px solid var(--ai-border); border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .18);
+  opacity: 0; transform: translateY(4px); pointer-events: none;
+  transition: opacity .14s var(--ai-ease), transform .14s var(--ai-ease);
+}
+.ai-prompt-pop.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.ai-prompt-pop[hidden] { display: none; }
+.ai-prompt-rows { overflow-y: auto; padding: 6px; }
+.ai-prompt-row {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 7px 9px; border: none; border-radius: 7px; background: transparent;
+  color: var(--ai-text); font-family: inherit; font-size: 12px; text-align: left; cursor: pointer;
+}
+.ai-prompt-row:hover { background: var(--ai-hover); }
+.ai-prompt-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-prompt-row .tx {
+  color: var(--ai-muted); font-size: 11px; max-width: 46%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ai-prompt-empty { padding: 14px; text-align: center; color: var(--ai-muted); font-size: 12px; }
+.ai-prompt-pop-foot { display: flex; gap: 6px; padding: 6px; border-top: 1px solid var(--ai-border); flex: none; }
+.ai-prompt-pop-foot .ai-btn { flex: 1; font-size: 11px; padding: 5px 8px; }
+
 /* ---------------------------------------------------------------- 弹窗（diff 与设置共用） */
 .ai-overlay {
   position: fixed; inset: 0; z-index: 9800; background: rgba(0, 0, 0, .45);
@@ -2547,8 +2588,16 @@ body.ai-panel-open .toc-float-btn { right: 360px; }
       </div>
 
       <div class="ai-composer">
+        <button class="ai-prompt-btn" id="aiPromptBtn" type="button" title="快捷指令"><svg viewBox="0 0 20 20" fill="none"><path d="M11.2 2 4.6 11h3.9L7.8 18l6.9-9.2h-4.2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
         <textarea class="ai-input" id="aiInput" rows="1" placeholder="追问，例如「再正式一点」"></textarea>
         <button class="ai-send" id="aiSendBtn" type="button" title="发送"><svg viewBox="0 0 20 20" fill="none"><path d="M10 15.5V4.8M5.6 9.2L10 4.8l4.4 4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="ai-prompt-pop" id="aiPromptPop" hidden>
+          <div class="ai-prompt-rows" id="aiPromptRows"></div>
+          <div class="ai-prompt-pop-foot">
+            <button class="ai-btn" id="aiPromptSaveCur" type="button">存为指令</button>
+            <button class="ai-btn" id="aiPromptManage" type="button">管理</button>
+          </div>
+        </div>
       </div>
 
     </div>

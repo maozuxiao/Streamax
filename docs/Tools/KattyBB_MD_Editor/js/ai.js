@@ -110,6 +110,12 @@
       replaced: '已替换，可按 Ctrl+Z 撤销',
       needSelection: '请先在编辑器中选中一段文字',
       readOnlyDenied: '只读文档不可修改',
+      promptPop: '快捷指令',
+      promptManage: '管理',
+      promptSaveCur: '存为指令',
+      promptEmpty: '暂无指令',
+      promptSaved: '已保存为快捷指令',
+      promptEmptyInput: '输入框为空，无法保存',
       channelExtension: '已连接扩展「{v}」· {provider} · {model}',
       channelExtensionNoKey: '扩展已安装，但供应商「{provider}」未配置，请在扩展设置中填写 API Key',
       channelDirect: '未检测到扩展，当前使用直连：{model}',
@@ -159,6 +165,12 @@
       replaced: 'Replaced — press Ctrl+Z to undo',
       needSelection: 'Select some text in the editor first',
       readOnlyDenied: 'Read-only document cannot be modified',
+      promptPop: 'Quick prompts',
+      promptManage: 'Manage',
+      promptSaveCur: 'Save as prompt',
+      promptEmpty: 'No prompts yet',
+      promptSaved: 'Saved as a quick prompt',
+      promptEmptyInput: 'Input is empty',
       channelExtension: 'Connected to extension v{v} · {provider} · {model}',
       channelExtensionNoKey: 'Extension installed, but provider "{provider}" is not configured — set an API Key in extension options',
       channelDirect: 'Extension not detected; using direct connection: {model}',
@@ -624,6 +636,105 @@
     }
   }
 
+  // ================================================================ 快捷指令面板（输入框旁）
+
+  var promptPopOpen = false
+
+  /** 渲染指令浮层的列表。与浮动指令条共用 getPrompts()，增删改三处同步。 */
+  function renderPromptPop() {
+    var box = $('aiPromptRows')
+    if (!box) return
+    box.innerHTML = ''
+    var ps = getPrompts()
+    if (!ps.length) {
+      var e = document.createElement('div')
+      e.className = 'ai-prompt-empty'
+      e.textContent = t('promptEmpty')
+      box.appendChild(e)
+      return
+    }
+    for (var i = 0; i < ps.length; i++) {
+      (function (p) {
+        var row = document.createElement('button')
+        row.className = 'ai-prompt-row'
+        row.type = 'button'
+        row.title = p.prompt           // 悬停看完整提示词
+        var nm = document.createElement('span')
+        nm.className = 'nm'
+        nm.textContent = p.name
+        var tx = document.createElement('span')
+        tx.className = 'tx'
+        tx.textContent = p.prompt
+        row.appendChild(nm)
+        row.appendChild(tx)
+        row.addEventListener('click', function () { applyPresetToInput(p) })
+        box.appendChild(row)
+      })(ps[i])
+    }
+  }
+
+  /**
+   * 选中指令：填入输入框而非直接发送（参照 mc-tool 的 applyPrompt）。
+   * 用户可以在此基础上改字，再自己回车发送——比一键直发更可控。
+   */
+  function applyPresetToInput(p) {
+    var input = $('aiInput')
+    if (!input) return
+    input.value = p.prompt
+    closePromptPop()
+    input.focus()
+    input.style.height = 'auto'
+    input.style.height = Math.min(130, input.scrollHeight) + 'px'
+  }
+
+  function openPromptPop() {
+    var pop = $('aiPromptPop')
+    if (!pop) return
+    renderPromptPop()
+    pop.hidden = false
+    void pop.offsetWidth            // 强制回流，否则过渡不生效
+    pop.classList.add('show')
+    promptPopOpen = true
+    var btn = $('aiPromptBtn')
+    if (btn) btn.classList.add('active')
+  }
+
+  function closePromptPop() {
+    var pop = $('aiPromptPop')
+    if (!pop || !promptPopOpen) return
+    pop.classList.remove('show')
+    promptPopOpen = false
+    var btn = $('aiPromptBtn')
+    if (btn) btn.classList.remove('active')
+    clearTimeout(closePromptPop._t)
+    closePromptPop._t = setTimeout(function () {
+      if (!promptPopOpen) pop.hidden = true
+    }, 150)
+  }
+
+  /** 把当前输入框内容存为自定义指令（mc-tool 的 saveCurrentAsPrompt） */
+  function saveCurrentInputAsPrompt() {
+    var input = $('aiInput')
+    var text = input ? input.value.trim() : ''
+    if (!text) { toast(t('promptEmptyInput')); return }
+    upsertPrompt({
+      id: 'custom_' + Date.now().toString(36),
+      builtin: false,
+      name: text.slice(0, 12),
+      prompt: text
+    })
+    renderPromptList()
+    renderChips()
+    renderPromptPop()
+    toast(t('promptSaved'))
+    closePromptPop()
+  }
+
+  function openPromptManage() {
+    closePromptPop()
+    openSettings()
+  }
+
   // ================================================================ 设置弹窗
 
   function openModal(id) {
@@ -825,6 +936,9 @@
     set('aiSecPromptsTitle', t('promptsTitle'))
     set('aiOpenExtOptions', t('openExtOptions'))
     set('aiReprobe', t('reprobe'))
+    set('aiPromptBtn', t('promptPop'), 'title')
+    set('aiPromptSaveCur', t('promptSaveCur'))
+    set('aiPromptManage', t('promptManage'))
     set('aiDirectSave', t('directSave'))
     set('aiDirectHint', t('directHint'))
     set('aiPromptAdd', t('promptAdd'))
@@ -963,6 +1077,25 @@
       }
     })
 
+    // ---- 快捷指令面板 ----
+    var promptBtn = $('aiPromptBtn')
+    if (promptBtn) promptBtn.addEventListener('click', function () {
+      if (promptPopOpen) closePromptPop()
+      else openPromptPop()
+    })
+    var psave = $('aiPromptSaveCur')
+    if (psave) psave.addEventListener('click', saveCurrentInputAsPrompt)
+    var pman = $('aiPromptManage')
+    if (pman) pman.addEventListener('click', openPromptManage)
+    // 点外部关闭（与 mc-tool 的 onDocClick 一致）
+    document.addEventListener('mousedown', function (e) {
+      if (!promptPopOpen) return
+      var pop = $('aiPromptPop')
+      if (pop && pop.contains(e.target)) return
+      if (promptBtn && promptBtn.contains(e.target)) return
+      closePromptPop()
+    })
+
     // ---- 设置弹窗 ----
     var sClose = $('aiSettingsClose')
     if (sClose) sClose.addEventListener('click', function () { closeModal('aiSettingsOverlay') })
@@ -1017,6 +1150,7 @@
       var setg = $('aiSettingsOverlay')
       if (diff && !diff.hidden) { if (global.AiDiff) global.AiDiff.close(); return }
       if (setg && !setg.hidden) { closeModal('aiSettingsOverlay'); return }
+      if (promptPopOpen) { closePromptPop(); return }
       if (!fb.hidden) hideFloatBar()
     })
 
