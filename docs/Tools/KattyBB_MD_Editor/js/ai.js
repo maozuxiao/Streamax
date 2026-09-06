@@ -583,7 +583,7 @@
       if (msg.text) {
         msg.text.textContent = ''
         var em = document.createElement('span')
-        em.style.color = 'var(--ai-err)'
+        em.style.color = 'var(--kbai-err)'
         em.textContent = (err && err.message) || '请求失败'
         msg.text.appendChild(em)
       }
@@ -857,7 +857,7 @@
     promptI.value = p ? p.prompt : ''
     promptI.rows = 3
     promptI.placeholder = t('promptText')
-    promptI.style.cssText = 'width:100%;margin-top:6px;padding:6px 8px;border:1px solid var(--ai-border);border-radius:6px;background:var(--ai-bg-soft);color:var(--ai-text);font-family:inherit;font-size:12px;resize:vertical'
+    promptI.style.cssText = 'width:100%;margin-top:6px;padding:6px 8px;border:1px solid var(--kbai-border);border-radius:6px;background:var(--kbai-bg-soft);color:var(--kbai-text);font-family:inherit;font-size:12px;resize:vertical'
 
     var acts = document.createElement('div')
     acts.style.cssText = 'display:flex;gap:6px;margin-top:6px;width:100%'
