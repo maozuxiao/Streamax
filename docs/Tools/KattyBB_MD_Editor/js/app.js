@@ -1630,6 +1630,9 @@ initFootnoteInteraction();
 
 // ===== 远程文档引导（?file= / ?url= + &ro=1）=====
 // 必须放在存档恢复之后，否则远程内容会被上面的 localStorage 恢复覆盖。
+// 远程文档默认以「仅预览」打开。这里只置标志位，不直接改 _viewMode——
+// _viewMode 在下方第 4163 行才用 var 声明并赋值，此处赋值会被它覆盖。
+var _remoteForcePreview = false
 ;(function bootstrapRemoteFile() {
   var qs
   try {
@@ -1651,6 +1654,9 @@ initFootnoteInteraction();
     showToast(t('remoteHostDenied'))
     return
   }
+  // 阅读场景下编辑区是多余的，本次会话默认仅预览。
+  // 刻意不写 localStorage，避免把用户的视图偏好改掉。
+  _remoteForcePreview = true
   loadRemoteMarkdown(u.href, remoteFileNameOf(u), qs.get('ro') === '1')
 })()
 
@@ -4160,7 +4166,8 @@ previewPanel.addEventListener('scroll', function() {
 });
 
 // ===== 视图模式（任务8）=====
-var _viewMode = localStorage.getItem('kattybb-view-mode') || 'split';
+// 远程文档（?file=）本次会话强制「仅预览」；否则沿用用户保存的偏好
+var _viewMode = _remoteForcePreview ? 'preview' : (localStorage.getItem('kattybb-view-mode') || 'split');
 
 function setViewMode(mode) {
   _viewMode = mode;
@@ -4196,6 +4203,9 @@ function applyViewMode() {
     if (notePanel) notePanel.style.display = 'none';
     if (fmtToolbar) fmtToolbar.style.display = 'flex';
   } else if (_viewMode === 'preview') {
+    // 仅预览默认收起笔记：该模式常是被动进入的（如从分栏切过来、或打开远程文档），
+    // 笔记面板默认展开会挤占阅读区。用户手动开过之后就不再强制。
+    if (!_noteToggledByUser) _noteVisible = false;
     ep.style.display = 'none';
     pp.style.display = 'block';
     dv.style.display = 'none';
@@ -4599,6 +4609,9 @@ previewPanel.addEventListener('drop', function(e) {
 
 // ===== 笔记功能 =====
 var _noteVisible = true;
+// 用户是否手动切换过笔记面板。仅预览模式默认收起笔记（阅读场景下它占右侧空间），
+// 但用户一旦手动开过，之后的视图切换就尊重他的选择，不再强制收起。
+var _noteToggledByUser = false;
 var _noteMode = localStorage.getItem('kattybb-note-mode') || 'rich';
 var _noteEditor = null;
 var _noteTextarea = null;
@@ -5140,6 +5153,7 @@ function makeNoteResizable() {
 }
 
 function toggleNotePanel() {
+  _noteToggledByUser = true;   // 用户主动切换过，后续视图切换不再强制收起
   _noteVisible = !_noteVisible;
   _notePanel.style.display = _noteVisible ? 'flex' : 'none';
   var btn = document.getElementById('noteToggleBtn');
