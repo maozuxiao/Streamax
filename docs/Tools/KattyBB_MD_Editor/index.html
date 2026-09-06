@@ -42,6 +42,38 @@ body {
   flex-wrap: wrap;
 }
 
+/* ===== 工具栏收起 / 展开 =====
+   收起态由 body 上的 .toolbar-collapsed 驱动，JS 只负责维护状态。
+   body 是 100vh 纵向 flex，工具栏 flex-shrink:0、.editor-container 占 flex:1，
+   因此收起省下的高度会自动回流给正文，不需要任何尺寸计算。 */
+.toolbar-collapse-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; min-width: 28px; flex-shrink: 0;
+  border: 1px solid var(--border, rgba(128, 128, 128, .3));
+  border-radius: 8px; background: transparent;
+  color: var(--text, #1f2329); cursor: pointer;
+  transition: background .18s ease;
+}
+.toolbar-collapse-btn:hover { background: rgba(128, 128, 128, .1); }
+.toolbar-collapse-btn svg { transition: transform .22s ease; }
+
+body.toolbar-collapsed .toolbar {
+  padding: 6px 12px;
+  /* 必须锁定单行：否则窄屏下主题选择器与 logo 仍会折行，收起就失去意义 */
+  flex-wrap: nowrap;
+}
+/* 白名单写法：日后新增的工具栏按钮会自动被收起，无需同步改这里。
+   .theme-selector 内含主题下拉与日间/夜间切换，一并保留。 */
+body.toolbar-collapsed .toolbar > *:not(.theme-selector):not(.toolbar-logo):not(.toolbar-collapse-btn) {
+  display: none;
+}
+body.toolbar-collapsed .toolbar-collapse-btn svg { transform: rotate(180deg); }
+
+@media (max-width: 480px) {
+  /* 极窄屏收起时只留主题色块，保证单行不折行 */
+  body.toolbar-collapsed #currentThemeName { display: none; }
+}
+
 .toolbar-title {
   font-weight: 700;
   font-size: 15px;
@@ -2170,6 +2202,14 @@ body.ai-panel-open .toc-float-btn { right: 360px; }
   <div class="toolbar-logo" title="KattyBB Markdown Editor">
     <svg width="24" height="24" viewBox="0 0 1024 1024" fill="currentColor"><path d="M20.48 327.76192a163.84 163.84 0 0 1 163.84-163.84h655.36a163.84 163.84 0 0 1 163.84 163.84v327.68a163.84 163.84 0 0 1-163.84 163.84H184.32a163.84 163.84 0 0 1-163.84-163.84v-327.68z m163.84-81.92a81.92 81.92 0 0 0-81.92 81.92v327.68a81.92 81.92 0 0 0 81.92 81.92h655.36a81.92 81.92 0 0 0 81.92-81.92v-327.68a81.92 81.92 0 0 0-81.92-81.92H184.32z m68.97664 84.00896a40.96 40.96 0 0 1 45.71136 14.336L389.12 464.24064l90.112-120.13568a40.96 40.96 0 0 1 73.728 24.576v245.76a40.96 40.96 0 0 1-81.92 0v-122.88l-49.152 65.536a41.04192 41.04192 0 0 1-65.536 0l-49.152-65.536v122.88a40.96 40.96 0 1 1-81.92 0v-245.76a40.96 40.96 0 0 1 28.01664-38.87104zM757.76 368.76288a40.96 40.96 0 0 0-81.92 0v146.8416l-12.00128-12.00128a40.96 40.96 0 0 0-57.91744 57.91744l81.92 81.92a40.96 40.96 0 0 0 57.91744 0l81.92-81.92a40.96 40.96 0 0 0-57.91744-57.91744l-12.00128 12.00128V368.72192z"/></svg>
   </div>
+
+  <!-- 工具栏收起/展开。必须是 .toolbar 的最后一个直接子元素：
+       收起态用 :not() 白名单隐藏其余子元素，放在别处会被一并隐藏，用户就再也点不到。 -->
+  <button class="toolbar-collapse-btn" id="toolbarCollapseBtn" type="button" onclick="toggleToolbarCollapsed()" title="收起工具栏">
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+      <path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
 </div>
 
 <!-- 格式工具栏（编辑/格式化功能区） -->

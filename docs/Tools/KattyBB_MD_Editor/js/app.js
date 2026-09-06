@@ -98,6 +98,8 @@ var i18n = {
     remoteFailed: '远程文档加载失败',
     remoteHostDenied: '该来源不在允许列表中',
     readOnly: '只读',
+    toolbarCollapse: '收起工具栏',
+    toolbarExpand: '展开工具栏',
     themeSwitched: '已切换主题',
     darkMode: '已切换到夜间模式',
     lightMode: '已切换到日间模式',
@@ -266,6 +268,8 @@ var i18n = {
     remoteFailed: 'Failed to load remote document',
     remoteHostDenied: 'Source host is not allowed',
     readOnly: 'Read-only',
+    toolbarCollapse: 'Collapse toolbar',
+    toolbarExpand: 'Expand toolbar',
     themeSwitched: 'Theme switched',
     darkMode: 'Switched to dark mode',
     lightMode: 'Switched to light mode',
@@ -374,6 +378,8 @@ function applyLang() {
   document.querySelector('button[onclick="printPreview()"]').title = t('printPDF');
   document.querySelector('button[onclick="exportWord()"]').title = t('exportWord');
   document.querySelector('button[onclick="saveMarkdown()"]').title = t('saveMD');
+  var tcb = document.getElementById('toolbarCollapseBtn');
+  if (tcb) tcb.title = _toolbarCollapsed ? t('toolbarExpand') : t('toolbarCollapse');
   document.getElementById('viewModeEditor').title = t('viewEditorOnly');
   document.getElementById('viewModeSplit').title = t('viewSplit');
   document.getElementById('viewModePreview').title = t('viewPreviewOnly');
@@ -4169,6 +4175,54 @@ previewPanel.addEventListener('scroll', function() {
 // 远程文档（?file=）本次会话强制「仅预览」；否则沿用用户保存的偏好
 var _viewMode = _remoteForcePreview ? 'preview' : (localStorage.getItem('kattybb-view-mode') || 'split');
 
+// ===== 工具栏收起 / 展开 =====
+// 默认：窄屏（≤760px）或仅预览模式都收起——阅读场景下工具栏里大部分按钮
+// （打开文件、导出、视图切换、编辑器相关）统统用不上。
+// ⚠ 必须放在 var _viewMode 之后：默认条件依赖 _viewMode，写在其之前会因
+//   变量提升拿到 undefined（与 _remoteForcePreview 是同一类坑）。
+var _toolbarCollapsed
+var _toolbarUserToggled = localStorage.getItem('kattybb-toolbar-collapsed') !== null
+if (_toolbarUserToggled) {
+  _toolbarCollapsed = localStorage.getItem('kattybb-toolbar-collapsed') === 'true'
+} else {
+  _toolbarCollapsed = window.innerWidth <= 760 || _viewMode === 'preview'
+}
+
+/**
+ * 应用收起状态。
+ * 这里只管 body 上的类与按钮文案。fmt-toolbar 不在此处理——
+ * 它的 display 被 applyViewMode 写成内联样式，内联优先级高于任何 CSS 选择器，
+ * 只能在 applyViewMode 末尾用 JS 覆盖（否则就得用 !important）。
+ */
+function applyToolbarCollapsed() {
+  document.body.classList.toggle('toolbar-collapsed', _toolbarCollapsed)
+  var btn = document.getElementById('toolbarCollapseBtn')
+  if (btn) btn.title = _toolbarCollapsed ? t('toolbarExpand') : t('toolbarCollapse')
+}
+
+function toggleToolbarCollapsed() {
+  _toolbarUserToggled = true   // 手动切换过，之后不再自动判定
+  _toolbarCollapsed = !_toolbarCollapsed
+  localStorage.setItem('kattybb-toolbar-collapsed', _toolbarCollapsed ? 'true' : 'false')
+  applyToolbarCollapsed()
+  // 必须重跑 applyViewMode：fmt-toolbar 的显示由它按视图模式决定，
+  // 展开时需要靠它恢复，不能只改 body 类
+  applyViewMode()
+}
+
+// 窄屏判定随窗口变化重算（手机横竖屏切换）；用户手动选过则不再自动介入
+var _toolbarResizeTimer = null
+window.addEventListener('resize', function () {
+  if (_toolbarUserToggled) return
+  clearTimeout(_toolbarResizeTimer)
+  _toolbarResizeTimer = setTimeout(function () {
+    var next = window.innerWidth <= 760 || _viewMode === 'preview'
+    if (next === _toolbarCollapsed) return
+    _toolbarCollapsed = next
+    applyViewMode()
+  }, 200)
+})
+
 function setViewMode(mode) {
   _viewMode = mode;
   localStorage.setItem('kattybb-view-mode', mode);
@@ -4253,6 +4307,13 @@ function applyViewMode() {
   document.getElementById('viewModeEditor').classList.toggle('active', _viewMode === 'editor');
   document.getElementById('viewModeSplit').classList.toggle('active', _viewMode === 'split');
   document.getElementById('viewModePreview').classList.toggle('active', _viewMode === 'preview');
+
+  // fmt-toolbar 的 display 已由上面的分支写成内联样式，内联优先级高于任何 CSS
+  // 选择器，所以收起只能在这里用 JS 覆盖（否则就得上 !important）。
+  // 展开时不做处理：保持上面分支按视图模式设好的值即可。
+  if (fmtToolbar && _toolbarCollapsed) fmtToolbar.style.display = 'none';
+  // 统一收口：任何路径切换视图后都重新应用收起状态
+  applyToolbarCollapsed();
 }
 
 // ===== 宽屏模式 =====
