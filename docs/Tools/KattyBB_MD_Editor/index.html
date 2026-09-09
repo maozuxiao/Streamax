@@ -2080,6 +2080,19 @@ body.ai-panel-open .toc-float-btn { right: 360px; }
 .ai-prompt-item .name { flex: 1; min-width: 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ai-prompt-item .prompt { width: 100%; margin-top: 6px; font-size: 11px; }
 
+/* 拖拽排序：手柄 + 拖拽中半透明 + 插入位置指示线 */
+.ai-prompt-item .grip {
+  flex: none; width: 14px; height: 18px; margin-left: -3px;
+  display: grid; place-items: center; cursor: grab;
+  color: var(--kbai-muted, #646a73); opacity: .55;
+}
+.ai-prompt-item .grip:hover { opacity: 1; }
+.ai-prompt-item .grip:active { cursor: grabbing; }
+.ai-prompt-item .grip svg { width: 12px; height: 12px; display: block; }
+.ai-prompt-item.dragging { opacity: .35; }
+.ai-prompt-item.drop-above { box-shadow: inset 0 2px 0 var(--kbai-accent, #4f7cf7); }
+.ai-prompt-item.drop-below { box-shadow: inset 0 -2px 0 var(--kbai-accent, #4f7cf7); }
+
 /* ---------------------------------------------------------------- 工具栏 AI 按钮 */
 #aiToggleBtn .ai-spark { width: 14px; height: 14px; }
 #aiToggleBtn { position: relative; }

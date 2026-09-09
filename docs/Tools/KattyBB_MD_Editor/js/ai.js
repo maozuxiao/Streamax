@@ -140,6 +140,7 @@
       promptAdd: '＋ 新增指令',
       promptName: '指令名称',
       promptText: '提示词内容',
+      dragSort: '拖动调整顺序',
       save: '保存',
       cancel: '取消',
       delete: '删除',
@@ -195,6 +196,7 @@
       promptAdd: '＋ Add instruction',
       promptName: 'Name',
       promptText: 'Prompt',
+      dragSort: 'Drag to reorder',
       save: 'Save',
       cancel: 'Cancel',
       delete: 'Delete',
@@ -300,7 +302,36 @@
           prompt: (saved && saved.prompt) || b.prompt[lang] || b.prompt.zh
         }
       })
-    return builtins.concat(custom)
+    return applyOrder(builtins.concat(custom), data.order)
+  }
+
+  /**
+   * 按持久化的 order（id 列表）排序；未登记的 id（新增指令、新增内置项）
+   * 保持原相对顺序排在末尾，不会丢失。
+   */
+  function applyOrder(list, order) {
+    if (!Array.isArray(order) || !order.length) return list
+    var pos = {}
+    for (var i = 0; i < order.length; i++) pos[order[i]] = i
+    var ranked = []
+    var rest = []
+    for (var j = 0; j < list.length; j++) {
+      var id = list[j].id
+      if (Object.prototype.hasOwnProperty.call(pos, id)) ranked.push({ p: list[j], i: pos[id] })
+      else rest.push(list[j])
+    }
+    ranked.sort(function (a, b) { return a.i - b.i })
+    var out = []
+    for (var k = 0; k < ranked.length; k++) out.push(ranked[k].p)
+    return out.concat(rest)
+  }
+
+  /** 拖拽完成后写回顺序。设置弹窗与浮动指令条的指令顺序共用这一份。 */
+  function persistOrder(ps) {
+    var data = loadStore()
+    data.order = []
+    for (var i = 0; i < ps.length; i++) data.order.push(ps[i].id)
+    saveStore(data)
   }
 
   function upsertPrompt(p) {
@@ -836,10 +867,32 @@
     if (!box) return
     box.innerHTML = ''
     var ps = getPrompts()
+
+    // 当前拖拽行的下标。挂在闭包里，drop 时与目标行配合算出插入位置。
+    var dragIdx = -1
+
+    function clearDropMarks() {
+      var rows = box.children
+      for (var i = 0; i < rows.length; i++) {
+        rows[i].classList.remove('drop-above', 'drop-below')
+      }
+    }
+
     for (var i = 0; i < ps.length; i++) {
-      (function (p) {
+      (function (p, idx) {
         var row = document.createElement('div')
         row.className = 'ai-prompt-item'
+
+        // 拖拽手柄。行默认不可拖，按住手柄才临时开启——整行 draggable
+        // 会吞掉名称的文字选中，编辑/删除按钮也容易误触发拖拽。
+        var grip = document.createElement('span')
+        grip.className = 'grip'
+        grip.title = t('dragSort')
+        grip.innerHTML = '<svg viewBox="0 0 20 20" fill="none"><path d="M7 5.5h.01M13 5.5h.01M7 10h.01M13 10h.01M7 14.5h.01M13 14.5h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>'
+        grip.addEventListener('mousedown', function () { row.draggable = true })
+        grip.addEventListener('mouseup', function () { row.draggable = false })
+        row.appendChild(grip)
+
         var name = document.createElement('span')
         name.className = 'name'
         name.textContent = p.name
@@ -851,8 +904,51 @@
           renderPromptList()
           renderChips()
         }))
+
+        row.addEventListener('dragstart', function (e) {
+          dragIdx = idx
+          row.classList.add('dragging')
+          e.dataTransfer.effectAllowed = 'move'
+          try { e.dataTransfer.setData('text/plain', String(idx)) } catch (err) { /* IE 兼容环境忽略 */ }
+        })
+        row.addEventListener('dragend', function () {
+          row.draggable = false
+          row.classList.remove('dragging')
+          dragIdx = -1
+          clearDropMarks()
+        })
+        row.addEventListener('dragover', function (e) {
+          if (dragIdx === -1 || dragIdx === idx) return
+          e.preventDefault()
+          e.dataTransfer.dropEffect = 'move'
+          // 指针落在行的上半/下半决定插到目标之前还是之后
+          var rect = row.getBoundingClientRect()
+          var below = (e.clientY - rect.top) > rect.height / 2
+          row.classList.toggle('drop-above', !below)
+          row.classList.toggle('drop-below', below)
+        })
+        row.addEventListener('dragleave', function () {
+          row.classList.remove('drop-above', 'drop-below')
+        })
+        row.addEventListener('drop', function (e) {
+          e.preventDefault()
+          if (dragIdx === -1 || dragIdx === idx) return
+          var rect = row.getBoundingClientRect()
+          var below = (e.clientY - rect.top) > rect.height / 2
+          var from = dragIdx
+          var to = idx + (below ? 1 : 0)
+          if (from < to) to--  // 先移除再插入，目标位需要左移一位
+          if (to === from) return
+          var next = ps.slice()
+          var moved = next.splice(from, 1)[0]
+          next.splice(to, 0, moved)
+          persistOrder(next)
+          renderPromptList()
+          renderChips()
+        })
+
         box.appendChild(row)
-      })(ps[i])
+      })(ps[i], i)
     }
   }
 
