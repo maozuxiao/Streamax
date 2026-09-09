@@ -436,6 +436,17 @@
     if (box) box.scrollTop = box.scrollHeight
   }
 
+  /**
+   * 是否贴在底部。流式输出时若用户已上翻查看前文，不应强行把他拽回底部——
+   * 那样长回复根本读不了。注意必须在写入新文本「之前」判断：
+   * 写入后 scrollHeight 已经变了，判断会失真。
+   */
+  function isNearBottom() {
+    var box = $('aiMessages')
+    if (!box) return true
+    return box.scrollHeight - box.scrollTop - box.clientHeight < 60
+  }
+
   function appendUserMsg(text) {
     var box = $('aiMessages')
     if (!box) return null
@@ -559,8 +570,9 @@
       model: state.model || undefined,
       signal: state.controller.signal,
       onDelta: function (chunk, full) {
+        var near = isNearBottom()   // 必须在写入前判断
         if (msg.text) msg.text.textContent = full
-        scrollBottom()
+        if (near) scrollBottom()
       }
     }).then(function (text) {
       setBusy(false)
