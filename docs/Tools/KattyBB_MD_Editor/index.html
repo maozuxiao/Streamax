@@ -764,6 +764,16 @@ body.toolbar-collapsed .toolbar-collapse-btn svg { transform: rotate(180deg); }
 }
 .fmt-form-input:focus { border-color: var(--accent, #e8859b); }
 
+/* 多行输入（网页嵌入代码等）：自动换行、可纵向拉伸 */
+.fmt-form-textarea {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  word-break: break-all;
+}
+
 .fmt-modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -2350,6 +2360,7 @@ body.ai-panel-open .toc-float-btn { right: 360px; }
     </button>
     <div class="fmt-menu" id="insertMenu">
       <div class="fmt-item" onclick="fmtInsertImage()"><span class="fmt-item-text" id="fmtInsImgText">图像</span><span class="fmt-item-key">Ctrl+Shift+I</span></div>
+      <div class="fmt-item" onclick="fmtInsertEmbed()"><span class="fmt-item-text" id="fmtInsEmbedText">网页嵌入</span><span class="fmt-item-key"></span></div>
       <div class="fmt-item" onclick="fmtInsertFootnote()"><span class="fmt-item-text" id="fmtInsFootnoteText">脚注</span><span class="fmt-item-key"></span></div>
       <div class="fmt-item" onclick="fmtInsertLinkRef()"><span class="fmt-item-text" id="fmtInsLinkRefText">链接引用</span><span class="fmt-item-key"></span></div>
       <div class="fmt-menu-sep"></div>

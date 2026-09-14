@@ -385,6 +385,16 @@ body {
 }
 .markdown-body pre code { background: transparent; padding: 0; color: var(--code-ink); font-weight: normal; border: none; }
 .markdown-body img { max-width: 100%; height: auto; border-radius: 14px; box-shadow: var(--shadow); display: block; margin: 1.5em auto; }
+/* 网页嵌入（iframe）：铺满内容宽度、窄屏不横向溢出；min-height 兜底嵌入代码 height="100%" 时高度塌陷 */
+.markdown-body iframe {
+  display: block; width: 100%; max-width: 100%; min-height: 360px;
+  border: 0; border-radius: 14px; box-shadow: var(--shadow);
+  margin: 1.5em auto; background: var(--surface, rgba(0,0,0,0.04));
+}
+/* 打印 / 导出 PDF：整块不跨页切断 */
+@media print {
+  .markdown-body iframe { break-inside: avoid; page-break-inside: avoid; }
+}
 .markdown-body mark {
   background: linear-gradient(120deg, rgba(var(--accent-rgb), 0.25), rgba(var(--accent-rgb), 0.12));
   color: inherit; padding: 0.12em 0.26em; border-radius: 9px;

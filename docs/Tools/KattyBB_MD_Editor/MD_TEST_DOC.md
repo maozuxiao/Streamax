@@ -1,7 +1,7 @@
 # KattyBB Markdown 编辑器 — 语法测试文档
 
 > 本文件用于一次性验证编辑器当前支持的所有 Markdown 语法。
-> 下次打开本文件即可逐项检查渲染效果，重点测试：锚点、公式、GitHub 警告框、高亮。
+> 下次打开本文件即可逐项检查渲染效果，重点测试：锚点、公式、GitHub 警告框、高亮、网页嵌入。
 [TOC]
 
 ---
@@ -18,6 +18,7 @@
 - [公式 Math](#公式-math)
 - [脚注](#脚注)
 - [GitHub 警告框](#github-警告框)
+- [网页嵌入 iframe](#网页嵌入-iframe)
 - [分割线与其它](#分割线与其它)
 
 ---
@@ -235,6 +236,34 @@ $$
 
 ---
 
+## 网页嵌入 iframe
+
+支持直接内嵌第三方内容（Sketchfab、YouTube、Bilibili、CodePen 等），预览区与导出 HTML 均可渲染。
+也可用格式工具栏「插入 → 网页嵌入」粘贴嵌入代码后插入正文。
+
+### Sketchfab 3D 模型（含 wrapper 与说明文字，重点测试项）
+
+<div class="sketchfab-embed-wrapper"> <iframe title="Low-Poly | Game Ready | VOLVO FMX | Truck" frameborder="0" allowfullscreen mozallowfullscreen="true" webkitallowfullscreen="true" allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered web-share src="https://sketchfab.com/models/5ea80f4d8a734532bd821f71b554e336/embed?autostart=1&dnt=1"> </iframe> <p style="font-size: 13px; font-weight: normal; margin: 5px; color: #4A4A4A;"> <a href="https://sketchfab.com/3d-models/low-poly-game-ready-volvo-fmx-truck-5ea80f4d8a734532bd821f71b554e336" target="_blank" rel="nofollow" style="font-weight: bold; color: #1CAAD9;"> Low-Poly | Game Ready | VOLVO FMX | Truck </a> by <a href="https://sketchfab.com/nikoawaku" target="_blank" rel="nofollow" style="font-weight: bold; color: #1CAAD9;"> Luo3D </a> on <a href="https://sketchfab.com" target="_blank" rel="nofollow" style="font-weight: bold; color: #1CAAD9;">Sketchfab</a></p></div>
+
+### 属性白名单与来源规范化
+
+只有 `https://` 与协议相对 `//` 来源会被保留（后者自动补成 `https:`），其余属性按白名单过滤后输出大致如下：
+
+```
+<iframe src="//www.youtube.com/embed/xxxx" width="100%" height="480" allowfullscreen></iframe>
+```
+
+### 安全约束
+
+- 仅放行 `https://` 与协议相对 `//`：明文 `http://`、`javascript:`、`data:` 的 iframe 会被整体移除（含闭合标签）
+- 自动移除 `on*` 事件属性；`script` / `object` / `embed` 仍被拦截
+- 白名单外属性被丢弃；无值布尔属性（如 `xr-spatial-tracking`、`web-share`）保留
+- 自动补 `loading="lazy"`，多个嵌入不阻塞首屏
+
+> 测试要点：预览区 iframe 是否铺满内容宽度、圆角与图片一致、窄屏不横向溢出；工具栏「插入 → 网页嵌入」粘贴嵌入代码后能否正确插入正文；导出 HTML 中嵌入是否保留，打印 PDF 时是否整块不被跨页切断。
+
+---
+
 ## 分割线与其它
 
 上方为分割线：
@@ -244,7 +273,7 @@ $$
 - 自动链接：https://example.com 应可点击
 - 强调符号嵌套：~~**删除并加粗**~~ 与 **_斜体加粗_**
 
-> 测试完毕：逐项核对上述渲染效果，重点确认锚点跳转、公式、GitHub 警告框、高亮四项。
+> 测试完毕：逐项核对上述渲染效果，重点确认锚点跳转、公式、GitHub 警告框、高亮、网页嵌入五项。
 
 ---
 

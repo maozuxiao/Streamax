@@ -157,6 +157,7 @@ var i18n = {
     fmtNormal: '普通段落',
     fmtInsert: '插入',
     fmtInsImg: '图像',
+    fmtInsEmbed: '网页嵌入',
     fmtInsFootnote: '脚注',
     fmtInsLinkRef: '链接引用',
     fmtInsHr: '水平分割线',
@@ -180,6 +181,10 @@ var i18n = {
     fmtLinkInputCancel: '取消',
     fmtImgInputUrl: '图像地址',
     fmtImgInputTitle: '图像说明（可选）',
+    fmtEmbedInputTitle: '插入网页嵌入',
+    fmtEmbedInputCode: '嵌入代码',
+    fmtEmbedInputPlaceholder: '<iframe src="https://..."></iframe>',
+    fmtEmbedInvalid: '未识别到有效的 iframe（src 仅支持 https 地址）',
     fmtToastCopied: '已复制到剪贴板',
     fmtToastCopyFail: '复制失败',
     fmtToastPasteFail: '粘贴失败',
@@ -327,6 +332,7 @@ var i18n = {
     fmtNormal: 'Normal Paragraph',
     fmtInsert: 'Insert',
     fmtInsImg: 'Image',
+    fmtInsEmbed: 'Web Embed',
     fmtInsFootnote: 'Footnote',
     fmtInsLinkRef: 'Link Reference',
     fmtInsHr: 'Horizontal Rule',
@@ -350,6 +356,10 @@ var i18n = {
     fmtLinkInputCancel: 'Cancel',
     fmtImgInputUrl: 'Image URL',
     fmtImgInputTitle: 'Image caption (optional)',
+    fmtEmbedInputTitle: 'Insert Web Embed',
+    fmtEmbedInputCode: 'Embed code',
+    fmtEmbedInputPlaceholder: '<iframe src="https://..."></iframe>',
+    fmtEmbedInvalid: 'No valid iframe found (only https src is supported)',
     fmtToastCopied: 'Copied to clipboard',
     fmtToastCopyFail: 'Copy failed',
     fmtToastPasteFail: 'Paste failed',
@@ -1769,6 +1779,16 @@ function getTurndownService() {
   service.addRule('highlight', {
     filter: 'mark',
     replacement: function (content) { return '==' + content + '=='; }
+  });
+  // iframe 原样保留（否则粘贴 Sketchfab / YouTube 等嵌入代码会丢嵌入）。
+  // 保留前先走 sanitizeIframeTag 做来源与属性白名单，避免把危险 iframe 带进文档；
+  // 前后补空行使其在 Markdown 里独立成块，被 marked 当作 HTML 块渲染。
+  service.addRule('iframe', {
+    filter: 'iframe',
+    replacement: function (content, node) {
+      var safe = sanitizeIframeTag(node.outerHTML || '');
+      return safe ? '\n\n' + safe + '\n\n' : '';
+    }
   });
   _turndownService = service;
   return service;
@@ -4473,23 +4493,82 @@ function remoteBaseOf(u) {
 }
 
 /**
+ * iframe 属性白名单：只保留嵌入所需的属性，其余（尤其 on*）一律丢弃。
+ * 无值布尔属性单独列出——Sketchfab 等嵌入代码里常见（如 xr-spatial-tracking）。
+ */
+var IFRAME_ATTR_ALLOWLIST = ['src', 'width', 'height', 'title', 'frameborder', 'allow',
+  'allowfullscreen', 'loading', 'referrerpolicy', 'sandbox', 'scrolling', 'class',
+  'style', 'name', 'mozallowfullscreen', 'webkitallowfullscreen']
+var IFRAME_BOOL_ATTR_ALLOWLIST = ['xr-spatial-tracking', 'execution-while-out-of-viewport',
+  'execution-while-not-rendered', 'web-share']
+
+/**
+ * 对单个 <iframe ...> 开标签做属性白名单过滤（供预览清洗与粘贴链共用）。
+ * src 仅允许 https:// 或协议相对 //（统一补成 https:）；
+ * 命中 javascript:/data: 或其余来源（含明文 http://）时返回空串，调用方据此丢弃整个 iframe。
+ */
+function sanitizeIframeTag(tag) {
+  var body = String(tag).replace(/^<\s*iframe\b/i, '').replace(/\/?>\s*$/, '')
+  var attrRe = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:\s*=\s*("[^"]*"|'[^']*'|[^\s"'>]+))?/g
+  var src = ''
+  var attrs = []
+  var hasLazy = false
+  var m
+  while ((m = attrRe.exec(body)) !== null) {
+    var name = m[1].toLowerCase()
+    var raw = m[2] || ''
+    var val = raw.replace(/^["']|["']$/g, '')
+    if (/^on/i.test(name)) continue                      // 事件属性一律移除
+    if (name === 'src') {
+      if (/^(javascript|data):/i.test(val)) return ''     // 危险协议直接丢弃
+      if (!/^(https:\/\/|\/\/)/i.test(val)) return ''     // 仅放行 https:// 与协议相对 //
+      src = val.slice(0, 2) === '//' ? 'https:' + val : val
+      continue
+    }
+    if (IFRAME_ATTR_ALLOWLIST.indexOf(name) !== -1) {
+      attrs.push(raw ? name + '=' + raw : name)
+      if (name === 'loading') hasLazy = true
+      continue
+    }
+    if (!raw && IFRAME_BOOL_ATTR_ALLOWLIST.indexOf(name) !== -1) attrs.push(name)
+  }
+  if (!src) return ''
+  if (!hasLazy) attrs.push('loading="lazy"')            // 多个嵌入不阻塞首屏
+  return '<iframe src="' + src + '"' + (attrs.length ? ' ' + attrs.join(' ') : '') + '></iframe>'
+}
+
+/**
  * 远程内容的轻量清洗。
  * updatePreview 是 preview.innerHTML = marked.parse(...)，而项目没有 DOMPurify。
  * 远程文档中写 <img src=x onerror="..."> 即可在本页执行脚本，且同源能读 localStorage
  * （那里存着本地草稿，以及配置过直连时的 AI Key）。
  * 必须在 innerHTML 之前处理——img 的 onerror 在插入 DOM 的瞬间就会触发，事后清理来不及。
  *
+ * iframe 不再整体删除，改为「受控保留」：逐个走 sanitizeIframeTag 做属性白名单，
+ * 仅放行 https: / // 来源，on* 与 javascript:/data: 一律拦截；非法来源则连同内容整体丢弃。
+ * script / object / embed 仍按原策略成对删除。
+ *
  * 只扫描真正的标签（以 <字母 开头），因此代码块里被转义成 &lt;div onclick="x"&gt;
  * 的示例文本不会被误伤。
  */
 function sanitizeMdHtml(html) {
   if (!html) return html
-  return html
+  var out = html
+    // iframe 受控保留：逐个做属性白名单，非法来源则整体丢弃（含闭合标签）
+    .replace(/<\s*iframe\b[^>]*>[\s\S]*?<\s*\/\s*iframe\s*>/gi, function (block) {
+      var open = block.match(/<\s*iframe\b[^>]*>/i)
+      return open ? sanitizeIframeTag(open[0]) : ''
+    })
+    // 未闭合 / 自闭合的 iframe 兜底（负向断言避免给已成对的 iframe 再补一个闭合标签）
+    .replace(/<\s*iframe\b[^>]*>(?!\s*<\s*\/\s*iframe\s*>)/gi, function (tag) {
+      return sanitizeIframeTag(tag)
+    })
+  return out
     // 成对出现的危险元素连同内容一起移除（只删标签会把脚本内容留成可见文本）
-    .replace(/<\s*(script|iframe|object|embed)\b[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
+    .replace(/<\s*(script|object|embed)\b[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
     // 未闭合的标签兜底移除
-    .replace(/<\s*(script|iframe|object|embed)\b[^>]*>/gi, '')
-    .replace(/<\s*\/\s*(script|iframe|object|embed)\s*>/gi, '')
+    .replace(/<\s*(script|object|embed)\b[^>]*>/gi, '')
+    .replace(/<\s*\/\s*(script|object|embed)\s*>/gi, '')
     .replace(/<[a-zA-Z][^>]*>/g, function (tag) {
       return tag
         .replace(/\son[a-z][a-z0-9_-]*\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
@@ -5664,6 +5743,7 @@ function applyFmtLang() {
   fmtSetText('fmtH6Text', t('fmtH6'));
   fmtSetText('fmtNormalText', t('fmtNormal'));
   fmtSetText('fmtInsImgText', t('fmtInsImg'));
+  fmtSetText('fmtInsEmbedText', t('fmtInsEmbed'));
   fmtSetText('fmtInsFootnoteText', t('fmtInsFootnote'));
   fmtSetText('fmtInsLinkRefText', t('fmtInsLinkRef'));
   fmtSetText('fmtInsHrText', t('fmtInsHr'));
@@ -6135,9 +6215,19 @@ function openFmtModal(title, fields, callback) {
   
   var html = '';
   fields.forEach(function(f) {
+    // type: 'textarea' 时渲染多行输入（粘贴 iframe / 嵌入代码用）；其余仍为单行 input
+    var control;
+    if (f.type === 'textarea') {
+      control = '<textarea class="fmt-form-input fmt-form-textarea" id="fmtModalInput_' + f.name + '"' +
+        ' rows="' + (f.rows || 6) + '" placeholder="' + (f.placeholder || '') + '">' +
+        escapeHtml(f.value || '') + '</textarea>';
+    } else {
+      control = '<input type="text" class="fmt-form-input" id="fmtModalInput_' + f.name + '" value="' +
+        (f.value || '').replace(/"/g, '&quot;') + '" placeholder="' + (f.placeholder || '') + '">';
+    }
     html += '<div class="fmt-form-group">' +
       '<label class="fmt-form-label">' + f.label + '</label>' +
-      '<input type="text" class="fmt-form-input" id="fmtModalInput_' + f.name + '" value="' + (f.value || '').replace(/"/g, '&quot;') + '" placeholder="' + (f.placeholder || '') + '">' +
+      control +
       '</div>';
   });
   bodyEl.innerHTML = html;
@@ -6201,6 +6291,22 @@ function fmtInsertImage() {
     if (!url) return;
     var insertion = '![' + alt + '](' + url + ')';
     fmtInsertAtCursor(insertion);
+  });
+}
+
+// 插入网页嵌入（iframe）：粘贴嵌入代码 -> 提取 iframe -> 来源/属性清洗 -> 插入正文
+function fmtInsertEmbed() {
+  closeAllFmtMenus();
+  openFmtModal(t('fmtEmbedInputTitle'), [
+    { name: 'code', label: t('fmtEmbedInputCode'), value: '', placeholder: t('fmtEmbedInputPlaceholder'), type: 'textarea', rows: 6 }
+  ], function(data) {
+    var code = (data.code || '').trim();
+    if (!code) return;
+    // 嵌入代码通常还带标题/说明链接（如 Sketchfab），这里只取 iframe 部分
+    var open = code.match(/<\s*iframe\b[^>]*>/i);
+    var safe = open ? sanitizeIframeTag(open[0]) : '';
+    if (!safe) { showToast(t('fmtEmbedInvalid')); return; }
+    fmtInsertAtCursor('\n' + safe + '\n');
   });
 }
 
