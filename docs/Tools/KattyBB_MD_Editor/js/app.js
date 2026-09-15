@@ -4328,7 +4328,7 @@ function syncEditorToPreview() {
 /**
  * 基于标题对齐的同步滚动：预览 → 编辑器
  */
-function syncPreviewToEditor() {
+function editorPosFromPreview() {
   var eHeadings = getEditorHeadings();
   var pHeadings = getPreviewHeadings();
 
@@ -4336,8 +4336,7 @@ function syncPreviewToEditor() {
     var maxPreview = previewPanel.scrollHeight - previewPanel.clientHeight;
     var ratio = maxPreview > 0 ? previewPanel.scrollTop / maxPreview : 0;
     var maxEditor = editor.scrollHeight - editor.clientHeight;
-    _syncScrollTo(editor, ratio * maxEditor);
-    return;
+    return ratio * maxEditor;
   }
 
   var currentScroll = previewPanel.scrollTop;
@@ -4350,13 +4349,13 @@ function syncPreviewToEditor() {
     }
   }
 
+  var lineHeight = parseFloat(getComputedStyle(editor).lineHeight) || 24;
+
   if (pIdx < 0) {
     var firstPTop = pHeadings[0].top;
     var firstELine = eHeadings[0].line;
-    var ratio = firstPTop > 0 ? currentScroll / firstPTop : 0;
-    var lineHeight = parseFloat(getComputedStyle(editor).lineHeight) || 24;
-    _syncScrollTo(editor, ratio * firstELine * lineHeight);
-    return;
+    var firstRatio = firstPTop > 0 ? currentScroll / firstPTop : 0;
+    return firstRatio * firstELine * lineHeight;
   }
 
   var pStart = pHeadings[pIdx].top;
@@ -4367,9 +4366,17 @@ function syncPreviewToEditor() {
 
   var pRatio = (pEnd > pStart) ? (currentScroll - pStart) / (pEnd - pStart) : 0;
   pRatio = Math.max(0, Math.min(1, pRatio));
-  var targetLine = eStartLine + pRatio * (eEndLine - eStartLine);
-  var lineHeight = parseFloat(getComputedStyle(editor).lineHeight) || 24;
-  _syncScrollTo(editor, targetLine * lineHeight);
+  return (eStartLine + pRatio * (eEndLine - eStartLine)) * lineHeight;
+}
+
+/**
+ * 基于标题对齐的同步滚动：预览 → 编辑器
+ *
+ * 映射逻辑抽到 editorPosFromPreview()，这样脚注跳转（需要平滑动画而非瞬间赋值）
+ * 能复用同一套映射，只是换一种写入方式。
+ */
+function syncPreviewToEditor() {
+  _syncScrollTo(editor, editorPosFromPreview());
 }
 
 // 同步滚动监听
@@ -6682,9 +6689,10 @@ function scrollToFootnote(id) {
       behavior: 'smooth' 
     });
     
-    // 落定后把编辑器也带过去：此前脚注跳转只动预览，开启同步滚动时源码会停在原处
+    // 落定后把编辑器也带过去：此前脚注跳转只动预览，开启同步滚动时源码会停在原处。
+    // 用平滑动画而不是直接赋值，否则源码是"瞬移"，观感很生硬。
     resumeSyncWhenSettled(function () {
-      if (_syncScroll) syncPreviewToEditor();
+      if (_syncScroll) animateEditorScroll(editorPosFromPreview());
     });
   } else {
     footnote.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -6714,9 +6722,10 @@ function scrollToFootnoteRef(id) {
       behavior: 'smooth' 
     });
     
-    // 落定后把编辑器也带过去：此前脚注跳转只动预览，开启同步滚动时源码会停在原处
+    // 落定后把编辑器也带过去：此前脚注跳转只动预览，开启同步滚动时源码会停在原处。
+    // 用平滑动画而不是直接赋值，否则源码是"瞬移"，观感很生硬。
     resumeSyncWhenSettled(function () {
-      if (_syncScroll) syncPreviewToEditor();
+      if (_syncScroll) animateEditorScroll(editorPosFromPreview());
     });
   } else {
     ref.scrollIntoView({ behavior: 'smooth', block: 'center' });
