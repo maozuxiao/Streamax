@@ -2216,25 +2216,18 @@ function updateTocFloat() {
 }
 
 /**
- * 在预览面板内平滑滚动到某个元素。
- *
- * 只管滚动本身，不碰同步滚动开关——那件事统一由 jumpToHeading 处理，
- * 免得「临时关同步」与「把编辑器一起带过去」被拆到两处、顾此失彼。
+ * 预览区内某元素的目标滚动位置（只算不滚）。
+ * 由 jumpToHeading 拿到后，与编辑器目标一起交给 animateJump 统一驱动。
  */
-function scrollPreviewToElement(el, offset) {
-  if (!el) return;
-  var previewPanel = document.getElementById('previewPanel');
-  if (!previewPanel) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    return;
-  }
+function previewTargetFor(el, offset) {
+  if (!el) return null;
+  var panel = document.getElementById('previewPanel');
+  if (!panel) return null;
   var rect = el.getBoundingClientRect();
-  var panelRect = previewPanel.getBoundingClientRect();
-  var scrollTarget = previewPanel.scrollTop + (rect.top - panelRect.top) - (offset == null ? 60 : offset);
-  previewPanel.scrollTo({ 
-    top: Math.max(0, scrollTarget), 
-    behavior: 'smooth' 
-  });
+  var panelRect = panel.getBoundingClientRect();
+  var target = panel.scrollTop + (rect.top - panelRect.top) - (offset == null ? 60 : offset);
+  var max = panel.scrollHeight - panel.clientHeight;
+  return Math.max(0, Math.min(target, max));
 }
 
 /**
@@ -2257,8 +2250,7 @@ function findHeadingBySlug(slug, occ) {
 // 编辑器侧滚动动画的 rAF 句柄
 var _editorScrollRaf = null;
 
-/** 本轮跳转期望的编辑器终点，落定时用于校正被回灌拽偏的情况 */
-var _jumpEditorTarget = null;
+
 
 /**
  * 平滑滚动编辑区到指定位置。
@@ -2287,13 +2279,54 @@ function animateEditorScroll(top) {
   _editorScrollRaf = requestAnimationFrame(step);
 }
 
+// 跳转动画的 rAF 句柄
+var _jumpRaf = null;
+
 /**
- * 把编辑器平滑滚到与 slug 对应的标题行。
+ * 预览与编辑器一起做跳转动画。
+ *
+ * ⚠ 两个窗口必须由**同一个动画驱动、同一时长、同一缓动**。此前预览走原生
+ *   behavior:'smooth'（时长由浏览器按距离自行决定），编辑器走自绘动画，
+ *   两套节奏对不齐，观感就是一个快一个慢。现在两边共用这一条时间轴。
+ */
+function animateJump(previewTop, editorTop) {
+  if (_jumpRaf) cancelAnimationFrame(_jumpRaf);
+
+  var p0 = previewPanel.scrollTop;
+  var dp = (previewTop == null) ? 0 : previewTop - p0;
+  var e0 = editor.scrollTop;
+  var de = (editorTop == null) ? 0 : editorTop - e0;
+  var span = Math.max(Math.abs(dp), Math.abs(de));
+  if (span < 1) return;
+
+  var dur = Math.min(520, Math.max(200, span * 0.35));
+  var t0 = performance.now();
+
+  function step(now) {
+    var p = Math.min(1, (now - t0) / dur);
+    var eased = 1 - Math.pow(1 - p, 3);        // easeOutCubic
+    if (dp) {
+      previewPanel.scrollTop = p0 + dp * eased;
+      _syncLockPreviewUntil = Date.now() + 200;
+    }
+    if (de) {
+      editor.scrollTop = e0 + de * eased;
+      _syncLockEditorUntil = Date.now() + 200;
+    }
+    if (p < 1) _jumpRaf = requestAnimationFrame(step);
+    else _jumpRaf = null;
+  }
+  _jumpRaf = requestAnimationFrame(step);
+}
+
+/**
+ * 编辑器滚到与 slug 对应标题行的目标位置（只算不滚）。
  * @param {string} slug
  * @param {number} [occ] 该 slug 是第几次出现（重名标题用）
  * @param {number} [tocIndex] 目录项在文档头部里的序号，与编辑区标题一一对应
+ * @returns {number|null}
  */
-function scrollEditorToHeading(slug, occ, tocIndex) {
+function editorTargetForHeading(slug, occ, tocIndex) {
   var eHeadings = getEditorHeadings();
   var want = occ || 0;
   var idx = -1;
@@ -2326,22 +2359,21 @@ function scrollEditorToHeading(slug, occ, tocIndex) {
       }
     }
   }
-  if (idx < 0 || !eHeadings[idx]) return;
+  if (idx < 0 || !eHeadings[idx]) return null;
 
   var lineHeight = parseFloat(getComputedStyle(editor).lineHeight) || 24;
   // 留一点余量，别把标题顶在最上沿
   var top = eHeadings[idx].line * lineHeight - 40;
   var max = editor.scrollHeight - editor.clientHeight;
-  top = Math.max(0, Math.min(top, max));
-  _jumpEditorTarget = top;
-  animateEditorScroll(top);
+  return Math.max(0, Math.min(top, max));
 }
 
 /**
  * 目录项 / 预览区锚点跳转：预览与编辑器一起跳。
  *
- * 期间临时关掉同步滚动（否则会被编辑器反向拉回，见 scrollPreviewToElement 的说明），
- * 但关闭期间编辑器就不会跟着动了——所以这里要手动把它带到对应标题行，
+ * 期间临时关掉同步滚动（否则两侧会互相拉扯、把跳转抵消掉），
+ * 但关闭期间编辑器就不会跟着动了——所以这里要手动算出它的目标位置，
+ * 与预览目标一起交给 animateJump 同步动画过去，
  * 免得开启同步滚动的用户看到「预览跳了、源码还停在原处」。
  */
 function jumpToHeading(slug, occ, tocIndex) {
@@ -2349,13 +2381,11 @@ function jumpToHeading(slug, occ, tocIndex) {
   if (!target) return;
   // 只暂停、不动用户偏好：源码要不要跟着跳，一律看偏好本身
   _syncPaused = true;
-  scrollPreviewToElement(target, 60);
-  // 平滑滚动是异步的，期间一直锁住预览侧，别让同步逻辑中途插一脚
-  _syncLockPreviewUntil = Date.now() + 1200;
-  if (_syncScroll) scrollEditorToHeading(slug, occ, tocIndex);
+  var pTop = previewTargetFor(target, 60);
+  var eTop = _syncScroll ? editorTargetForHeading(slug, occ, tocIndex) : null;
+  animateJump(pTop, eTop);
   // 不能用固定 1 秒定时器恢复：动画可能更久，提前恢复会把刚跳过去的一侧拽回来
-  var wantEditor = _syncScroll ? _jumpEditorTarget : null;
-  _jumpEditorTarget = null;
+  var wantEditor = eTop;
   resumeSyncWhenSettled(function () {
     // 落定时再校一次：万一动画期间被残余回灌拽偏，这里把它按回目标位置
     if (wantEditor == null || !_syncScroll) return;
