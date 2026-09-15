@@ -104,6 +104,7 @@
       placeholder: '追问，例如「再正式一点」',
       chat: '对话',
       generating: '生成中…',
+      thinkingChars: '思考中…（{n} 字）',
       applyToDoc: '应用到文档…',
       diffOld: '原文',
       diffNew: '改写后',
@@ -162,6 +163,7 @@
       placeholder: 'Ask a follow-up, e.g. "make it more formal"',
       chat: 'Chat',
       generating: 'Generating…',
+      thinkingChars: 'Thinking… ({n} chars)',
       applyToDoc: 'Apply to document…',
       diffOld: 'Original',
       diffNew: 'Rewritten',
@@ -598,13 +600,22 @@
     if (!msg) return
 
     setBusy(true, display)
+    var busyLabel = display ? display + '…' : t('generating')
     state.controller = new AbortController()
 
     global.KattyAI.chat({
       messages: messages,
       model: state.model || undefined,
       signal: state.controller.signal,
+      // 推理模型（hy4-preview 等）会先思考几十秒，这期间正文是空的。
+      // 把状态切成「思考中…（N 字）」，否则界面长时间一动不动像是卡死了。
+      onReasoning: function (chunk, full) {
+        var st = $('aiFloatStatusText')
+        if (st && state.busy) st.textContent = fmt(t('thinkingChars'), { n: full.length })
+      },
       onDelta: function (chunk, full) {
+        var st = $('aiFloatStatusText')
+        if (st && state.busy) st.textContent = busyLabel
         var near = isNearBottom()   // 必须在写入前判断
         if (msg.text) msg.text.textContent = full
         if (near) scrollBottom()
