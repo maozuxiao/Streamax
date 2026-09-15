@@ -2196,13 +2196,17 @@ function updateTocFloat() {
   btn.classList.remove('hidden');
 
   var tocHtml = '<ul>';
+  // 重名标题必须带上「第几次出现」：光靠 slug 只能定位到第一个同名标题
+  var slugSeen = {};
   headings.forEach(function(h) {
     var level = h.match(/^#+/)[0].length;
     var title = h.replace(/^#+\s+/, '').replace(/[#]+$/, '').trim();
     var slug = slugifyTitle(title);
+    var occ = slugSeen[slug] || 0;
+    slugSeen[slug] = occ + 1;
     var inner = neutralizeTocLinks(renderTocTitle(title));
     var linkTitle = textFromHtml(inner).replace(/"/g, '&quot;');
-    tocHtml += '<li class="toc-level-' + level + '"><a href="#' + slug + '" title="' + linkTitle + '" onclick="scrollToHeading(\'' + slug + '\'); return false;">' + inner + '</a></li>';
+    tocHtml += '<li class="toc-level-' + level + '"><a href="#' + slug + '" title="' + linkTitle + '" onclick="scrollToHeading(\'' + slug + '\', ' + occ + '); return false;">' + inner + '</a></li>';
   });
   tocHtml += '</ul>';
 
@@ -2232,22 +2236,63 @@ function scrollPreviewToElement(el, offset) {
 }
 
 /**
- * 把编辑器滚到与 slug 对应的标题行。
- * 编辑区与预览区的标题按同一顺序一一对应，按下标取值即可。
+ * 取第 n 个（0 基）id 为 slug 的预览标题元素。
+ * 文档里出现重名标题时，光靠 getElementById 只能拿到第一个。
  */
-function scrollEditorToHeading(slug) {
-  var pHeadings = getPreviewHeadings();
+function findHeadingBySlug(slug, occ) {
+  var list = preview.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  var want = occ || 0;
+  var seen = 0;
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].id === slug) {
+      if (seen === want) return list[i];
+      seen++;
+    }
+  }
+  return document.getElementById(slug);
+}
+
+/**
+ * 把编辑器平滑滚到与 slug 对应的标题行。
+ */
+function scrollEditorToHeading(slug, occ) {
   var eHeadings = getEditorHeadings();
+  var want = occ || 0;
+  var seen = 0;
   var idx = -1;
-  for (var i = 0; i < pHeadings.length; i++) {
-    if (pHeadings[i].id === slug) { idx = i; break; }
+
+  // 首选：用「编辑区标题文本 → slug」直接匹配。TOC 的 slug 也是同一个 slugifyTitle
+  // 算出来的，这条路径不依赖预览区 DOM，不会因重名标题、预览未渲染完成或
+  // 预览 id 与 TOC slug 的实体/链接处理差异而失配（此前偶发不跳转就出在这里）。
+  for (var i = 0; i < eHeadings.length; i++) {
+    if (slugifyTitle(eHeadings[i].text) === slug) {
+      if (seen === want) { idx = i; break; }
+      seen++;
+    }
+  }
+
+  // 兜底：按预览区同名标题的下标取值，文本层匹配不上时至少能跳到大致位置
+  if (idx < 0) {
+    var pHeadings = getPreviewHeadings();
+    var n = 0;
+    for (var j = 0; j < pHeadings.length; j++) {
+      if (pHeadings[j].id === slug) {
+        if (n === want) { idx = j; break; }
+        n++;
+      }
+    }
   }
   if (idx < 0 || !eHeadings[idx]) return;
+
   var lineHeight = parseFloat(getComputedStyle(editor).lineHeight) || 24;
   // 留一点余量，别把标题顶在最上沿
   var top = eHeadings[idx].line * lineHeight - 40;
   var max = editor.scrollHeight - editor.clientHeight;
-  editor.scrollTop = Math.max(0, Math.min(top, max));
+  top = Math.max(0, Math.min(top, max));
+
+  // 与预览侧一样平滑滚动，避免源码窗口"瞬移"的突兀感
+  editor.scrollTo({ top: top, behavior: 'smooth' });
+  _syncLockEditorUntil = Date.now() + 1200;
 }
 
 /**
@@ -2257,25 +2302,27 @@ function scrollEditorToHeading(slug) {
  * 但关闭期间编辑器就不会跟着动了——所以这里要手动把它带到对应标题行，
  * 免得开启同步滚动的用户看到「预览跳了、源码还停在原处」。
  */
-function jumpToHeading(slug) {
-  var target = document.getElementById(slug);
+function jumpToHeading(slug, occ) {
+  var target = findHeadingBySlug(slug, occ);
   if (!target) return;
   var wasSyncScroll = _syncScroll;
   _syncScroll = false;
   scrollPreviewToElement(target, 60);
   // 平滑滚动是异步的，期间一直锁住预览侧，别让同步逻辑中途插一脚
   _syncLockPreviewUntil = Date.now() + 1200;
-  if (wasSyncScroll) scrollEditorToHeading(slug);
+  if (wasSyncScroll) scrollEditorToHeading(slug, occ);
   setTimeout(function () { _syncScroll = wasSyncScroll; }, 1000);
 }
 
 /**
  * 点击目录项跳转到指定标题
+ * @param {string} slug 标题 slug
+ * @param {number} [occ] 该 slug 在文档中是第几次出现（重名标题用）
  */
-function scrollToHeading(slug) {
-  var heading = document.getElementById(slug);
+function scrollToHeading(slug, occ) {
+  var heading = findHeadingBySlug(slug, occ);
   if (heading) {
-    jumpToHeading(slug);
+    jumpToHeading(slug, occ);
     document.getElementById('tocFloatBtn').classList.remove('open');
   }
 }
