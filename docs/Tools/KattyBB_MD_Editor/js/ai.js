@@ -105,6 +105,7 @@
       chat: '对话',
       generating: '生成中…',
       thinkingChars: '思考中…（{n} 字）',
+      thoughtDone: '已完成思考（{n} 字）· 点此展开',
       applyToDoc: '应用到文档…',
       diffOld: '原文',
       diffNew: '改写后',
@@ -164,6 +165,7 @@
       chat: 'Chat',
       generating: 'Generating…',
       thinkingChars: 'Thinking… ({n} chars)',
+      thoughtDone: 'Thought for {n} chars · click to expand',
       applyToDoc: 'Apply to document…',
       diffOld: 'Original',
       diffNew: 'Rewritten',
@@ -520,6 +522,29 @@
     return { wrap: wrap, bubble: bub, text: textEl, caret: caret }
   }
 
+  /**
+   * 在回复气泡上方挂一个「思考过程」块。
+   *
+   * 推理模型（hy4-preview、deepseek-reasoner、o4-mini 等）会先思考几十秒才吐第一个
+   * 正文字，这段空白期界面必须有反馈，否则看起来就是卡死。正文开始后自动折起，
+   * 点标题可随时展开回看；整轮没有任何思考片段（非推理模型）时整块移除。
+   */
+  function appendThinkBlock(msg) {
+    var wrap = document.createElement('div')
+    wrap.className = 'ai-think open'
+    var head = document.createElement('button')
+    head.type = 'button'
+    head.className = 'ai-think-head'
+    head.textContent = fmt(t('thinkingChars'), { n: 0 })
+    var body = document.createElement('div')
+    body.className = 'ai-think-body'
+    wrap.appendChild(head)
+    wrap.appendChild(body)
+    msg.wrap.insertBefore(wrap, msg.bubble)
+    head.addEventListener('click', function () { wrap.classList.toggle('open') })
+    return { wrap: wrap, head: head, body: body }
+  }
+
   function syncComposer() {
     var send = $('aiSendBtn')
     if (!send) return
@@ -599,6 +624,27 @@
     var msg = appendAiMsg()
     if (!msg) return
 
+    // 思考块：正文到来前就显示「思考中…」，让用户知道请求已经发出去了
+    var think = appendThinkBlock(msg)
+    var thinkChars = 0
+    var thinkClosed = false
+
+    // 思考期间先藏起空气泡（里面只有一个光标），等正文/报错要写入时再显示
+    if (msg.bubble) msg.bubble.style.display = 'none'
+
+    /** 思考块收尾：有思考内容就折起保留，没有（非推理模型）就整块撤掉 */
+    function settleThink() {
+      if (thinkClosed) return
+      thinkClosed = true
+      if (msg.bubble) msg.bubble.style.display = ''
+      if (!thinkChars) {
+        if (think.wrap.parentNode) think.wrap.parentNode.removeChild(think.wrap)
+        return
+      }
+      think.wrap.classList.remove('open')
+      think.head.textContent = fmt(t('thoughtDone'), { n: thinkChars })
+    }
+
     setBusy(true, display)
     var busyLabel = display ? display + '…' : t('generating')
     state.controller = new AbortController()
@@ -607,13 +653,17 @@
       messages: messages,
       model: state.model || undefined,
       signal: state.controller.signal,
-      // 推理模型（hy4-preview 等）会先思考几十秒，这期间正文是空的。
-      // 把状态切成「思考中…（N 字）」，否则界面长时间一动不动像是卡死了。
+      // 推理模型的思考片段：实时写进思考块。它不进答案，只用于呈现进度。
       onReasoning: function (chunk, full) {
+        thinkChars = full.length
+        think.head.textContent = fmt(t('thinkingChars'), { n: thinkChars })
+        think.body.textContent = full
         var st = $('aiFloatStatusText')
-        if (st && state.busy) st.textContent = fmt(t('thinkingChars'), { n: full.length })
+        if (st && state.busy) st.textContent = fmt(t('thinkingChars'), { n: thinkChars })
+        if (isNearBottom()) scrollBottom()
       },
       onDelta: function (chunk, full) {
+        settleThink()   // 开始吐正文了，把思考块收起
         var st = $('aiFloatStatusText')
         if (st && state.busy) st.textContent = busyLabel
         var near = isNearBottom()   // 必须在写入前判断
@@ -621,6 +671,7 @@
         if (near) scrollBottom()
       }
     }).then(function (text) {
+      settleThink()
       setBusy(false)
       state.history.push({ role: 'assistant', content: text })
       if (msg.text) msg.text.textContent = text
@@ -630,6 +681,7 @@
       if (runSel) addApplyButton(msg, runSel, text, retry)
       if (opts.autoDiff && runSel) openDiffFor(runSel, text, retry)
     }).catch(function (err) {
+      settleThink()
       setBusy(false)
       state.history = snapshot
       if (msg.caret) msg.caret.style.display = 'none'
