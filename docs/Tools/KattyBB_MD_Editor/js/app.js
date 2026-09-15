@@ -2257,6 +2257,9 @@ function findHeadingBySlug(slug, occ) {
 // 编辑器侧滚动动画的 rAF 句柄
 var _editorScrollRaf = null;
 
+/** 本轮跳转期望的编辑器终点，落定时用于校正被回灌拽偏的情况 */
+var _jumpEditorTarget = null;
+
 /**
  * 平滑滚动编辑区到指定位置。
  *
@@ -2329,7 +2332,9 @@ function scrollEditorToHeading(slug, occ, tocIndex) {
   // 留一点余量，别把标题顶在最上沿
   var top = eHeadings[idx].line * lineHeight - 40;
   var max = editor.scrollHeight - editor.clientHeight;
-  animateEditorScroll(Math.max(0, Math.min(top, max)));
+  top = Math.max(0, Math.min(top, max));
+  _jumpEditorTarget = top;
+  animateEditorScroll(top);
 }
 
 /**
@@ -2349,7 +2354,16 @@ function jumpToHeading(slug, occ, tocIndex) {
   _syncLockPreviewUntil = Date.now() + 1200;
   if (_syncScroll) scrollEditorToHeading(slug, occ, tocIndex);
   // 不能用固定 1 秒定时器恢复：动画可能更久，提前恢复会把刚跳过去的一侧拽回来
-  resumeSyncWhenSettled();
+  var wantEditor = _syncScroll ? _jumpEditorTarget : null;
+  _jumpEditorTarget = null;
+  resumeSyncWhenSettled(function () {
+    // 落定时再校一次：万一动画期间被残余回灌拽偏，这里把它按回目标位置
+    if (wantEditor == null || !_syncScroll) return;
+    if (Math.abs(editor.scrollTop - wantEditor) > 2) {
+      editor.scrollTop = wantEditor;
+      _syncLockEditorUntil = Date.now() + 300;
+    }
+  });
 }
 
 /**
@@ -4169,12 +4183,14 @@ var _syncResumeToken = 0;
  *   而且点击越快越容易撞上（后一次跳转把计时器重置，两次动画叠在一起更晚才停）。
  *   这里改为：连续 6 帧（约 100ms）两侧 scrollTop 都不再变化，才认为动画结束。
  */
-function resumeSyncWhenSettled() {
+function resumeSyncWhenSettled(onSettled) {
   var token = ++_syncResumeToken;
   var lastP = previewPanel.scrollTop;
   var lastE = editor.scrollTop;
   var stable = 0;
-  var deadline = Date.now() + 4000;
+  // 兜底放宽到 6 秒：文档里带 Sketchfab iframe / Mermaid 时单帧可能被拖到几百毫秒
+  // （控制台实测 rAF 单帧 658ms），太短的兜底会在动画真正停下之前就恢复同步
+  var deadline = Date.now() + 6000;
 
   function tick() {
     if (token !== _syncResumeToken) return;   // 已有新的跳转接管，本轮作废
@@ -4185,10 +4201,14 @@ function resumeSyncWhenSettled() {
     lastP = p;
     lastE = e;
 
-    if (stable >= 6 || Date.now() > deadline) {
+    if (stable >= 4 || Date.now() > deadline) {
       _syncPaused = false;
-      _syncLockPreviewUntil = 0;
-      _syncLockEditorUntil = 0;
+      // 恢复之后再加 350ms 静默期：动画收尾那几帧的残余 scroll 事件一律忽略。
+      // 少了这一步，这些残余事件仍会把刚跳过去的一侧拽回原地。
+      var quiet = Date.now() + 350;
+      _syncLockPreviewUntil = quiet;
+      _syncLockEditorUntil = quiet;
+      if (onSettled) onSettled();
       return;
     }
     requestAnimationFrame(tick);
@@ -6662,7 +6682,10 @@ function scrollToFootnote(id) {
       behavior: 'smooth' 
     });
     
-    resumeSyncWhenSettled();
+    // 落定后把编辑器也带过去：此前脚注跳转只动预览，开启同步滚动时源码会停在原处
+    resumeSyncWhenSettled(function () {
+      if (_syncScroll) syncPreviewToEditor();
+    });
   } else {
     footnote.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -6691,7 +6714,10 @@ function scrollToFootnoteRef(id) {
       behavior: 'smooth' 
     });
     
-    resumeSyncWhenSettled();
+    // 落定后把编辑器也带过去：此前脚注跳转只动预览，开启同步滚动时源码会停在原处
+    resumeSyncWhenSettled(function () {
+      if (_syncScroll) syncPreviewToEditor();
+    });
   } else {
     ref.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
