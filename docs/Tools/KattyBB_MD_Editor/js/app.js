@@ -2305,13 +2305,13 @@ function scrollEditorToHeading(slug, occ) {
 function jumpToHeading(slug, occ) {
   var target = findHeadingBySlug(slug, occ);
   if (!target) return;
-  var wasSyncScroll = _syncScroll;
-  _syncScroll = false;
+  // 只暂停、不动用户偏好：源码要不要跟着跳，一律看偏好本身
+  _syncPaused = true;
   scrollPreviewToElement(target, 60);
   // 平滑滚动是异步的，期间一直锁住预览侧，别让同步逻辑中途插一脚
   _syncLockPreviewUntil = Date.now() + 1200;
-  if (wasSyncScroll) scrollEditorToHeading(slug, occ);
-  setTimeout(function () { _syncScroll = wasSyncScroll; }, 1000);
+  if (_syncScroll) scrollEditorToHeading(slug, occ);
+  setTimeout(function () { _syncPaused = false; }, 1000);
 }
 
 /**
@@ -4105,7 +4105,19 @@ document.addEventListener('mouseup', function() {
 });
 
 // ===== 同步滚动（任务5）— 基于标题对齐 =====
+/** 用户的同步滚动偏好，只有 toggleSyncScroll() 会改它 */
 var _syncScroll = localStorage.getItem('kattybb-sync-scroll') !== 'false';
+
+/**
+ * 程序化跳转期间的临时暂停标记。
+ *
+ * ⚠ 以前的做法是直接把 _syncScroll 置 false、再「还原成跳转前的值」：一旦跳转发生在
+ *   另一次跳转（或脚注跳转）的暂停期内，取到的「跳转前值」就是 false，还原之后
+ *   同步滚动被**永久关掉**——表现为「点目录只跳预览、源码不动」，且只有刷新页面
+ *   才恢复（刷新才会重新读 localStorage）。
+ *   所以暂停必须用独立标记，绝不能复用偏好开关。
+ */
+var _syncPaused = false;
 
 function toggleSyncScroll() {
   _syncScroll = !_syncScroll;
@@ -4289,7 +4301,7 @@ function _syncScrollTo(el, top) {
 }
 
 editor.addEventListener('scroll', function() {
-  if (!_syncScroll || _isSyncing || _isPreviewUpdating()) return;
+  if (!_syncScroll || _syncPaused || _isSyncing || _isPreviewUpdating()) return;
   if (Date.now() < _syncLockEditorUntil) return;   // 这次滚动是我们自己写的，别再同步回去
   _isSyncing = true;
   syncEditorToPreview();
@@ -4297,7 +4309,7 @@ editor.addEventListener('scroll', function() {
 });
 
 previewPanel.addEventListener('scroll', function() {
-  if (!_syncScroll || _isSyncing || _isPreviewUpdating()) return;
+  if (!_syncScroll || _syncPaused || _isSyncing || _isPreviewUpdating()) return;
   if (Date.now() < _syncLockPreviewUntil) return;
   _isSyncing = true;
   syncPreviewToEditor();
@@ -6566,8 +6578,7 @@ function scrollToFootnote(id) {
     var panelRect = previewPanel.getBoundingClientRect();
     var scrollTarget = previewPanel.scrollTop + (footnoteRect.top - panelRect.top) - 80;
     
-    var wasSyncScroll = _syncScroll;
-    _syncScroll = false;
+    _syncPaused = true;
     
     previewPanel.scrollTo({ 
       top: Math.max(0, scrollTarget), 
@@ -6575,7 +6586,7 @@ function scrollToFootnote(id) {
     });
     
     setTimeout(function() {
-      _syncScroll = wasSyncScroll;
+      _syncPaused = false;
     }, 1000);
   } else {
     footnote.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -6598,8 +6609,7 @@ function scrollToFootnoteRef(id) {
     var panelRect = previewPanel.getBoundingClientRect();
     var scrollTarget = previewPanel.scrollTop + (refRect.top - panelRect.top) - 80;
     
-    var wasSyncScroll = _syncScroll;
-    _syncScroll = false;
+    _syncPaused = true;
     
     previewPanel.scrollTo({ 
       top: Math.max(0, scrollTarget), 
@@ -6607,7 +6617,7 @@ function scrollToFootnoteRef(id) {
     });
     
     setTimeout(function() {
-      _syncScroll = wasSyncScroll;
+      _syncPaused = false;
     }, 1000);
   } else {
     ref.scrollIntoView({ behavior: 'smooth', block: 'center' });
