@@ -1641,8 +1641,14 @@ if (savedContent) {
     window._openedFileName = savedFileName.replace(/\.(md|markdown|txt|text)$/i, '');
   }
 }
-updatePreviewNow();
-initFootnoteInteraction();
+// 初始化渲染必须容错：此处一旦抛异常，后面的输入监听、远程文档引导、笔记模式、
+// 工具栏与 i18n 初始化都不会执行，页面看起来「预览永久空白且输入无反应」。
+try {
+  updatePreviewNow();
+  initFootnoteInteraction();
+} catch (err) {
+  console.error('[KattyBB] 初始化预览渲染失败：', err);
+}
 
 // ===== 远程文档引导（?file= / ?url= + &ro=1）=====
 // 必须放在存档恢复之后，否则远程内容会被上面的 localStorage 恢复覆盖。
@@ -4493,21 +4499,23 @@ function remoteBaseOf(u) {
 }
 
 /**
- * iframe 属性白名单：只保留嵌入所需的属性，其余（尤其 on*）一律丢弃。
- * 无值布尔属性单独列出——Sketchfab 等嵌入代码里常见（如 xr-spatial-tracking）。
- */
-var IFRAME_ATTR_ALLOWLIST = ['src', 'width', 'height', 'title', 'frameborder', 'allow',
-  'allowfullscreen', 'loading', 'referrerpolicy', 'sandbox', 'scrolling', 'class',
-  'style', 'name', 'mozallowfullscreen', 'webkitallowfullscreen']
-var IFRAME_BOOL_ATTR_ALLOWLIST = ['xr-spatial-tracking', 'execution-while-out-of-viewport',
-  'execution-while-not-rendered', 'web-share']
-
-/**
  * 对单个 <iframe ...> 开标签做属性白名单过滤（供预览清洗与粘贴链共用）。
  * src 仅允许 https:// 或协议相对 //（统一补成 https:）；
  * 命中 javascript:/data: 或其余来源（含明文 http://）时返回空串，调用方据此丢弃整个 iframe。
+ *
+ * 白名单刻意定义在函数内部（而不是模块级 var）：本函数会在页面初始化早期、
+ * 从 localStorage 恢复内容后立刻被调用（见文件中部的 updatePreviewNow()），
+ * 那一刻文件末尾的模块级 var 初始化还没执行，一旦依赖它就会拿到 undefined 抛 TypeError，
+ * 进而中断整个脚本的初始化——表现为预览永久空白、输入无响应。
  */
 function sanitizeIframeTag(tag) {
+  // 属性白名单：只保留嵌入所需的属性，其余（尤其 on*）一律丢弃
+  var IFRAME_ATTR_ALLOWLIST = ['src', 'width', 'height', 'title', 'frameborder', 'allow',
+    'allowfullscreen', 'loading', 'referrerpolicy', 'sandbox', 'scrolling', 'class',
+    'style', 'name', 'mozallowfullscreen', 'webkitallowfullscreen']
+  // 无值布尔属性单独列出——Sketchfab 等嵌入代码里常见（如 xr-spatial-tracking）
+  var IFRAME_BOOL_ATTR_ALLOWLIST = ['xr-spatial-tracking', 'execution-while-out-of-viewport',
+    'execution-while-not-rendered', 'web-share']
   var body = String(tag).replace(/^<\s*iframe\b/i, '').replace(/\/?>\s*$/, '')
   var attrRe = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:\s*=\s*("[^"]*"|'[^']*'|[^\s"'>]+))?/g
   var src = ''
