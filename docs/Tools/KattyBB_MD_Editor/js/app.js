@@ -2210,23 +2210,41 @@ function updateTocFloat() {
 }
 
 /**
+ * 在预览面板内平滑滚动到某个元素。
+ *
+ * 滚动期间必须临时关掉同步滚动：在「编辑 + 预览」模式下，预览一滚就会触发
+ * syncPreviewToEditor 把编辑器拽到映射位置，编辑器随即回调 syncEditorToPreview
+ * 又把预览拉回去——净位移只剩一点点，表现为「点目录没跳转，只往下挪了一截」。
+ * 脚注跳转早就这么规避了，目录跳转漏了这一步。
+ */
+function scrollPreviewToElement(el, offset) {
+  if (!el) return;
+  var previewPanel = document.getElementById('previewPanel');
+  if (!previewPanel) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+  var rect = el.getBoundingClientRect();
+  var panelRect = previewPanel.getBoundingClientRect();
+  var scrollTarget = previewPanel.scrollTop + (rect.top - panelRect.top) - (offset == null ? 60 : offset);
+
+  var wasSyncScroll = _syncScroll;
+  _syncScroll = false;
+  previewPanel.scrollTo({ 
+    top: Math.max(0, scrollTarget), 
+    behavior: 'smooth' 
+  });
+  // 平滑滚动是异步的，等它落定再恢复同步；这段时间里手动滚动不参与同步
+  setTimeout(function () { _syncScroll = wasSyncScroll; }, 1000);
+}
+
+/**
  * 点击目录项跳转到指定标题
  */
 function scrollToHeading(slug) {
   var heading = document.getElementById(slug);
   if (heading) {
-    var previewPanel = document.getElementById('previewPanel');
-    if (previewPanel) {
-      var headingRect = heading.getBoundingClientRect();
-      var panelRect = previewPanel.getBoundingClientRect();
-      var scrollTarget = previewPanel.scrollTop + (headingRect.top - panelRect.top) - 60;
-      previewPanel.scrollTo({ 
-        top: Math.max(0, scrollTarget), 
-        behavior: 'smooth' 
-      });
-    } else {
-      heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    scrollPreviewToElement(heading, 60);
     document.getElementById('tocFloatBtn').classList.remove('open');
   }
 }
@@ -2279,21 +2297,8 @@ function initAnchorClick() {
     
     e.preventDefault();
     var targetId = a.getAttribute('href').substring(1);
-    var targetEl = document.getElementById(targetId);
-    if (targetEl) {
-      var previewPanel = document.getElementById('previewPanel');
-      if (previewPanel) {
-        var targetRect = targetEl.getBoundingClientRect();
-        var panelRect = previewPanel.getBoundingClientRect();
-        var scrollTarget = previewPanel.scrollTop + (targetRect.top - panelRect.top) - 60;
-        previewPanel.scrollTo({ 
-          top: Math.max(0, scrollTarget), 
-          behavior: 'smooth' 
-        });
-      } else {
-        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
+    // 同样要临时关掉同步滚动，否则会被编辑器反向拉回（见 scrollPreviewToElement）
+    scrollPreviewToElement(document.getElementById(targetId), 60);
   });
 }
 
