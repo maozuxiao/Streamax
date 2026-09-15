@@ -2212,10 +2212,8 @@ function updateTocFloat() {
 /**
  * 在预览面板内平滑滚动到某个元素。
  *
- * 滚动期间必须临时关掉同步滚动：在「编辑 + 预览」模式下，预览一滚就会触发
- * syncPreviewToEditor 把编辑器拽到映射位置，编辑器随即回调 syncEditorToPreview
- * 又把预览拉回去——净位移只剩一点点，表现为「点目录没跳转，只往下挪了一截」。
- * 脚注跳转早就这么规避了，目录跳转漏了这一步。
+ * 只管滚动本身，不碰同步滚动开关——那件事统一由 jumpToHeading 处理，
+ * 免得「临时关同步」与「把编辑器一起带过去」被拆到两处、顾此失彼。
  */
 function scrollPreviewToElement(el, offset) {
   if (!el) return;
@@ -2227,14 +2225,47 @@ function scrollPreviewToElement(el, offset) {
   var rect = el.getBoundingClientRect();
   var panelRect = previewPanel.getBoundingClientRect();
   var scrollTarget = previewPanel.scrollTop + (rect.top - panelRect.top) - (offset == null ? 60 : offset);
-
-  var wasSyncScroll = _syncScroll;
-  _syncScroll = false;
   previewPanel.scrollTo({ 
     top: Math.max(0, scrollTarget), 
     behavior: 'smooth' 
   });
-  // 平滑滚动是异步的，等它落定再恢复同步；这段时间里手动滚动不参与同步
+}
+
+/**
+ * 把编辑器滚到与 slug 对应的标题行。
+ * 编辑区与预览区的标题按同一顺序一一对应，按下标取值即可。
+ */
+function scrollEditorToHeading(slug) {
+  var pHeadings = getPreviewHeadings();
+  var eHeadings = getEditorHeadings();
+  var idx = -1;
+  for (var i = 0; i < pHeadings.length; i++) {
+    if (pHeadings[i].id === slug) { idx = i; break; }
+  }
+  if (idx < 0 || !eHeadings[idx]) return;
+  var lineHeight = parseFloat(getComputedStyle(editor).lineHeight) || 24;
+  // 留一点余量，别把标题顶在最上沿
+  var top = eHeadings[idx].line * lineHeight - 40;
+  var max = editor.scrollHeight - editor.clientHeight;
+  editor.scrollTop = Math.max(0, Math.min(top, max));
+}
+
+/**
+ * 目录项 / 预览区锚点跳转：预览与编辑器一起跳。
+ *
+ * 期间临时关掉同步滚动（否则会被编辑器反向拉回，见 scrollPreviewToElement 的说明），
+ * 但关闭期间编辑器就不会跟着动了——所以这里要手动把它带到对应标题行，
+ * 免得开启同步滚动的用户看到「预览跳了、源码还停在原处」。
+ */
+function jumpToHeading(slug) {
+  var target = document.getElementById(slug);
+  if (!target) return;
+  var wasSyncScroll = _syncScroll;
+  _syncScroll = false;
+  scrollPreviewToElement(target, 60);
+  // 平滑滚动是异步的，期间一直锁住预览侧，别让同步逻辑中途插一脚
+  _syncLockPreviewUntil = Date.now() + 1200;
+  if (wasSyncScroll) scrollEditorToHeading(slug);
   setTimeout(function () { _syncScroll = wasSyncScroll; }, 1000);
 }
 
@@ -2244,7 +2275,7 @@ function scrollPreviewToElement(el, offset) {
 function scrollToHeading(slug) {
   var heading = document.getElementById(slug);
   if (heading) {
-    scrollPreviewToElement(heading, 60);
+    jumpToHeading(slug);
     document.getElementById('tocFloatBtn').classList.remove('open');
   }
 }
@@ -2296,9 +2327,8 @@ function initAnchorClick() {
     }
     
     e.preventDefault();
-    var targetId = a.getAttribute('href').substring(1);
-    // 同样要临时关掉同步滚动，否则会被编辑器反向拉回（见 scrollPreviewToElement）
-    scrollPreviewToElement(document.getElementById(targetId), 60);
+    // 与目录跳转走同一条路径：预览 + 编辑器一起跳，且期间关掉同步滚动
+    jumpToHeading(a.getAttribute('href').substring(1));
   });
 }
 
@@ -4105,7 +4135,7 @@ function syncEditorToPreview() {
     var maxEditor = editor.scrollHeight - editor.clientHeight;
     var ratio = maxEditor > 0 ? editor.scrollTop / maxEditor : 0;
     var maxPreview = previewPanel.scrollHeight - previewPanel.clientHeight;
-    previewPanel.scrollTop = ratio * maxPreview;
+    _syncScrollTo(previewPanel, ratio * maxPreview);
     return;
   }
 
@@ -4124,7 +4154,7 @@ function syncEditorToPreview() {
     var firstELine = eHeadings[0].line;
     var firstPTop = pHeadings.length > 0 ? pHeadings[0].top : 0;
     var ratio = firstELine > 0 ? currentLine / firstELine : 0;
-    previewPanel.scrollTop = ratio * firstPTop;
+    _syncScrollTo(previewPanel, ratio * firstPTop);
     return;
   }
 
@@ -4136,7 +4166,7 @@ function syncEditorToPreview() {
 
   var eRatio = (eEnd > eStart) ? (currentLine - eStart) / (eEnd - eStart) : 0;
   eRatio = Math.max(0, Math.min(1, eRatio));
-  previewPanel.scrollTop = pStart + eRatio * (pEnd - pStart);
+  _syncScrollTo(previewPanel, pStart + eRatio * (pEnd - pStart));
 }
 
 /**
@@ -4150,7 +4180,7 @@ function syncPreviewToEditor() {
     var maxPreview = previewPanel.scrollHeight - previewPanel.clientHeight;
     var ratio = maxPreview > 0 ? previewPanel.scrollTop / maxPreview : 0;
     var maxEditor = editor.scrollHeight - editor.clientHeight;
-    editor.scrollTop = ratio * maxEditor;
+    _syncScrollTo(editor, ratio * maxEditor);
     return;
   }
 
@@ -4169,7 +4199,7 @@ function syncPreviewToEditor() {
     var firstELine = eHeadings[0].line;
     var ratio = firstPTop > 0 ? currentScroll / firstPTop : 0;
     var lineHeight = parseFloat(getComputedStyle(editor).lineHeight) || 24;
-    editor.scrollTop = ratio * firstELine * lineHeight;
+    _syncScrollTo(editor, ratio * firstELine * lineHeight);
     return;
   }
 
@@ -4183,13 +4213,37 @@ function syncPreviewToEditor() {
   pRatio = Math.max(0, Math.min(1, pRatio));
   var targetLine = eStartLine + pRatio * (eEndLine - eStartLine);
   var lineHeight = parseFloat(getComputedStyle(editor).lineHeight) || 24;
-  editor.scrollTop = targetLine * lineHeight;
+  _syncScrollTo(editor, targetLine * lineHeight);
 }
 
 // 同步滚动监听
 var _isSyncing = false;
+
+/**
+ * 程序化写入某一侧滚动位置后，短暂屏蔽「该侧自己」的 scroll 事件。
+ *
+ * 为什么需要：scroll 事件是异步派发的，而 _isSyncing 只靠 requestAnimationFrame 复位，
+ * 时序上并不保证能盖住回灌的那一次——我们把对侧滚过去，对侧立刻回调又把这一侧拽回来。
+ * 两个方向的映射（按行 ↔ 按标题区间）本来就不互逆，来回换算必然产生偏差；
+ * 滚到结尾时尤其明显：目标值越界被浏览器夹紧，偏差被放大成持续抖动的来回拉扯。
+ */
+var _syncLockEditorUntil = 0;
+var _syncLockPreviewUntil = 0;
+
+function _syncScrollTo(el, top) {
+  var max = el.scrollHeight - el.clientHeight;
+  if (max < 0) max = 0;
+  var v = Math.max(0, Math.min(top, max));      // 夹紧到合法区间，别靠浏览器被动夹紧
+  if (Math.abs(el.scrollTop - v) < 1) return;   // 亚像素差异直接忽略，避免放大成抖动
+  el.scrollTop = v;
+  var until = Date.now() + 150;
+  if (el === previewPanel) _syncLockPreviewUntil = until;
+  else _syncLockEditorUntil = until;
+}
+
 editor.addEventListener('scroll', function() {
   if (!_syncScroll || _isSyncing || _isPreviewUpdating()) return;
+  if (Date.now() < _syncLockEditorUntil) return;   // 这次滚动是我们自己写的，别再同步回去
   _isSyncing = true;
   syncEditorToPreview();
   requestAnimationFrame(function() { _isSyncing = false; });
@@ -4197,6 +4251,7 @@ editor.addEventListener('scroll', function() {
 
 previewPanel.addEventListener('scroll', function() {
   if (!_syncScroll || _isSyncing || _isPreviewUpdating()) return;
+  if (Date.now() < _syncLockPreviewUntil) return;
   _isSyncing = true;
   syncPreviewToEditor();
   requestAnimationFrame(function() { _isSyncing = false; });

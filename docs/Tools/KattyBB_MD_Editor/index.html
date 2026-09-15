@@ -1949,12 +1949,17 @@ body.ai-panel-open .toc-float-btn { right: 360px; }
 .ai-think-head:hover { color: var(--kbai-accent); }
 .ai-think-body {
   display: none; max-height: 190px; overflow-y: auto;
-  padding: 7px 9px; border-radius: 6px;
-  border-left: 2px dashed var(--kbai-border); background: var(--kbai-bg-soft);
+  padding: 7px 9px; border-radius: 6px; background: var(--kbai-bg-soft);
   font-size: 12px; line-height: 1.6; color: var(--kbai-muted);
-  white-space: pre-wrap; word-break: break-word;
 }
 .ai-think.open .ai-think-body { display: block; }
+/* 思考过程按空行切段：段内保留换行（便于显示列表、短句） */
+.ai-think-seg {
+  padding: 4px 0 4px 8px; margin-bottom: 6px;
+  border-left: 2px solid var(--kbai-border);
+  white-space: pre-wrap; word-break: break-word;
+}
+.ai-think-seg:last-child { margin-bottom: 0; }
 @keyframes ai-caret { 50% { opacity: 0; } }
 
 .ai-empty { margin: auto; text-align: center; color: var(--kbai-muted); font-size: 12px; line-height: 1.8; padding: 20px; }

@@ -545,6 +545,33 @@
     return { wrap: wrap, head: head, body: body }
   }
 
+  /**
+   * 按空行把思考内容切成段落渲染（CodeBuddy / WorkBuddy 那种一段段的效果）。
+   *
+   * 网关吐出来的思考文本本身是有语义分段的（如「原句分析 / 目标 / 版本1…」），
+   * 整段糊在一起很难读。这里按空行切块，流式过程中做增量更新：
+   * 只在段落数变化时增删节点，其余只改最后一个节点的文本，避免每个片段都重建整块 DOM。
+   */
+  function renderThinkSegments(box, text) {
+    var raw = String(text || '').split(/\n{2,}/)
+    var segs = []
+    for (var i = 0; i < raw.length; i++) {
+      var s = raw[i].replace(/^\n+|\n+$/g, '')
+      if (s) segs.push(s)
+    }
+    while (box.childNodes.length > segs.length) box.removeChild(box.lastChild)
+    for (var j = 0; j < segs.length; j++) {
+      var el = box.childNodes[j]
+      if (!el) {
+        el = document.createElement('div')
+        el.className = 'ai-think-seg'
+        box.appendChild(el)
+      }
+      if (el.textContent !== segs[j]) el.textContent = segs[j]
+    }
+    return segs.length
+  }
+
   function syncComposer() {
     var send = $('aiSendBtn')
     if (!send) return
@@ -656,8 +683,8 @@
       // 推理模型的思考片段：实时写进思考块。它不进答案，只用于呈现进度。
       onReasoning: function (chunk, full) {
         thinkChars = full.length
+        renderThinkSegments(think.body, full)
         think.head.textContent = fmt(t('thinkingChars'), { n: thinkChars })
-        think.body.textContent = full
         var st = $('aiFloatStatusText')
         if (st && state.busy) st.textContent = fmt(t('thinkingChars'), { n: thinkChars })
         if (isNearBottom()) scrollBottom()
