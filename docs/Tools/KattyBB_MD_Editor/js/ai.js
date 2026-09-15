@@ -132,10 +132,12 @@
       directTitle: '直连设置',
       directHint: '直连只对开放了 CORS 的供应商有效（如 OpenRouter）。Key 会明文保存在本浏览器的 localStorage 中。',
       directSave: '保存直连设置',
-      directSaved: '已保存直连设置',
+      directSaved: '已保存直连设置（仅在未检测到扩展时生效）',
       directBase: 'API 地址',
       directKey: 'API Key',
       directModel: '模型',
+      directFromExt: '以上地址与模型来自扩展当前供应商「{provider}」；Key 由扩展保管，页面不读取。',
+      directKeyKeptByExt: '由扩展保管，页面不读取',
       promptsTitle: '自定义指令',
       promptAdd: '＋ 新增指令',
       promptName: '指令名称',
@@ -188,10 +190,12 @@
       directTitle: 'Direct connection',
       directHint: 'Direct calls only work with CORS-enabled providers (e.g. OpenRouter). The key is stored in plain text in this browser\'s localStorage.',
       directSave: 'Save direct settings',
-      directSaved: 'Direct settings saved',
+      directSaved: 'Direct settings saved (only used when no extension is detected)',
       directBase: 'API base URL',
       directKey: 'API Key',
       directModel: 'Model',
+      directFromExt: 'The URL and model above come from the extension\'s current provider "{provider}"; the key stays in the extension and is never exposed to the page.',
+      directKeyKeptByExt: 'Kept by the extension, not readable by the page',
       promptsTitle: 'Custom instructions',
       promptAdd: '＋ Add instruction',
       promptName: 'Name',
@@ -1003,14 +1007,33 @@
     nameI.focus()
   }
 
+  /**
+   * 回填「直连设置」。
+   *
+   * 扩展通道下用扩展当前供应商的地址与模型回填，让设置里看到的就是真正在用的那条连接，
+   * 不用再手抄一遍；API Key 按扩展的安全边界不回传页面，留空并换成说明性占位文案。
+   * 没有扩展（或扩展尚未探测到）时仍用本页面的直连存档，行为与改动前一致。
+   */
   function fillDirectForm() {
     var cfg = (global.KattyAI && global.KattyAI.getDirectConfig) ? global.KattyAI.getDirectConfig() : null
+    var info = state.probeInfo
+    var fromExt = !!(info && info.mode === 'extension' && info.baseUrl)
+
     var base = $('aiDirectBase')
     var key = $('aiDirectKey')
     var model = $('aiDirectModel')
-    if (base) base.value = cfg ? cfg.baseUrl : ''
-    if (key) key.value = cfg ? cfg.apiKey : ''
-    if (model) model.value = cfg ? cfg.model : ''
+    var hint = $('aiDirectFromExt')
+
+    if (base) base.value = fromExt ? info.baseUrl : (cfg ? cfg.baseUrl : '')
+    if (model) model.value = fromExt ? (info.model || (cfg ? cfg.model : '')) : (cfg ? cfg.model : '')
+    if (key) {
+      key.value = fromExt ? '' : (cfg ? cfg.apiKey : '')
+      key.placeholder = fromExt ? t('directKeyKeptByExt') : 'sk-...'
+    }
+    if (hint) {
+      hint.hidden = !fromExt
+      if (fromExt) hint.textContent = fmt(t('directFromExt'), { provider: info.providerName || '—' })
+    }
   }
 
   function openSettings() {
@@ -1073,6 +1096,9 @@
     renderChips()
     syncCtx()
     refreshChannel()
+    // 设置弹层开着时切语言：来源提示与 Key 占位文案也要跟着换，
+    // 否则会停在上一次 fillDirectForm 用的语言上
+    fillDirectForm()
   }
 
   // ================================================================ 初始化
