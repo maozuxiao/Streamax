@@ -2198,7 +2198,7 @@ function updateTocFloat() {
   var tocHtml = '<ul>';
   // 重名标题必须带上「第几次出现」：光靠 slug 只能定位到第一个同名标题
   var slugSeen = {};
-  headings.forEach(function(h) {
+  headings.forEach(function(h, index) {
     var level = h.match(/^#+/)[0].length;
     var title = h.replace(/^#+\s+/, '').replace(/[#]+$/, '').trim();
     var slug = slugifyTitle(title);
@@ -2206,7 +2206,9 @@ function updateTocFloat() {
     slugSeen[slug] = occ + 1;
     var inner = neutralizeTocLinks(renderTocTitle(title));
     var linkTitle = textFromHtml(inner).replace(/"/g, '&quot;');
-    tocHtml += '<li class="toc-level-' + level + '"><a href="#' + slug + '" title="' + linkTitle + '" onclick="scrollToHeading(\'' + slug + '\', ' + occ + '); return false;">' + inner + '</a></li>';
+    // index 是目录项在文档标题里的序号，与 getEditorHeadings() 一一对应，
+    // 是源码侧定位最可靠的一条路径（文本/ID 匹配都可能因渲染差异失配）
+    tocHtml += '<li class="toc-level-' + level + '"><a href="#' + slug + '" title="' + linkTitle + '" onclick="scrollToHeading(\'' + slug + '\', ' + occ + ', ' + index + '); return false;">' + inner + '</a></li>';
   });
   tocHtml += '</ul>';
 
@@ -2252,26 +2254,65 @@ function findHeadingBySlug(slug, occ) {
   return document.getElementById(slug);
 }
 
+// 编辑器侧滚动动画的 rAF 句柄
+var _editorScrollRaf = null;
+
+/**
+ * 平滑滚动编辑区到指定位置。
+ *
+ * 不用原生 behavior:'smooth'：连续快速点击时，新的 smooth 请求可能与正在跑的上一次
+ * 动画互相干扰（被吞掉或提前终止），表现为「源码窗口干脆不动」。自己用 rAF 驱动，
+ * 后一次请求必定取消并接管前一次，行为完全可控。
+ */
+function animateEditorScroll(top) {
+  if (_editorScrollRaf) cancelAnimationFrame(_editorScrollRaf);
+  var start = editor.scrollTop;
+  var delta = top - start;
+  if (Math.abs(delta) < 1) return;
+
+  var dur = Math.min(420, Math.max(160, Math.abs(delta) * 0.5));
+  var t0 = performance.now();
+
+  function step(now) {
+    var p = Math.min(1, (now - t0) / dur);
+    var eased = 1 - Math.pow(1 - p, 3);        // easeOutCubic
+    editor.scrollTop = start + delta * eased;
+    _syncLockEditorUntil = Date.now() + 200;   // 动画期间持续压住编辑器侧的回灌
+    if (p < 1) _editorScrollRaf = requestAnimationFrame(step);
+    else _editorScrollRaf = null;
+  }
+  _editorScrollRaf = requestAnimationFrame(step);
+}
+
 /**
  * 把编辑器平滑滚到与 slug 对应的标题行。
+ * @param {string} slug
+ * @param {number} [occ] 该 slug 是第几次出现（重名标题用）
+ * @param {number} [tocIndex] 目录项在文档头部里的序号，与编辑区标题一一对应
  */
-function scrollEditorToHeading(slug, occ) {
+function scrollEditorToHeading(slug, occ, tocIndex) {
   var eHeadings = getEditorHeadings();
   var want = occ || 0;
-  var seen = 0;
   var idx = -1;
 
-  // 首选：用「编辑区标题文本 → slug」直接匹配。TOC 的 slug 也是同一个 slugifyTitle
-  // 算出来的，这条路径不依赖预览区 DOM，不会因重名标题、预览未渲染完成或
-  // 预览 id 与 TOC slug 的实体/链接处理差异而失配（此前偶发不跳转就出在这里）。
-  for (var i = 0; i < eHeadings.length; i++) {
-    if (slugifyTitle(eHeadings[i].text) === slug) {
-      if (seen === want) { idx = i; break; }
-      seen++;
+  // 首选：目录序号直接对应编辑区标题序号（同一份文档、同一顺序），最可靠
+  if (typeof tocIndex === 'number' && eHeadings[tocIndex] &&
+      slugifyTitle(eHeadings[tocIndex].text) === slug) {
+    idx = tocIndex;
+  }
+
+  // 次选：用「编辑区标题文本 → slug」匹配。slugifyTitle 与 TOC 同源，不依赖预览区 DOM
+  if (idx < 0) {
+    var seen = 0;
+    for (var i = 0; i < eHeadings.length; i++) {
+      if (slugifyTitle(eHeadings[i].text) === slug) {
+        if (seen === want) { idx = i; break; }
+        seen++;
+      }
     }
   }
 
-  // 兜底：按预览区同名标题的下标取值，文本层匹配不上时至少能跳到大致位置
+  // 兜底：按预览区同名标题的下标取值
   if (idx < 0) {
     var pHeadings = getPreviewHeadings();
     var n = 0;
@@ -2288,11 +2329,7 @@ function scrollEditorToHeading(slug, occ) {
   // 留一点余量，别把标题顶在最上沿
   var top = eHeadings[idx].line * lineHeight - 40;
   var max = editor.scrollHeight - editor.clientHeight;
-  top = Math.max(0, Math.min(top, max));
-
-  // 与预览侧一样平滑滚动，避免源码窗口"瞬移"的突兀感
-  editor.scrollTo({ top: top, behavior: 'smooth' });
-  _syncLockEditorUntil = Date.now() + 1200;
+  animateEditorScroll(Math.max(0, Math.min(top, max)));
 }
 
 /**
@@ -2302,7 +2339,7 @@ function scrollEditorToHeading(slug, occ) {
  * 但关闭期间编辑器就不会跟着动了——所以这里要手动把它带到对应标题行，
  * 免得开启同步滚动的用户看到「预览跳了、源码还停在原处」。
  */
-function jumpToHeading(slug, occ) {
+function jumpToHeading(slug, occ, tocIndex) {
   var target = findHeadingBySlug(slug, occ);
   if (!target) return;
   // 只暂停、不动用户偏好：源码要不要跟着跳，一律看偏好本身
@@ -2310,19 +2347,21 @@ function jumpToHeading(slug, occ) {
   scrollPreviewToElement(target, 60);
   // 平滑滚动是异步的，期间一直锁住预览侧，别让同步逻辑中途插一脚
   _syncLockPreviewUntil = Date.now() + 1200;
-  if (_syncScroll) scrollEditorToHeading(slug, occ);
-  setTimeout(function () { _syncPaused = false; }, 1000);
+  if (_syncScroll) scrollEditorToHeading(slug, occ, tocIndex);
+  // 不能用固定 1 秒定时器恢复：动画可能更久，提前恢复会把刚跳过去的一侧拽回来
+  resumeSyncWhenSettled();
 }
 
 /**
  * 点击目录项跳转到指定标题
  * @param {string} slug 标题 slug
  * @param {number} [occ] 该 slug 在文档中是第几次出现（重名标题用）
+ * @param {number} [tocIndex] 目录项在文档标题里的序号
  */
-function scrollToHeading(slug, occ) {
+function scrollToHeading(slug, occ, tocIndex) {
   var heading = findHeadingBySlug(slug, occ);
   if (heading) {
-    jumpToHeading(slug, occ);
+    jumpToHeading(slug, occ, tocIndex);
     document.getElementById('tocFloatBtn').classList.remove('open');
   }
 }
@@ -4118,6 +4157,44 @@ var _syncScroll = localStorage.getItem('kattybb-sync-scroll') !== 'false';
  *   所以暂停必须用独立标记，绝不能复用偏好开关。
  */
 var _syncPaused = false;
+
+/** 恢复同步的看门狗令牌：新一次跳转会让上一轮看门狗作废 */
+var _syncResumeToken = 0;
+
+/**
+ * 等预览与编辑器都真正停下来之后，再恢复同步滚动。
+ *
+ * ⚠ 不能用固定 1 秒定时器：平滑滚动是异步的，长文档里动画可能比 1 秒更久。
+ *   提前恢复会让对侧的回灌把刚跳过去的一侧又拽回来——表现为「预览跳了、源码不动」，
+ *   而且点击越快越容易撞上（后一次跳转把计时器重置，两次动画叠在一起更晚才停）。
+ *   这里改为：连续 6 帧（约 100ms）两侧 scrollTop 都不再变化，才认为动画结束。
+ */
+function resumeSyncWhenSettled() {
+  var token = ++_syncResumeToken;
+  var lastP = previewPanel.scrollTop;
+  var lastE = editor.scrollTop;
+  var stable = 0;
+  var deadline = Date.now() + 4000;
+
+  function tick() {
+    if (token !== _syncResumeToken) return;   // 已有新的跳转接管，本轮作废
+    var p = previewPanel.scrollTop;
+    var e = editor.scrollTop;
+    if (p === lastP && e === lastE) stable++;
+    else stable = 0;
+    lastP = p;
+    lastE = e;
+
+    if (stable >= 6 || Date.now() > deadline) {
+      _syncPaused = false;
+      _syncLockPreviewUntil = 0;
+      _syncLockEditorUntil = 0;
+      return;
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
 
 function toggleSyncScroll() {
   _syncScroll = !_syncScroll;
@@ -6585,9 +6662,7 @@ function scrollToFootnote(id) {
       behavior: 'smooth' 
     });
     
-    setTimeout(function() {
-      _syncPaused = false;
-    }, 1000);
+    resumeSyncWhenSettled();
   } else {
     footnote.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -6616,9 +6691,7 @@ function scrollToFootnoteRef(id) {
       behavior: 'smooth' 
     });
     
-    setTimeout(function() {
-      _syncPaused = false;
-    }, 1000);
+    resumeSyncWhenSettled();
   } else {
     ref.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
