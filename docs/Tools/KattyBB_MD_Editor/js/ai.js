@@ -92,6 +92,32 @@
     ].join('\n')
   }
 
+  /**
+   * 自由提问（问答）模式的系统提示：与「改写」类指令不同，这里不要求「只输出 Markdown 正文」，
+   * 而是允许自然语言回答（可含 Markdown）。既支持「这段讲什么」之类的问题，也支持
+   * 「把它改得更正式」之类的改写要求——后者直接给出改写后的内容即可。
+   */
+  var SYSTEM_PROMPT_QA = {
+    zh: [
+      '你是 Markdown 文档编辑助手。用户会提供一段文档内容（可能是选中片段，也可能是全文），然后据此提问或提出修改要求。',
+      '',
+      '要求：',
+      '1. 用与文档一致的语言回答。',
+      '2. 若用户只是提问，用清晰的自然语言回答，可使用 Markdown 排版（标题、列表、代码块等）。',
+      '3. 若用户要求改写 / 润色 / 扩写某段，直接给出改写后的内容，保持原有 Markdown 结构与代码块原样；不要复述文档全文。',
+      '4. 不要编造文档中不存在的内容；拿不准的地方请明确说明。'
+    ].join('\n'),
+    en: [
+      'You are a Markdown editing assistant. The user gives you a passage (a selection or the whole document) and then asks a question or requests an edit.',
+      '',
+      'Requirements:',
+      '1. Reply in the same language as the document.',
+      '2. If the user only asks a question, answer in clear prose and you may use Markdown (headings, lists, code fences).',
+      '3. If the user asks to rewrite / polish / expand, output the revised content directly, preserving Markdown structure and code blocks; do not echo the whole document.',
+      '4. Do not invent content not present in the document; say so when unsure.'
+    ].join('\n')
+  }
+
   // ================================================================ 文案
 
   var I18N = {
@@ -150,10 +176,20 @@
       delete: '删除',
       needNamePrompt: '名称与提示词都不能为空',
       clearConfirm: '清空当前会话？',
+      cleared: '已清空会话',
       settings: '设置',
       clearChat: '清空会话',
       close: '收起',
-      modelTitle: '当前模型（可在扩展设置中切换）'
+      modelTitle: '当前模型（可在扩展设置中切换）',
+      ctxDoc: '全文 {n} 字 · 未选中将以全文提问',
+      empty: '选中一段文字让 AI 改写，或直接就全文提问',
+      copyChat: '复制对话（Markdown）',
+      copyMsg: '复制为 Markdown',
+      copied: '已复制为 Markdown',
+      noDoc: '编辑器内容为空，无法基于全文提问',
+      imgAdded: '已添加 {n} 张图片',
+      imgRemoved: '已移除图片',
+      pasteImgHint: '可粘贴 / 拖入图片一起提问（部分模型支持读图）'
     },
     en: {
       ai: 'AI',
@@ -210,10 +246,20 @@
       delete: 'Delete',
       needNamePrompt: 'Name and prompt cannot be empty',
       clearConfirm: 'Clear this conversation?',
+      cleared: 'Conversation cleared',
       settings: 'Settings',
       clearChat: 'Clear conversation',
       close: 'Collapse',
-      modelTitle: 'Current model (change in extension options)'
+      modelTitle: 'Current model (change in extension options)',
+      ctxDoc: 'Full document {n} chars · no selection, will ask about the whole doc',
+      empty: 'Select text to rewrite it, or just ask about the whole document',
+      copyChat: 'Copy conversation (Markdown)',
+      copyMsg: 'Copy as Markdown',
+      copied: 'Copied as Markdown',
+      noDoc: 'The editor is empty, cannot ask about the document',
+      imgAdded: 'Added {n} image(s)',
+      imgRemoved: 'Image removed',
+      pasteImgHint: 'Paste or drop images to ask together (some models can read images)'
     }
   }
 
@@ -232,13 +278,15 @@
 
   var state = {
     sel: null,          // 当前选区 { start, end, text }
+    scopeKind: null,    // 'sel' | 'doc'：本轮会话作用范围（选中片段 / 全文）
     baseSel: null,      // 本轮会话要替换的目标选区，生成期间不随用户改选而变
     history: [],        // 多轮上下文（不含 system）
     busy: false,
     controller: null,
     panelOpen: false,
     probeInfo: null,
-    model: ''
+    model: '',
+    attachments: []     // 待发送的图片附件：{ id, url, name }
   }
 
   var deletedBuiltins = []
@@ -460,13 +508,18 @@
     var body = $('aiCtxBody')
     if (!card) return
     var s = getSel()
-    if (s) state.sel = s
-    if (state.sel && state.sel.text) {
+    if (s && s.text.trim()) {
+      state.sel = s
+      state.scopeKind = 'sel'
       if (label) label.textContent = fmt(t('ctxSel'), { n: state.sel.text.length })
       if (body) body.textContent = state.sel.text.length > 300 ? state.sel.text.slice(0, 300) + '…' : state.sel.text
     } else {
-      if (label) label.textContent = t('ctxNone')
-      if (body) body.textContent = ''
+      var ed = getEditor()
+      var full = ed ? ed.value : ''
+      state.sel = null
+      state.scopeKind = 'doc'
+      if (label) label.textContent = fmt(t('ctxDoc'), { n: full.length })
+      if (body) body.textContent = full.length ? (full.length > 300 ? full.slice(0, 300) + '…' : full) : ''
     }
   }
 
@@ -486,7 +539,48 @@
     return box.scrollHeight - box.scrollTop - box.clientHeight < 60
   }
 
-  function appendUserMsg(text) {
+  /** 在消息气泡里渲染一组图片缩略图（悬停查看大图，参照 CodeBuddy）。 */
+  function buildImageGallery(attachments) {
+    if (!attachments || !attachments.length) return null
+    var gal = document.createElement('div')
+    gal.className = 'ai-attach-gal'
+    for (var i = 0; i < attachments.length; i++) {
+      gal.appendChild(makeThumb(attachments[i].url))
+    }
+    return gal
+  }
+
+  /** 单张缩略图：小图 + 悬停放大预览。 */
+  function makeThumb(url) {
+    var wrap = document.createElement('div')
+    wrap.className = 'ai-att'
+    var thumb = document.createElement('img')
+    thumb.className = 'thumb'
+    thumb.src = url
+    thumb.alt = ''
+    thumb.loading = 'lazy'
+    var big = document.createElement('img')
+    big.className = 'big'
+    big.src = url
+    big.alt = ''
+    wrap.appendChild(thumb)
+    wrap.appendChild(big)
+    return wrap
+  }
+
+  /** 给消息气泡挂一个「复制为 Markdown」按钮（悬停出现）。 */
+  function appendCopyBtn(wrap, role) {
+    var b = iconBtn(
+      '<rect x="7" y="7" width="9" height="9" rx="1.6" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V5.5A1.5 1.5 0 0 0 11.5 4h-6A1.5 1.5 0 0 0 4 5.5v6A1.5 1.5 0 0 0 5.5 13H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+      t('copyMsg'),
+      function () { copyMsgMarkdown(wrap, role) }
+    )
+    b.className = 'ai-icon-btn ai-copy'
+    b.type = 'button'
+    wrap.appendChild(b)
+  }
+
+  function appendUserMsg(text, attachments) {
     var box = $('aiMessages')
     if (!box) return null
     var empty = $('aiEmpty')
@@ -495,8 +589,16 @@
     wrap.className = 'ai-msg user'
     var bub = document.createElement('div')
     bub.className = 'ai-bubble'
-    bub.textContent = text
+    if (text) {
+      var tx = document.createElement('div')
+      tx.className = 'ai-bubble-text'
+      tx.textContent = text
+      bub.appendChild(tx)
+    }
+    var gal = buildImageGallery(attachments)
+    if (gal) bub.appendChild(gal)
     wrap.appendChild(bub)
+    appendCopyBtn(wrap, 'user')
     box.appendChild(wrap)
     scrollBottom()
     return wrap
@@ -517,6 +619,7 @@
     bub.appendChild(textEl)
     bub.appendChild(caret)
     wrap.appendChild(bub)
+    appendCopyBtn(wrap, 'ai')
     box.appendChild(wrap)
     scrollBottom()
     return { wrap: wrap, bubble: bub, text: textEl, caret: caret }
@@ -591,6 +694,183 @@
     return SYSTEM_PROMPT[curLang()] || SYSTEM_PROMPT.zh
   }
 
+  function systemPromptQA() {
+    return SYSTEM_PROMPT_QA[curLang()] || SYSTEM_PROMPT_QA.zh
+  }
+
+  /** 问答模式下把「文档内容 + 问题」拼成一条 user 消息（内容部分）。 */
+  function qaContent(question, text) {
+    var sep = curLang() === 'en'
+      ? 'Document content:\n\n---\n\n'
+      : '文档内容：\n\n---\n\n'
+    var tail = curLang() === 'en'
+      ? '\n\n---\n\nQuestion: '
+      : '\n\n---\n\n用户问题：'
+    return sep + text + tail + question
+  }
+
+  /**
+   * 解析本次操作的作用范围：
+   *   - 有选中且非空 → 片段模式，返回真实选区（可用于「应用到文档」）。
+   *   - 无选中       → 全文模式，把整个编辑器内容当作上下文（用于问答 / 改写）。
+   * 全文模式也给出 start/end（0..len），diff 时即整篇替换。
+   */
+  function resolveScope() {
+    var sel = getSel()
+    var ed = getEditor()
+    if (sel && sel.text.trim()) return { kind: 'sel', sel: sel }
+    var full = ed ? ed.value : ''
+    return { kind: 'doc', sel: { start: 0, end: full.length, text: full } }
+  }
+
+  /**
+   * 把文字与图片附件拼成多模态消息。无图片时仍返回纯字符串（保持与旧逻辑一致，
+   * 也避免空数组被当成无效 content）；有图片时返回 OpenAI 兼容的 parts 数组
+   * [{type:'text'},{type:'image_url',image_url:{url}}]，由传输层原样转发给模型。
+   */
+  function buildMultimodalContent(text, attachments) {
+    if (!attachments || !attachments.length) return text
+    var parts = []
+    if (text) parts.push({ type: 'text', text: text })
+    for (var i = 0; i < attachments.length; i++) {
+      parts.push({ type: 'image_url', image_url: { url: attachments[i].url } })
+    }
+    return parts
+  }
+
+  // ================================================================ 附件（粘贴 / 拖拽图片）
+
+  function addAttachment(file) {
+    if (!file || file.type.indexOf('image/') !== 0) return
+    var reader = new FileReader()
+    reader.onload = function () {
+      state.attachments.push({
+        id: 'att_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        url: String(reader.result),
+        name: file.name || 'image'
+      })
+      renderAttachments()
+      toast(fmt(t('imgAdded'), { n: state.attachments.length }))
+    }
+    reader.readAsDataURL(file)
+  }
+
+  function removeAttachment(id) {
+    state.attachments = state.attachments.filter(function (a) { return a.id !== id })
+    renderAttachments()
+  }
+
+  function clearAttachments() {
+    state.attachments = []
+    renderAttachments()
+  }
+
+  function renderAttachments() {
+    var box = $('aiAttach')
+    if (!box) return
+    box.innerHTML = ''
+    if (!state.attachments.length) { box.hidden = true; return }
+    box.hidden = false
+    for (var i = 0; i < state.attachments.length; i++) {
+      (function (att) {
+        var wrap = makeThumb(att.url)
+        var rm = document.createElement('button')
+        rm.type = 'button'
+        rm.className = 'ai-att-rm'
+        rm.textContent = '×'
+        rm.title = t('imgRemoved')
+        rm.addEventListener('click', function (e) {
+          e.stopPropagation()
+          removeAttachment(att.id)
+        })
+        wrap.appendChild(rm)
+        box.appendChild(wrap)
+      })(state.attachments[i])
+    }
+  }
+
+  // ================================================================ 复制到 Markdown
+
+  /** 读取消息流的 DOM，整理成 {role, text, images} 列表。 */
+  function collectTranscript() {
+    var box = $('aiMessages')
+    if (!box) return []
+    var nodes = box.querySelectorAll('.ai-msg')
+    var out = []
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i]
+      var role = n.classList.contains('user') ? 'user' : 'ai'
+      var bub = n.querySelector('.ai-bubble')
+      if (!bub) continue
+      var clone = bub.cloneNode(true)
+      var gal = clone.querySelector('.ai-attach-gal')
+      if (gal) gal.parentNode.removeChild(gal)
+      var caret = clone.querySelector('.ai-caret')
+      if (caret) caret.parentNode.removeChild(caret)
+      var text = (clone.textContent || '').replace(/\s+$/, '')
+      var imgs = bub.querySelectorAll('.ai-att').length
+      out.push({ role: role, text: text, images: imgs })
+    }
+    return out
+  }
+
+  function buildMarkdown(tr, single) {
+    var lines = []
+    for (var i = 0; i < tr.length; i++) {
+      var m = tr[i]
+      if (!single) {
+        lines.push('### ' + (m.role === 'user' ? (curLang() === 'en' ? 'User' : '用户') : (curLang() === 'en' ? 'Assistant' : '助手')))
+        lines.push('')
+      }
+      if (m.text) lines.push(m.text)
+      if (m.images) lines.push((curLang() === 'en' ? '[image ×' : '[图片 ×') + m.images + ']')
+      lines.push('')
+    }
+    return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim() + '\n'
+  }
+
+  /** clipboard 不可用时（file:// 等）的降级方案。 */
+  function copyText(text) {
+    if (global.navigator && navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).catch(function () { return fallbackCopy(text) })
+    }
+    return fallbackCopy(text)
+  }
+  function fallbackCopy(text) {
+    try {
+      var ta = document.createElement('textarea')
+      ta.value = text
+      ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0'
+      document.body.appendChild(ta)
+      ta.select()
+      var ok = document.execCommand('copy')
+      document.body.removeChild(ta)
+      return ok ? Promise.resolve() : Promise.reject()
+    } catch (e) { return Promise.reject() }
+  }
+
+  function copyChatMarkdown() {
+    var tr = collectTranscript()
+    if (!tr.length) { toast(t('empty')); return }
+    copyText(buildMarkdown(tr, false)).then(function () {
+      toast(t('copied'))
+    }).catch(function () { toast(t('copied')) })
+  }
+
+  function copyMsgMarkdown(wrap, role) {
+    var bub = wrap.querySelector('.ai-bubble')
+    if (!bub) return
+    var clone = bub.cloneNode(true)
+    var gal = clone.querySelector('.ai-attach-gal')
+    if (gal) gal.parentNode.removeChild(gal)
+    var caret = clone.querySelector('.ai-caret')
+    if (caret) caret.parentNode.removeChild(caret)
+    var text = (clone.textContent || '').replace(/\s+$/, '')
+    var imgs = bub.querySelectorAll('.ai-att').length
+    var md = buildMarkdown([{ role: role, text: text, images: imgs }], true)
+    copyText(md).then(function () { toast(t('copied')) }).catch(function () { toast(t('copied')) })
+  }
+
   function openDiffFor(sel, newText, retryFn) {
     if (!global.AiDiff) return
     // 只读文档（?file=...&ro=1 载入的远程文档）不允许替换
@@ -612,6 +892,8 @@
   }
 
   function addApplyButton(msg, sel, text, retryFn) {
+    // 异步流中消息气泡可能已被清空（如中途点了清空会话），先行防御，避免报错与「按钮消失」
+    if (!msg || !msg.wrap || !msg.wrap.parentNode) return
     // 只读文档根本不该出现「应用到文档」入口
     var roEd = document.getElementById('editor')
     if (roEd && roEd.readOnly) return
@@ -629,9 +911,9 @@
 
   /**
    * 执行一轮对话。失败或取消时回滚 history，避免污染上下文。
-   * @param {string} content   发给模型的 user 内容
-   * @param {string} display   界面上展示的文字
-   * @param {Object} opts      { autoDiff: boolean }
+   * @param {string|Array} content   发给模型的 user 内容（字符串或含图片的 parts 数组）
+   * @param {string} display         界面上展示的文字
+   * @param {Object} opts            { autoDiff, qa, scope, attachments }
    */
   function runTurn(content, display, opts) {
     opts = opts || {}
@@ -640,14 +922,16 @@
 
     var snapshot = state.history.slice()
     state.history.push({ role: 'user', content: content })
-    appendUserMsg(display)
+    appendUserMsg(display, opts.attachments)
 
-    // 替换目标锁定为发起时的选区（追问场景沿用会话首轮的选区）。
-    // 若改用实时的 state.sel，生成过程中用户一改选，diff 就会比对错位。
-    if (state.sel) state.baseSel = state.sel
-    var runSel = state.baseSel
+    // 替换目标锁定为发起时的作用范围（追问场景沿用会话首轮的范围）。
+    // 若改用实时的选区，生成过程中用户一改选，diff 就会比对错位。
+    var runSel = (opts.scope && opts.scope.sel) ? opts.scope.sel : null
+    state.baseSel = runSel
 
-    var messages = [{ role: 'system', content: systemPrompt() }].concat(state.history)
+    // 自由提问走问答系统提示；内置指令（改写/润色…）走严格的「只输出 Markdown」提示。
+    var sys = opts.qa ? systemPromptQA() : systemPrompt()
+    var messages = [{ role: 'system', content: sys }].concat(state.history)
     var msg = appendAiMsg()
     if (!msg) return
 
@@ -705,18 +989,23 @@
       if (msg.caret) msg.caret.style.display = 'none'
 
       var retry = function () { state.history = snapshot; runTurn(content, display, opts) }
-      if (runSel) addApplyButton(msg, runSel, text, retry)
+      // 改写类（非问答）：只要锁定了替换目标就提供「应用到文档」入口
+      // 问答类：仅当本轮确实基于「选中片段」时才提供，避免把回答误替换整篇文档
+      var canApply = !!runSel && (!opts.qa || (opts.scope && opts.scope.kind === 'sel'))
+      if (canApply) addApplyButton(msg, runSel, text, retry)
       if (opts.autoDiff && runSel) openDiffFor(runSel, text, retry)
     }).catch(function (err) {
       settleThink()
       setBusy(false)
-      state.history = snapshot
       if (msg.caret) msg.caret.style.display = 'none'
       var code = err && err.code
       if (code === 'ABORTED') {
+        // 中止（手动取消 / 清空会话）时不回滚历史：手动取消应保留用户已发出的提问；
+        // 清空会话在 clearChat 里已把 history 置空，这里若回滚快照会把它覆盖回去
         if (msg.wrap && msg.wrap.parentNode && !msg.text.textContent) msg.wrap.parentNode.removeChild(msg.wrap)
         return
       }
+      state.history = snapshot
       if (msg.text) {
         msg.text.textContent = ''
         var em = document.createElement('span')
@@ -729,12 +1018,14 @@
   }
 
   function runPreset(p) {
-    var sel = getSel()
-    if (!sel) { toast(t('needSelection')); return }
-    state.sel = sel
+    var scope = resolveScope()
+    state.scopeKind = scope.kind
+    state.sel = scope.sel
     state.history = []
     syncCtx()
-    runTurn(userContent(p.prompt, sel.text), p.name, { autoDiff: true })
+    openPanel()
+    // 改写预设不自动弹 diff 窗：回复完成后稳定显示「应用到文档…」按钮，由用户主动打开预览
+    runTurn(userContent(p.prompt, scope.sel.text), p.name, { autoDiff: false, scope: scope, qa: false })
   }
 
   function sendFollowUp() {
@@ -744,22 +1035,46 @@
     if (!text || state.busy) return
 
     if (!state.history.length) {
-      var sel = getSel()
-      if (!sel) { toast(t('needSelection')); return }
-      state.sel = sel
+      var scope = resolveScope()
+      // 全文模式且文档为空、又没有附图时，确实无内容可问
+      if (scope.kind === 'doc' && !scope.sel.text && !(state.attachments && state.attachments.length)) {
+        toast(t('noDoc'))
+        return
+      }
+      state.sel = scope.sel
+      state.scopeKind = scope.kind
       syncCtx()
-      runTurn(userContent(text, sel.text), text, { autoDiff: true })
+      var firstContent = buildMultimodalContent(qaContent(text, scope.sel.text), state.attachments)
+      // 问答模式不自动弹全文替换窗：仅展示回答，是否应用到文档由回复后的按钮决定
+      runTurn(firstContent, text, { autoDiff: false, scope: scope, qa: true, attachments: state.attachments.slice() })
     } else {
-      runTurn(text, text, { autoDiff: false })
+      var followContent = buildMultimodalContent(text, state.attachments)
+      runTurn(followContent, text, { autoDiff: false, qa: true, attachments: state.attachments.slice() })
     }
     input.value = ''
     input.style.height = 'auto'
+    clearAttachments()
   }
 
   function clearChat() {
-    if (state.history.length && !global.confirm(t('clearConfirm'))) return
+    // 生成中点击清空：先中止正在进行的请求，再复位 UI，避免残留半截消息
+    if (state.busy) {
+      if (state.controller) state.controller.abort()
+      setBusy(false)
+    }
+    // 直接清空，不再依赖原生 confirm（部分浏览器 / 嵌入环境会拦截 confirm，导致「点了没反应」）
     state.history = []
     state.baseSel = null
+    // 同时清掉「选中上下文」与待发送的图片附件：清空会话不该残留上一次的选区与图片
+    state.sel = null
+    state.scopeKind = null
+    clearAttachments()
+    // 同步清除编辑器中的选区/高亮，让「选中的部分」一并复位（不移动光标位置）
+    var ed = getEditor()
+    if (ed && typeof ed.setSelectionRange === 'function') {
+      var caret = ed.selectionStart || 0
+      ed.setSelectionRange(caret, caret)
+    }
     var box = $('aiMessages')
     if (box) {
       box.innerHTML = ''
@@ -771,6 +1086,8 @@
         '<div id="aiEmptyText">' + t('empty') + '</div>'
       box.appendChild(empty)
     }
+    syncCtx()
+    toast(t('cleared'))
   }
 
   // ================================================================ 快捷指令面板（输入框旁）
@@ -811,17 +1128,12 @@
   }
 
   /**
-   * 选中指令：填入输入框而非直接发送（参照 mc-tool 的 applyPrompt）。
-   * 用户可以在此基础上改字，再自己回车发送——比一键直发更可控。
+   * 选中指令：与浮动指令条行为一致，直接以预设方式执行。
+   * 避免填入输入框后走 QA 追问流程，导致上下文污染 / 首轮范围锁定 / 应用入口丢失。
    */
   function applyPresetToInput(p) {
-    var input = $('aiInput')
-    if (!input) return
-    input.value = p.prompt
     closePromptPop()
-    input.focus()
-    input.style.height = 'auto'
-    input.style.height = Math.min(130, input.scrollHeight) + 'px'
+    runPreset(p)
   }
 
   function openPromptPop() {
@@ -1164,6 +1476,7 @@
     set('aiDirectHint', t('directHint'))
     set('aiPromptAdd', t('promptAdd'))
     set('aiClearBtn', t('clearChat'), 'title')
+    set('aiCopyBtn', t('copyChat'), 'title')
     set('aiSettingsBtn', t('settings'), 'title')
     set('aiPanelCloseBtn', t('close'), 'title')
     set('aiDiffDiscard', t('cancel'))
@@ -1265,6 +1578,8 @@
     })
     var clearBtn = $('aiClearBtn')
     if (clearBtn) clearBtn.addEventListener('click', clearChat)
+    var copyBtn = $('aiCopyBtn')
+    if (copyBtn) copyBtn.addEventListener('click', copyChatMarkdown)
     var settingsBtn = $('aiSettingsBtn')
     if (settingsBtn) settingsBtn.addEventListener('click', openSettings)
     var panelClose = $('aiPanelCloseBtn')
@@ -1290,6 +1605,42 @@
             sendFollowUp()
           }
         }
+      })
+      // 粘贴图片：拦截默认的「把文件名当文本粘进来」，转为附件
+      input.addEventListener('paste', function (e) {
+        var cd = e.clipboardData || (e.originalEvent && e.originalEvent.clipboardData)
+        if (!cd || !cd.items) return
+        var files = []
+        for (var i = 0; i < cd.items.length; i++) {
+          if (cd.items[i].kind === 'file') {
+            var f = cd.items[i].getAsFile()
+            if (f) files.push(f)
+          }
+        }
+        if (files.length) {
+          e.preventDefault()
+          for (var j = 0; j < files.length; j++) addAttachment(files[j])
+        }
+      })
+    }
+
+    // 拖拽图片到输入框也能添加附件（dragover 时高亮提示）
+    var composer = document.querySelector('.ai-composer')
+    if (composer) {
+      composer.addEventListener('dragover', function (e) {
+        if (e.dataTransfer && Array.prototype.some.call(e.dataTransfer.items || [], function (it) { return it.kind === 'file' })) {
+          e.preventDefault()
+          composer.classList.add('drag')
+        }
+      })
+      composer.addEventListener('dragleave', function () { composer.classList.remove('drag') })
+      composer.addEventListener('drop', function (e) {
+        composer.classList.remove('drag')
+        if (!e.dataTransfer || !e.dataTransfer.files) return
+        var has = Array.prototype.some.call(e.dataTransfer.files, function (f) { return f.type.indexOf('image/') === 0 })
+        if (!has) return
+        e.preventDefault()
+        for (var i = 0; i < e.dataTransfer.files.length; i++) addAttachment(e.dataTransfer.files[i])
       })
     }
     var sendBtn = $('aiSendBtn')

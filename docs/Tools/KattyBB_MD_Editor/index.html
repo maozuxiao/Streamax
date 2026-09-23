@@ -1829,6 +1829,11 @@ body {
 .ai-btn.ghost { border-color: transparent; background: transparent; color: var(--kbai-muted); }
 .ai-btn.ghost:hover { background: var(--kbai-hover); color: var(--kbai-text); }
 .ai-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.ai-apply {
+  background: var(--kbai-grad); border-color: transparent; color: #fff;
+  box-shadow: 0 2px 8px rgba(79, 124, 247, .3);
+}
+.ai-apply:hover { filter: brightness(1.07); }
 
 /* ---------------------------------------------------------------- 选中浮动指令条 */
 .ai-floatbar {
@@ -1966,7 +1971,43 @@ body.ai-panel-open .toc-float-btn { right: 360px; }
 .ai-empty .ai-mark { width: 30px; height: 30px; border-radius: 9px; margin-bottom: 10px; }
 .ai-empty .ai-mark svg { width: 17px; height: 17px; }
 
-.ai-composer { flex: none; border-top: 1px solid var(--kbai-border); padding: 10px; display: flex; gap: 8px; align-items: flex-end; }
+.ai-composer { flex: none; border-top: 1px solid var(--kbai-border); padding: 10px; display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+.ai-composer.drag { box-shadow: inset 0 0 0 2px var(--kbai-accent); border-radius: 10px; }
+.ai-composer-row { display: flex; gap: 8px; align-items: flex-end; }
+
+/* 粘贴 / 拖拽进来的图片附件：小缩略图 + 悬停放大预览（参照 CodeBuddy） */
+.ai-attach { display: flex; flex-wrap: wrap; gap: 6px; }
+.ai-attach:not([hidden]) { padding-top: 2px; }
+.ai-att { position: relative; width: 52px; height: 52px; flex: none; }
+.ai-att img.thumb {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  border-radius: 7px; border: 1px solid var(--kbai-border); cursor: zoom-in; background: var(--kbai-bg-soft);
+}
+.ai-att img.big {
+  position: absolute; bottom: calc(100% + 6px); left: 0; display: none;
+  width: 240px; max-width: 240px; border-radius: 8px; border: 1px solid var(--kbai-border);
+  background: #fff; box-shadow: 0 10px 26px rgba(0, 0, 0, .28); z-index: 40;
+}
+.ai-att:hover img.big { display: block; }
+.ai-att-rm {
+  position: absolute; top: -6px; right: -6px; width: 18px; height: 18px; padding: 0;
+  border-radius: 50%; border: none; background: rgba(0, 0, 0, .6); color: #fff;
+  font-size: 12px; line-height: 1; cursor: pointer; display: grid; place-items: center;
+}
+.ai-att-rm:hover { background: rgba(0, 0, 0, .82); }
+
+/* 消息气泡里的图片画廊，复用 .ai-att 的缩略图与悬停放大 */
+.ai-attach-gal { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.ai-attach-gal .ai-att { width: 66px; height: 66px; }
+
+/* 消息气泡内的文字段落（与图片画廊分离，便于复制时剥离图片） */
+.ai-bubble-text { white-space: pre-wrap; word-break: break-word; }
+
+/* 单条消息的「复制为 Markdown」按钮：悬停消息时浮现 */
+.ai-msg { position: relative; }
+.ai-copy { position: absolute; top: -8px; right: 0; opacity: 0; pointer-events: none; padding: 3px; }
+.ai-copy svg { width: 14px; height: 14px; }
+.ai-msg:hover .ai-copy { opacity: 1; pointer-events: auto; }
 .ai-input {
   flex: 1; min-height: 34px; max-height: 130px; resize: none;
   padding: 7px 10px; border: 1px solid var(--kbai-border); border-radius: 8px;
@@ -2623,6 +2664,7 @@ body.ai-panel-open .toc-float-btn { right: 360px; }
         </div>
         <div class="ai-panel-head-actions">
           <select class="ai-model-select" id="aiModelSelect" title="模型"></select>
+          <button class="ai-icon-btn" id="aiCopyBtn" type="button" title="复制对话（Markdown）"><svg viewBox="0 0 20 20" fill="none"><rect x="7" y="7" width="9" height="9" rx="1.6" stroke="currentColor" stroke-width="1.5"/><path d="M13 7V5.5A1.5 1.5 0 0 0 11.5 4h-6A1.5 1.5 0 0 0 4 5.5v6A1.5 1.5 0 0 0 5.5 13H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
           <button class="ai-icon-btn" id="aiClearBtn" type="button" title="清空会话"><svg viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4.5A1.5 1.5 0 0 1 9.5 3h1A1.5 1.5 0 0 1 12 4.5V6M6.5 6l.7 9.5A1.5 1.5 0 0 0 8.7 17h2.6a1.5 1.5 0 0 0 1.5-1.5L13.5 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <button class="ai-icon-btn" id="aiSettingsBtn" type="button" title="设置"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
           <button class="ai-icon-btn" id="aiPanelCloseBtn" type="button" title="收起"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
@@ -2645,9 +2687,12 @@ body.ai-panel-open .toc-float-btn { right: 360px; }
       </div>
 
       <div class="ai-composer">
-        <button class="ai-prompt-btn" id="aiPromptBtn" type="button" title="快捷指令"><svg viewBox="0 0 20 20" fill="none"><path d="M11.2 2 4.6 11h3.9L7.8 18l6.9-9.2h-4.2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
-        <textarea class="ai-input" id="aiInput" rows="1" placeholder="追问，例如「再正式一点」"></textarea>
-        <button class="ai-send" id="aiSendBtn" type="button" title="发送"><svg viewBox="0 0 20 20" fill="none"><path d="M10 15.5V4.8M5.6 9.2L10 4.8l4.4 4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="ai-attach" id="aiAttach" hidden></div>
+        <div class="ai-composer-row">
+          <button class="ai-prompt-btn" id="aiPromptBtn" type="button" title="快捷指令"><svg viewBox="0 0 20 20" fill="none"><path d="M11.2 2 4.6 11h3.9L7.8 18l6.9-9.2h-4.2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
+          <textarea class="ai-input" id="aiInput" rows="1" placeholder="追问，例如「再正式一点」"></textarea>
+          <button class="ai-send" id="aiSendBtn" type="button" title="发送"><svg viewBox="0 0 20 20" fill="none"><path d="M10 15.5V4.8M5.6 9.2L10 4.8l4.4 4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
         <div class="ai-prompt-pop" id="aiPromptPop" hidden>
           <div class="ai-prompt-rows" id="aiPromptRows"></div>
           <div class="ai-prompt-pop-foot">
