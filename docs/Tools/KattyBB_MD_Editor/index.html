@@ -1094,10 +1094,26 @@ body.toolbar-collapsed .toolbar-collapse-btn svg { transform: rotate(180deg); }
 .toc-float-content code { font-family: var(--font-mono); font-size: 0.88em; padding: 0.2em 0.45em; border-radius: 7px; background: rgba(var(--accent-rgb), 0.14); color: var(--accent); font-weight: 600; border: 1px solid rgba(var(--accent-rgb), 0.32); }
 
 /* 打印/导出样式 */
+@page { margin: 14mm 12mm; }
 @media print {
   .toolbar, .fmt-toolbar, .statusbar, .editor-panel, .divider { display: none !important; }
   .preview-panel { overflow: visible !important; }
   .markdown-body { border: none !important; box-shadow: none !important; background: white !important; }
+  /* 分页后上下留白：padding 只作用于首个片段，clone 让每页都重复一遍内边距 */
+  #write {
+    -webkit-box-decoration-break: clone !important;
+    box-decoration-break: clone !important;
+  }
+  /* 代码块打印时改为自动换行，避免横向滚动区域被裁掉 */
+  #write pre,
+  #write pre code,
+  #write .md-fences {
+    white-space: pre-wrap !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow: visible !important;
+    max-width: 100% !important;
+  }
 }
 
 /* 表格溢出修复 */
