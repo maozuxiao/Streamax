@@ -153,11 +153,29 @@ body.toolbar-collapsed .toolbar-collapse-btn svg { transform: rotate(180deg); }
   transform: translateY(-4px);
   pointer-events: none;
   transition: all 0.18s ease;
-  /* 主题数量增多（Bloom 8 + Typora 9 + 其他 2）后限制高度并允许滚动，
-     避免下拉开到工具栏下方被窗口裁掉 */
+  /* 主题数量增多（共 19 项）后限制高度并允许滚动，
+     避免下拉开到工具栏下方被窗口裁掉；打开时 JS 还会按窗口剩余高度再收紧（fitThemeDropdown） */
   max-height: min(70vh, 620px);
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* 滚动条常显，明确提示「下面还有内容」，避免用户以为列表到底了 */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-semi) transparent;
+}
+
+.theme-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.theme-dropdown::-webkit-scrollbar-thumb {
+  background: var(--border-semi);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.theme-dropdown::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .theme-selector.open .theme-dropdown {
@@ -173,6 +191,11 @@ body.toolbar-collapsed .toolbar-collapse-btn svg { transform: rotate(180deg); }
   padding: 6px 10px 4px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  /* 分组标题吸顶，滚动列表时始终能看清当前分组 */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface, #f5f2f1);
 }
 
 .theme-option {
@@ -185,6 +208,8 @@ body.toolbar-collapsed .toolbar-collapse-btn svg { transform: rotate(180deg); }
   transition: background 0.15s ease;
   font-size: 13px;
   color: var(--text, #443a3e);
+  /* 主题名不折行：长名（Purple Green Light）折成两行会撑高列表、也让行高参差 */
+  white-space: nowrap;
 }
 
 .theme-option:hover {
@@ -240,6 +265,7 @@ body.toolbar-collapsed .toolbar-collapse-btn svg { transform: rotate(180deg); }
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .theme-mode-btn:hover {
@@ -2269,7 +2295,15 @@ body.ai-panel-open .toc-float-btn { right: 360px; }
         <span class="theme-dot" style="background: #7cb87c;"></span>
         Bloom Verdant
       </div>
-      <div class="theme-group-label" id="themeGroupTypora">Typora 移植系列</div>
+      <div class="theme-group-label" id="themeGroupOther">其他主题</div>
+      <div class="theme-option" data-theme="animal-island" onclick="selectTheme('animal-island')">
+        <span class="theme-dot" style="background: #e6a23c;"></span>
+        Animal Island
+      </div>
+      <div class="theme-option" data-theme="everforest" onclick="selectTheme('everforest')">
+        <span class="theme-dot" style="background: #8da101;"></span>
+        Everforest
+      </div>
       <div class="theme-option" data-theme="swiss" onclick="selectTheme('swiss')">
         <span class="theme-dot" style="background: #80372b;"></span>
         Swiss
@@ -2305,15 +2339,6 @@ body.ai-panel-open .toc-float-btn { right: 360px; }
       <div class="theme-option" data-theme="purple-cesno" onclick="selectTheme('purple-cesno')">
         <span class="theme-dot" style="background: #bc64a4;"></span>
         Purple Cesno
-      </div>
-      <div class="theme-group-label" id="themeGroupOther">其他主题</div>
-      <div class="theme-option" data-theme="animal-island" onclick="selectTheme('animal-island')">
-        <span class="theme-dot" style="background: #e6a23c;"></span>
-        Animal Island
-      </div>
-      <div class="theme-option" data-theme="everforest" onclick="selectTheme('everforest')">
-        <span class="theme-dot" style="background: #8da101;"></span>
-        Everforest
       </div>
       <div class="theme-mode-toggle">
         <span class="mode-label" id="themeModeLabel">显示模式</span>
@@ -2873,7 +2898,7 @@ body.ai-panel-open .toc-float-btn { right: 360px; }
 
 <script src="js/lib/turndown.js"></script>
 <script src="js/lib/turndown-plugin-gfm.js"></script>
-<script src="js/app.js"></script>
+<script src="js/app.js?v=1.13.0"></script>
 <script src="js/ai-bridge.js"></script>
 <script src="js/ai-diff.js"></script>
 <script src="js/ai.js"></script>

@@ -119,12 +119,12 @@ var i18n = {
     statusReady: '就绪',
     statusAutoSave: '内容自动保存中',
     themeGroupBloom: 'Bloom 系列',
-    themeGroupTypora: 'Typora 移植系列',
     themeGroupOther: '其他主题',
     themeModeLabel: '显示模式',
     lightModeLabel: '日间',
     darkModeLabel: '夜间',
     themeDarkUnsupported: '该主题仅提供日间配色',
+    themeUnavailable: '主题未加载，请刷新页面后重试',
     // 格式工具栏
     fmtCut: '剪切',
     fmtCopy: '复制',
@@ -296,12 +296,12 @@ var i18n = {
     statusReady: 'Ready',
     statusAutoSave: 'Auto-saving',
     themeGroupBloom: 'Bloom Series',
-    themeGroupTypora: 'Typora Themes',
     themeGroupOther: 'Other Themes',
     themeModeLabel: 'Display Mode',
     lightModeLabel: 'Light',
     darkModeLabel: 'Dark',
     themeDarkUnsupported: 'This theme only has a light variant',
+    themeUnavailable: 'Theme not loaded. Please refresh the page and try again.',
     // Format toolbar
     fmtCut: 'Cut',
     fmtCopy: 'Copy',
@@ -418,8 +418,6 @@ function applyLang() {
   // 更新主题下拉菜单中的静态文本
   var themeGroupBloom = document.getElementById('themeGroupBloom');
   if (themeGroupBloom) themeGroupBloom.textContent = t('themeGroupBloom');
-  var themeGroupTypora = document.getElementById('themeGroupTypora');
-  if (themeGroupTypora) themeGroupTypora.textContent = t('themeGroupTypora');
   var themeGroupOther = document.getElementById('themeGroupOther');
   if (themeGroupOther) themeGroupOther.textContent = t('themeGroupOther');
   var themeModeLabel = document.getElementById('themeModeLabel');
@@ -654,6 +652,9 @@ var themeList = {
 
 var _currentThemeName = localStorage.getItem('kattybb-theme-name') || 'bloom-petal';
 var _currentThemeMode = localStorage.getItem('kattybb-theme-mode') || 'light';
+// 存档里的主题名若已不存在（旧版本主题被移除、或手工写入），回落到默认主题，
+// 否则主题按钮文字、下拉高亮与明暗判断都会因为查不到主题而抛错。
+if (!themeList[_currentThemeName]) _currentThemeName = 'bloom-petal';
 
 // 主题是否提供夜间配色：Typora 移植系列只有一套浅色，返回 false
 function themeHasDark(themeName) {
@@ -1894,10 +1895,26 @@ function fmtPasteMarkdownText() {
 }
 
 // ===== 主题下拉菜单切换 =====
+// 下拉限高后底部选项需要滚动才能看到；这里再按窗口剩余高度收紧，
+// 保证下拉整体不越出窗口底部——越界的行会被滚动容器裁掉，点上去落在后面的页面上，表现为「点了没反应」。
+function fitThemeDropdown() {
+  var dd = document.getElementById('themeDropdown');
+  if (!dd) return;
+  var rect = dd.getBoundingClientRect();
+  var avail = window.innerHeight - rect.top - 12;
+  dd.style.maxHeight = Math.max(200, Math.min(avail, 620)) + 'px';
+}
+
 function toggleThemeDropdown() {
   var selector = document.getElementById('themeSelector');
+  var willOpen = !selector.classList.contains('open');
+  if (willOpen) fitThemeDropdown();
   selector.classList.toggle('open');
 }
+
+window.addEventListener('resize', function() {
+  if (document.getElementById('themeSelector').classList.contains('open')) fitThemeDropdown();
+});
 
 // 点击外部关闭下拉菜单
 document.addEventListener('click', function(e) {
@@ -1909,11 +1926,16 @@ document.addEventListener('click', function(e) {
 
 // ===== 选择主题 =====
 function selectTheme(themeName) {
+  var theme = themeList[themeName];
+  // 主题表里没有的名字（如浏览器缓存了旧版 app.js，HTML 已有该项而 JS 未注册）：
+  // 直接提示并返回，避免写坏 _currentThemeName 后连页面标题都渲染失败。
+  if (!theme) { showToast(t('themeUnavailable')); return; }
   _currentThemeName = themeName;
-  localStorage.setItem('kattybb-theme-name', themeName);
+  // 存档失败（隐私模式 / 配额已满）不能连累主题切换本身，否则点了毫无反应
+  try { localStorage.setItem('kattybb-theme-name', themeName); } catch (e) {}
   applyTheme();
   updateThemeUI();
-  showToast(t('themeSwitched') + ': ' + themeList[themeName].name);
+  showToast(t('themeSwitched') + ': ' + theme.name);
   document.getElementById('themeSelector').classList.remove('open');
 }
 
@@ -1925,7 +1947,7 @@ function setThemeMode(mode) {
     return;
   }
   _currentThemeMode = mode;
-  localStorage.setItem('kattybb-theme-mode', mode);
+  try { localStorage.setItem('kattybb-theme-mode', mode); } catch (e) {}
   applyTheme();
   updateThemeUI();
   showToast(mode === 'dark' ? t('darkMode') : t('lightMode'));
