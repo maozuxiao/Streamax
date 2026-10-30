@@ -1,0 +1,474 @@
+@charset "UTF-8";
+/*!
+ * swiss.css —— 移植自 Typora 主题「Swiss」
+ *
+ * 原版特征：瑞士国际主义排版（纯无衬线、方正边框、棕红强调色、块级元素卡片化）。
+ *
+ * 移植约定（与 bloom / everforest 系列保持一致）：
+ *   1. :root 同时输出「编辑器契约变量」（--accent / --bg / --text / --surface …），
+ *      工具栏、侧栏、目录、状态栏、AI 面板因此自动跟随主题换色；
+ *   2. 正文规则成对书写：#write（导出 HTML / 打印 PDF）与 #preview（编辑器实时预览），
+ *      保证「预览所见 = 导出所得」；
+ *   3. 导出侧统一带 .markdown-body 类（导出包裹层为 <div id="write" class="markdown-body">），
+ *      故代码块等规则写作 #write.markdown-body xxx，用来压过导出流程末尾追加的兜底样式；
+ *   4. Typora 专有选择器已移除或映射：.md-fences → pre、.typora-export → 忽略、
+ *      .cm-s-inner（CodeMirror）→ .hljs 语法高亮 token；
+ *   5. 原主题的 @media print 与 @page 未纳入，避免与编辑器自身的打印分页策略冲突。
+ *
+ * 来源：Typora 用户主题 swiss.css（仅做适配，配色与版式数值保持原样）。
+ */
+
+:root {
+  /* ===== 上游主题变量（保留原命名，便于与 Typora 版本对齐）===== */
+  --card: #ffffff;
+  --line: #e8ddd2;
+  --tag-bg: #fffaf6;
+
+  /* ===== 编辑器契约变量 ===== */
+  --bg: #fcf9f4;
+  --surface: #ffffff;
+  --surface-1: #ffffff;
+  --surface-2: #f6efe6;
+
+  --text: #111111;
+  --text-rgb: 17, 17, 17;
+  --text-semi: #4a4340;
+  --text-soft: #b9aca2;
+  --muted: #80372b;
+
+  --accent: #80372b;
+  --accent-rgb: 128, 55, 43;
+  --accent-hover: #6b2d23;
+  --accent-active: #58241c;
+  --accent-soft: rgba(128, 55, 43, 0.08);
+
+  --border: #e8ddd2;
+  --border-semi: #d9c6b4;
+
+  --success: #3f7d4e;
+  --warning: #b07d1a;
+  --error: #a33227;
+  --info: #2f6d94;
+  --important: #80372b;
+
+  --selection: rgba(128, 55, 43, 0.16);
+
+  --shadow-sm: 0 1px 2px rgba(17, 17, 17, 0.04);
+  --shadow: 0 4px 14px rgba(17, 17, 17, 0.06);
+  --shadow-lg: 0 12px 32px rgba(17, 17, 17, 0.08);
+
+  /* 瑞士风：纯无衬线 + 等宽 */
+  --font-sans: "Helvetica Neue", Helvetica, Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+
+  --code-bg: #ffffff;
+  --code-text: #24292f;
+  --code-ink: #24292f;
+  --code-dot-red: #d87070;
+  --code-dot-yellow: #d8c870;
+  --code-dot-green: #70c888;
+
+  --space-unit: 8px;
+  --space-xs: calc(var(--space-unit) * 1);
+  --space-sm: calc(var(--space-unit) * 1.5);
+  --space-md: calc(var(--space-unit) * 2);
+  --space-lg: calc(var(--space-unit) * 3);
+  --space-xl: calc(var(--space-unit) * 4);
+  --space-2xl: calc(var(--space-unit) * 6);
+  --space-3xl: calc(var(--space-unit) * 8);
+
+  /* Typora chrome（保留，便于导出到 Typora / 旧版复用） */
+  --bg-color: var(--bg);
+  --text-color: var(--text);
+  --primary-color: var(--accent);
+  --select-text-bg-color: var(--selection);
+  --white-rgb: 255, 255, 255;
+  --black-rgb: 0, 0, 0;
+}
+
+::selection {
+  background: var(--selection);
+}
+
+/* ===== 版心 ===== */
+#write,
+#preview {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 36px 36px 56px;
+  background: var(--card);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.58;
+  font-size: 15px;
+  /* 方正的瑞士风：直角 + 细线框，不用圆角与投影 */
+  border: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* ===== 标题层级 ===== */
+:is(#write, #preview) :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--text);
+  font-weight: 700;
+  margin-top: 1.6em;
+  margin-bottom: 0.65em;
+  line-height: 1.18;
+  letter-spacing: normal;
+}
+
+:is(#write, #preview) h1 {
+  font-size: 2.85em;
+  letter-spacing: -0.035em;
+  margin-top: 0;
+  margin-bottom: 0.9em;
+  padding: 20px 24px 18px;
+  background: var(--card);
+  border-left: 5px solid var(--accent);
+  border-bottom: 1px solid var(--line);
+}
+
+/* 原主题 h1 无下划渐变条，此处抹掉编辑器预览骨架自带的装饰线 */
+:is(#write, #preview) h1::after {
+  content: none;
+  display: none;
+}
+
+:is(#write, #preview) h2 {
+  font-size: 1.95em;
+  margin-top: 1.3em;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+/* h2 右侧贯穿细线（原主题用 ::after 生成） */
+:is(#write, #preview) h2::after {
+  content: "";
+  position: static;
+  display: block;
+  flex: 1 1 auto;
+  width: auto;
+  height: 2px;
+  bottom: auto;
+  background: var(--accent);
+  opacity: 0.8;
+  border-radius: 0;
+}
+
+:is(#write, #preview) h3 {
+  font-size: 1.5em;
+  margin-top: 1em;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--text);
+}
+
+:is(#write, #preview) h4,
+:is(#write, #preview) h5,
+:is(#write, #preview) h6 {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--text);
+}
+
+/* 预览骨架给 h3 / h4 加了装饰短线，这里统一去掉 */
+:is(#write, #preview) h3::after,
+:is(#write, #preview) h4::after {
+  content: none;
+  display: none;
+}
+
+/* ===== 行内元素 ===== */
+:is(#write, #preview) p {
+  margin-top: 0;
+  margin-bottom: 0.68em;
+  line-height: 1.58;
+}
+
+:is(#write, #preview) strong {
+  font-weight: 700;
+  color: var(--text);
+}
+
+:is(#write, #preview) em {
+  color: var(--muted);
+  font-style: normal;
+}
+
+:is(#write, #preview) a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+
+:is(#write, #preview) a:hover {
+  border-bottom-color: var(--accent);
+}
+
+:is(#write, #preview) hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: none;
+  height: 0;
+  margin: 1.35em 0 1.5em;
+}
+
+/* ===== 块级元素：卡片化 ===== */
+:is(#write, #preview) > ul,
+:is(#write, #preview) > ol {
+  background: var(--card);
+  border: 1px solid var(--accent);
+  border-left: 4px solid var(--accent);
+  padding: 14px 18px 12px 34px;
+  margin: 0.75em 0 1.1em;
+  line-height: 1.5;
+}
+
+:is(#write, #preview) li {
+  margin-bottom: 0;
+  padding-left: 0.15em;
+}
+
+:is(#write, #preview) li + li {
+  margin-top: 0.32em;
+}
+
+:is(#write, #preview) li p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+:is(#write, #preview) li::marker {
+  font-size: 0.95em;
+}
+
+/* 嵌套列表保持轻量，不再套一层边框（原版会层层套框，深嵌套时过于拥挤） */
+:is(#write, #preview) li > ul,
+:is(#write, #preview) li > ol {
+  background: transparent;
+  border: 0;
+  padding: 0 0 0 1.4em;
+  margin: 0.32em 0;
+}
+
+:is(#write, #preview) blockquote {
+  background: var(--card);
+  border: 1px solid var(--accent);
+  border-left: 4px solid var(--accent);
+  border-radius: 0;
+  box-shadow: none;
+  margin: 1.1em 0 1.4em;
+  padding: 14px 18px;
+  color: var(--muted);
+}
+
+:is(#write, #preview) blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* ===== 表格 ===== */
+:is(#write, #preview) table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin: 1em 0 1.5em;
+  background: var(--card);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+:is(#write, #preview) th,
+:is(#write, #preview) td {
+  border: 1px solid var(--line);
+  padding: 8px 12px;
+  background: var(--card);
+  vertical-align: top;
+}
+
+:is(#write, #preview) th {
+  font-weight: 700;
+  background: #faf5ef;
+  text-align: left;
+  color: var(--accent);
+}
+
+:is(#write, #preview) tr:nth-child(even) td {
+  background: var(--card);
+}
+
+:is(#write, #preview) tr:last-child td {
+  border-bottom: 1px solid var(--line);
+}
+
+:is(#write, #preview) p + h2,
+:is(#write, #preview) ul + h2,
+:is(#write, #preview) ol + h2,
+:is(#write, #preview) blockquote + h2,
+:is(#write, #preview) table + h2 {
+  margin-top: 1.6em;
+}
+
+/* ===== 卡片化的顶层段落（原主题标志性设计）===== */
+:is(#write, #preview) > p {
+  background: var(--card);
+  border: 1px solid var(--accent);
+  padding: 16px 18px;
+  margin-top: 0.75em;
+  margin-bottom: 0;
+}
+
+:is(#write, #preview) > p + p {
+  border-top: 0;
+  padding-top: 4px;
+  margin-top: -1px;
+}
+
+:is(#write, #preview) > h1 + p,
+:is(#write, #preview) > h2 + p,
+:is(#write, #preview) > h3 + p {
+  margin-top: 0.75em;
+}
+
+:is(#write, #preview) mark {
+  background: var(--tag-bg);
+  color: var(--accent);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0.05em 0.35em;
+}
+
+:is(#write, #preview) img {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:is(#write, #preview) kbd {
+  border-radius: 0;
+  font-family: var(--font-mono);
+}
+
+/* ===== 代码：白底细框（GitHub 风格）===== */
+#write.markdown-body pre,
+#preview pre {
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: #ffffff;
+  color: #24292f;
+  box-shadow: none;
+  padding: 8px 12px;
+  margin: 15px 0;
+  font-size: 0.9em;
+  font-family: var(--font-mono);
+  line-height: 1.45;
+  overflow: auto;
+}
+
+/* 去掉编辑器预览骨架的 macOS 三色圆点 */
+#write.markdown-body pre::before,
+#preview pre::before {
+  content: none;
+  display: none;
+}
+
+#write.markdown-body pre code,
+#preview pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  font-weight: normal;
+}
+
+#write.markdown-body code,
+:is(#write, #preview) code {
+  border: 1px solid var(--line);
+  background: #ffffff;
+  border-radius: 0;
+  padding: 0 2px;
+  font-size: 0.9em;
+  font-family: var(--font-mono);
+  color: #24292f;
+  font-weight: normal;
+}
+
+/* ===== 语法高亮 token（原生 .hljs 类，压过 CDN 主题的同等规则）===== */
+:is(#write, #preview) .hljs {
+  color: #24292f;
+  background: transparent;
+}
+
+:is(#write, #preview) :is(.hljs-comment, .hljs-quote) {
+  color: #6e7781;
+  font-style: italic;
+}
+
+:is(#write, #preview) :is(.hljs-keyword, .hljs-selector-tag, .hljs-literal) {
+  color: #cf222e;
+}
+
+:is(#write, #preview) :is(.hljs-string, .hljs-doctag, .hljs-regexp) {
+  color: #0a3069;
+}
+
+:is(#write, #preview) :is(.hljs-title, .hljs-section, .hljs-name) {
+  color: #8250df;
+}
+
+:is(#write, #preview) :is(.hljs-function, .hljs-params, .hljs-attr) {
+  color: #24292f;
+}
+
+:is(#write, #preview) :is(.hljs-number, .hljs-built_in, .hljs-type) {
+  color: #0550ae;
+}
+
+:is(#write, #preview) :is(.hljs-variable, .hljs-template-variable) {
+  color: #953800;
+}
+
+/* ===== 响应式：窄屏收紧留白（原主题 @media screen 适配，字号不缩小以免影响阅读）===== */
+@media screen and (max-width: 900px) {
+  #write,
+  #preview {
+    padding: 24px 20px 40px;
+  }
+
+  :is(#write, #preview) h1 {
+    font-size: 2.3em;
+    padding: 16px 18px 14px;
+  }
+
+  :is(#write, #preview) h2 {
+    gap: 12px;
+    font-size: 1.65em;
+  }
+
+  :is(#write, #preview) h3 {
+    font-size: 1.3em;
+    gap: 12px;
+  }
+
+  :is(#write, #preview) h4,
+  :is(#write, #preview) h5,
+  :is(#write, #preview) h6 {
+    gap: 10px;
+  }
+}

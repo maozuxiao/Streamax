@@ -1,0 +1,420 @@
+@charset "UTF-8";
+/*!
+ * purple-classic.css —— Purple 系列变体：Purple Classic —— 紫色标题 + 紫色链接
+ *
+ * 本文件为「独立完整」主题：
+ *   = purple.css 的全量版式与变量契约
+ *   + 本变体的配色 / 字体覆盖（文件末尾）
+ *
+ * 说明：这里内联全量规则而不使用 @import，是因为编辑器的「导出 HTML」会把主题 CSS
+ * 内联进 <style>，而 @import 在同一文件内非首行时会失效，导致导出结果丢失基础版式。
+ * 调整公共版式时，请同步修改 purple.css 与本系列的 7 个变体文件。
+ *
+ * 移植说明同 purple.css：移除 Typora 专有选择器 / @include-when-export / @font-face /
+ * @media print / @page；CodeMirror token 映射为 .hljs。
+ */
+
+:root {
+  /* ===== 上游主题变量（变体文件覆盖这些即可换色）===== */
+  --title-color: #8064a9;
+  --text-color: #444444;
+  --light-text-color: #666666;
+  --lighter-text-color: #888888;
+  --link-color: #2aa899;
+  --code-color: #745fb5;
+  --shadow-color: #eeeeee;
+  --border-quote: rgba(116, 95, 181, 0.2);
+  --border-quote-grey: #c8c8c8;
+  --border: #e7e7e7;
+  --link-bottom: #bbbbbb;
+  --shadow: 3px 3px 10px var(--shadow-color);
+  --inline-code-bg: #f4f2f9;
+  --header-weight: normal;
+  --base-font: "Open Sans", "Clear Sans", "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --title-font: "EB Garamond", "Source Sans Pro", Georgia, "Songti SC", "SimSun", serif;
+  --monospace: Courier, "Courier New", monospace;
+
+  /* ===== 编辑器契约变量 ===== */
+  --bg: #fbfbfc;
+  --surface: #ffffff;
+  --surface-1: #ffffff;
+  --surface-2: #f7f7f7;
+
+  --text: var(--text-color);
+  --text-rgb: 68, 68, 68;
+  --text-semi: var(--light-text-color);
+  --text-soft: #c4c4c4;
+  --muted: var(--lighter-text-color);
+
+  --accent: var(--title-color);
+  --accent-rgb: 128, 100, 169;
+  --accent-hover: #6f5596;
+  --accent-active: #5f4782;
+  --accent-soft: rgba(128, 100, 169, 0.1);
+
+  --border-semi: #dddddd;
+
+  --success: #2aa899;
+  --warning: #c9903e;
+  --error: #c45b6a;
+  --info: #5b8bc4;
+  --important: #ec71b7;
+
+  --selection: rgba(128, 100, 169, 0.18);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 6px 20px rgba(0, 0, 0, 0.07);
+
+  --font-sans: var(--base-font);
+  --font-mono: var(--monospace);
+
+  --code-bg: #fdfdfd;
+  --code-text: #3a3432;
+  --code-ink: #3a3432;
+  --code-dot-red: #d87070;
+  --code-dot-yellow: #d8c870;
+  --code-dot-green: #70c888;
+
+  --space-unit: 8px;
+  --space-xs: calc(var(--space-unit) * 1);
+  --space-sm: calc(var(--space-unit) * 1.5);
+  --space-md: calc(var(--space-unit) * 2);
+  --space-lg: calc(var(--space-unit) * 3);
+  --space-xl: calc(var(--space-unit) * 4);
+  --space-2xl: calc(var(--space-unit) * 6);
+  --space-3xl: calc(var(--space-unit) * 8);
+
+  /* Typora chrome（保留，便于对照上游） */
+  --side-bar-bg-color: #fafafa;
+  --active-file-text-color: var(--title-color);
+  --active-file-bg-color: var(--shadow-color);
+  --item-hover-bg-color: var(--shadow-color);
+  --active-file-border-color: var(--title-color);
+  --white-rgb: 255, 255, 255;
+  --black-rgb: 0, 0, 0;
+}
+
+::selection {
+  background: var(--selection);
+}
+
+/* ===== 版心 ===== */
+#write,
+#preview {
+  margin: 0 auto;
+  padding: 1rem 4rem 100px;
+  font-family: var(--base-font);
+  font-size: 16px;
+  color: var(--light-text-color);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
+:is(#write, #preview) > *:first-child {
+  margin-top: 0;
+}
+
+:is(#write, #preview) > *:last-child {
+  margin-bottom: 0;
+}
+
+/* ===== 标题 ===== */
+:is(#write, #preview) :is(h1, h2, h3, h4, h5, h6) {
+  position: relative;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-weight: var(--header-weight);
+  line-height: 1.3;
+  color: var(--title-color);
+  font-family: var(--title-font);
+  background: transparent;
+}
+
+:is(#write, #preview) h1 {
+  text-align: center;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+  font-size: 2.25em;
+  padding: 0 0 0.1em;
+  border: 0;
+}
+
+/* 居中短横线（原主题 h1::after） */
+:is(#write, #preview) h1::after {
+  content: "";
+  display: block;
+  position: static;
+  margin: 0.2rem auto 0;
+  width: 6rem;
+  height: 2px;
+  bottom: auto;
+  background: none;
+  border-bottom: 2px solid var(--title-color);
+  border-radius: 0;
+  opacity: 1;
+}
+
+:is(#write, #preview) h2 {
+  padding-left: 0.4em;
+  padding-bottom: 0.1em;
+  font-size: 1.6em;
+  border-left: 0.4em solid var(--title-color);
+  border-bottom: 1px solid var(--title-color);
+}
+
+/* 预览骨架给 h2 加了渐变短线，去掉以免与左侧色块冲突 */
+:is(#write, #preview) h2::after {
+  content: none;
+  display: none;
+}
+
+:is(#write, #preview) h3 {
+  font-size: 1.3em;
+  padding: 0;
+  border: 0;
+}
+
+:is(#write, #preview) h4,
+:is(#write, #preview) h5,
+:is(#write, #preview) h6 {
+  font-size: 1.05em;
+  padding: 0;
+  border: 0;
+}
+
+:is(#write, #preview) h3::after,
+:is(#write, #preview) h4::after {
+  content: none;
+  display: none;
+}
+
+/* 标题内的行内代码跟随标题字号 */
+:is(#write, #preview) :is(h1, h2, h3, h4, h5, h6) :is(code, tt) {
+  font-size: inherit;
+}
+
+/* ===== 文本与链接 ===== */
+:is(#write, #preview) p {
+  line-height: 1.6;
+  word-spacing: 0.05rem;
+  margin: 0.8em 0;
+}
+
+:is(#write, #preview) a {
+  color: var(--link-color);
+  text-decoration: none;
+  border-bottom: 1px solid var(--link-bottom);
+}
+
+:is(#write, #preview) a:hover {
+  border-bottom-color: var(--link-color);
+}
+
+:is(#write, #preview) strong {
+  padding: 0 2px;
+  font-weight: bold;
+  color: var(--text-color);
+}
+
+:is(#write, #preview) em {
+  font-style: italic;
+  color: inherit;
+}
+
+:is(#write, #preview) del {
+  padding: 1px 2px;
+}
+
+:is(#write, #preview) mark {
+  background: rgb(255, 255, 196);
+  color: var(--text-color);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0 2px;
+}
+
+:is(#write, #preview) hr {
+  margin: 1.5em auto;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: none;
+  height: 0;
+}
+
+/* ===== 块级元素 ===== */
+:is(#write, #preview) :is(p, blockquote, ul, ol, dl, table) {
+  margin: 0.8em 0;
+}
+
+:is(#write, #preview) :is(ul, ol) {
+  padding-left: 2rem;
+}
+
+:is(#write, #preview) li > :is(ol, ul) {
+  margin: 0;
+}
+
+:is(#write, #preview) li {
+  padding-left: 0.1rem;
+}
+
+:is(#write, #preview) blockquote {
+  margin: 0.8em 0;
+  padding: 0.1em 0 0.1em 1em;
+  background: transparent;
+  border: 0;
+  border-left: 0.3rem solid var(--border-quote);
+  border-radius: 0;
+  box-shadow: none;
+  font-family: var(--base-font);
+  color: var(--text-color);
+}
+
+:is(#write, #preview) blockquote p {
+  margin: 0.4em 0;
+}
+
+/* ===== 表格 ===== */
+:is(#write, #preview) table {
+  width: 100%;
+  margin-bottom: 1.25rem;
+  border: 0;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  background: transparent;
+}
+
+:is(#write, #preview) :is(th, td) {
+  padding: 8px;
+  line-height: 1.25rem;
+  vertical-align: middle;
+  border: 1px solid #dddddd;
+  background: transparent;
+}
+
+:is(#write, #preview) th {
+  font-weight: bold;
+}
+
+:is(#write, #preview) tr:nth-child(2n),
+:is(#write, #preview) thead {
+  background-color: #fcfcfc;
+}
+
+/* ===== 代码 ===== */
+:is(#write, #preview) :is(code, tt) {
+  padding: 2px 4px;
+  border-radius: 0.3rem;
+  font-family: var(--monospace);
+  font-size: 0.9em;
+  color: var(--code-color);
+  background-color: var(--inline-code-bg);
+  margin: 0 2px;
+  border: 0;
+  font-weight: normal;
+}
+
+#write.markdown-body pre,
+#preview pre {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: #fdfdfd;
+  box-shadow: none;
+  font-size: 0.9rem;
+  padding: 0.75rem 1rem;
+  margin: 1em 0;
+  line-height: 1.55;
+  color: #3a3432;
+  overflow: auto;
+}
+
+/* 去掉编辑器预览骨架的 macOS 三色圆点 */
+#write.markdown-body pre::before,
+#preview pre::before {
+  content: none;
+  display: none;
+}
+
+#write.markdown-body pre code,
+#preview pre code {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  border-radius: 0;
+}
+
+/* 语法高亮：原主题仅定制注释与内置对象，其余交给 hljs 主题 */
+:is(#write, #preview) :is(.hljs-comment, .hljs-quote) {
+  color: #9daab6;
+}
+
+:is(#write, #preview) :is(.hljs-built_in, .hljs-type) {
+  color: #0451a5;
+}
+
+:is(#write, #preview) .hljs-variable {
+  color: var(--text-color);
+}
+
+/* ===== 图片 ===== */
+:is(#write, #preview) img {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* 写 ![shadow-...]() 时给图片加阴影（原主题特性） */
+:is(#write, #preview) img[alt|="shadow"] {
+  box-shadow: var(--shadow);
+}
+
+/* ===== 任务列表：沿用原生复选框，仅统一强调色 ===== */
+:is(#write, #preview) .task-list-item input[type="checkbox"] {
+  accent-color: var(--title-color);
+}
+
+:is(#write, #preview) .task-list-item p {
+  margin: 0.15em 0;
+}
+
+/* ===== 目录 ===== */
+:is(#write, #preview) .toc a {
+  line-height: 1.6;
+  border-bottom: none;
+  color: var(--light-text-color);
+  font-size: 0.9rem;
+}
+
+/* ===== 响应式 ===== */
+@media screen and (max-width: 900px) {
+  #write,
+  #preview {
+    padding: 1rem 1.25rem 48px;
+  }
+
+  :is(#write, #preview) h1 {
+    font-size: 1.85em;
+  }
+
+  :is(#write, #preview) h2 {
+    font-size: 1.4em;
+  }
+}
+
+/* ==========================================================================
+ * 变体覆盖（位于文件末尾，同特异性下后写生效）
+ * ========================================================================== */
+:root {
+  --link-color: #745fb5;
+  --code-color: #ec71b7;
+}

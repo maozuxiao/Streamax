@@ -153,6 +153,11 @@ body.toolbar-collapsed .toolbar-collapse-btn svg { transform: rotate(180deg); }
   transform: translateY(-4px);
   pointer-events: none;
   transition: all 0.18s ease;
+  /* 主题数量增多（Bloom 8 + Typora 9 + 其他 2）后限制高度并允许滚动，
+     避免下拉开到工具栏下方被窗口裁掉 */
+  max-height: min(70vh, 620px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .theme-selector.open .theme-dropdown {
@@ -246,6 +251,16 @@ body.toolbar-collapsed .toolbar-collapse-btn svg { transform: rotate(180deg); }
   background: var(--accent);
   color: white;
   border-color: transparent;
+}
+
+/* 单模式主题（Typora 移植系列）没有夜间配色：夜间按钮置灰，仅提示不可用 */
+.theme-mode-btn.disabled,
+.theme-mode-btn.disabled:hover {
+  opacity: 0.45;
+  color: var(--muted);
+  background: var(--bg);
+  border-color: var(--border);
+  cursor: not-allowed;
 }
 
 .toolbar .btn {
@@ -2253,6 +2268,43 @@ body.ai-panel-open .toc-float-btn { right: 360px; }
       <div class="theme-option" data-theme="bloom-verdant" onclick="selectTheme('bloom-verdant')">
         <span class="theme-dot" style="background: #7cb87c;"></span>
         Bloom Verdant
+      </div>
+      <div class="theme-group-label" id="themeGroupTypora">Typora 移植系列</div>
+      <div class="theme-option" data-theme="swiss" onclick="selectTheme('swiss')">
+        <span class="theme-dot" style="background: #80372b;"></span>
+        Swiss
+      </div>
+      <div class="theme-option" data-theme="purple" onclick="selectTheme('purple')">
+        <span class="theme-dot" style="background: #8064a9;"></span>
+        Purple
+      </div>
+      <div class="theme-option" data-theme="purple-blue" onclick="selectTheme('purple-blue')">
+        <span class="theme-dot" style="background: #337ab7;"></span>
+        Purple Blue
+      </div>
+      <div class="theme-option" data-theme="purple-blue-light" onclick="selectTheme('purple-blue-light')">
+        <span class="theme-dot" style="background: #a9c8e4;"></span>
+        Purple Blue Light
+      </div>
+      <div class="theme-option" data-theme="purple-green" onclick="selectTheme('purple-green')">
+        <span class="theme-dot" style="background: #2aa899;"></span>
+        Purple Green
+      </div>
+      <div class="theme-option" data-theme="purple-green-light" onclick="selectTheme('purple-green-light')">
+        <span class="theme-dot" style="background: #92cdc4;"></span>
+        Purple Green Light
+      </div>
+      <div class="theme-option" data-theme="purple-classic" onclick="selectTheme('purple-classic')">
+        <span class="theme-dot" style="background: #745fb5;"></span>
+        Purple Classic
+      </div>
+      <div class="theme-option" data-theme="purple-plain" onclick="selectTheme('purple-plain')">
+        <span class="theme-dot" style="background: #9a9a9a;"></span>
+        Purple Plain
+      </div>
+      <div class="theme-option" data-theme="purple-cesno" onclick="selectTheme('purple-cesno')">
+        <span class="theme-dot" style="background: #bc64a4;"></span>
+        Purple Cesno
       </div>
       <div class="theme-group-label" id="themeGroupOther">其他主题</div>
       <div class="theme-option" data-theme="animal-island" onclick="selectTheme('animal-island')">

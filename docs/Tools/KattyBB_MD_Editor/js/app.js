@@ -119,10 +119,12 @@ var i18n = {
     statusReady: '就绪',
     statusAutoSave: '内容自动保存中',
     themeGroupBloom: 'Bloom 系列',
+    themeGroupTypora: 'Typora 移植系列',
     themeGroupOther: '其他主题',
     themeModeLabel: '显示模式',
     lightModeLabel: '日间',
     darkModeLabel: '夜间',
+    themeDarkUnsupported: '该主题仅提供日间配色',
     // 格式工具栏
     fmtCut: '剪切',
     fmtCopy: '复制',
@@ -294,10 +296,12 @@ var i18n = {
     statusReady: 'Ready',
     statusAutoSave: 'Auto-saving',
     themeGroupBloom: 'Bloom Series',
+    themeGroupTypora: 'Typora Themes',
     themeGroupOther: 'Other Themes',
     themeModeLabel: 'Display Mode',
     lightModeLabel: 'Light',
     darkModeLabel: 'Dark',
+    themeDarkUnsupported: 'This theme only has a light variant',
     // Format toolbar
     fmtCut: 'Cut',
     fmtCopy: 'Copy',
@@ -414,6 +418,8 @@ function applyLang() {
   // 更新主题下拉菜单中的静态文本
   var themeGroupBloom = document.getElementById('themeGroupBloom');
   if (themeGroupBloom) themeGroupBloom.textContent = t('themeGroupBloom');
+  var themeGroupTypora = document.getElementById('themeGroupTypora');
+  if (themeGroupTypora) themeGroupTypora.textContent = t('themeGroupTypora');
   var themeGroupOther = document.getElementById('themeGroupOther');
   if (themeGroupOther) themeGroupOther.textContent = t('themeGroupOther');
   var themeModeLabel = document.getElementById('themeModeLabel');
@@ -632,11 +638,40 @@ var themeList = {
   'bloom-stone': { name: 'Bloom Stone', light: 'css/themes/bloom-stone.css', dark: 'css/themes/bloom-stone-dark.css' },
   'bloom-verdant': { name: 'Bloom Verdant', light: 'css/themes/bloom-verdant.css', dark: 'css/themes/bloom-verdant-dark.css' },
   'animal-island': { name: 'Animal Island', light: 'css/themes/animal-island.css', dark: 'css/themes/animal-island-dark.css' },
-  'everforest': { name: 'Everforest', light: 'css/themes/everforest-light.css', dark: 'css/themes/everforest-dark.css' }
+  'everforest': { name: 'Everforest', light: 'css/themes/everforest-light.css', dark: 'css/themes/everforest-dark.css' },
+  // Typora 移植系列：上游主题只提供日间配色，故为「单模式主题」（singleMode），
+  // 夜间切换按钮对它们禁用（见 themeHasDark / isDarkMode 与 updateThemeUI）
+  'swiss': { name: 'Swiss', light: 'css/themes/swiss.css', singleMode: true },
+  'purple': { name: 'Purple', light: 'css/themes/purple.css', singleMode: true },
+  'purple-blue': { name: 'Purple Blue', light: 'css/themes/purple-blue.css', singleMode: true },
+  'purple-blue-light': { name: 'Purple Blue Light', light: 'css/themes/purple-blue-light.css', singleMode: true },
+  'purple-green': { name: 'Purple Green', light: 'css/themes/purple-green.css', singleMode: true },
+  'purple-green-light': { name: 'Purple Green Light', light: 'css/themes/purple-green-light.css', singleMode: true },
+  'purple-classic': { name: 'Purple Classic', light: 'css/themes/purple-classic.css', singleMode: true },
+  'purple-plain': { name: 'Purple Plain', light: 'css/themes/purple-plain.css', singleMode: true },
+  'purple-cesno': { name: 'Purple Cesno', light: 'css/themes/purple-cesno.css', singleMode: true }
 };
 
 var _currentThemeName = localStorage.getItem('kattybb-theme-name') || 'bloom-petal';
 var _currentThemeMode = localStorage.getItem('kattybb-theme-mode') || 'light';
+
+// 主题是否提供夜间配色：Typora 移植系列只有一套浅色，返回 false
+function themeHasDark(themeName) {
+  var th = themeList[themeName || _currentThemeName];
+  return !!(th && th.dark);
+}
+
+// 实际生效的明暗模式：单模式主题强制按日间渲染，
+// 避免出现「夜间按钮高亮、页面却仍是浅色」的错配（高亮配色、导出 color-scheme 一并跟随）
+function isDarkMode() {
+  return _currentThemeMode === 'dark' && themeHasDark(_currentThemeName);
+}
+
+// 解析主题 CSS 文件：缺夜间文件时统一回退到 light，保证不会加载 undefined
+function getThemeCssFile(theme, wantDark) {
+  if (!theme) return '';
+  return (wantDark && theme.dark) ? theme.dark : theme.light;
+}
 
 // marked 配置
 marked.setOptions({
@@ -667,7 +702,7 @@ var _hljsLoaded = false;
 var _hljsLoading = false;
 // highlight.js 主题随明暗模式切换：夜间用 github-dark，日间用 github
 function getHljsThemeUrl() {
-  return _currentThemeMode === 'dark'
+  return isDarkMode()
     ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css'
     : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
 }
@@ -1884,6 +1919,11 @@ function selectTheme(themeName) {
 
 // ===== 设置主题模式（日间/夜间）=====
 function setThemeMode(mode) {
+  // 单模式主题（Typora 移植系列）没有夜间配色，拒绝切换并提示，避免出现半明半暗的错配
+  if (mode === 'dark' && !themeHasDark(_currentThemeName)) {
+    showToast(t('themeDarkUnsupported'));
+    return;
+  }
   _currentThemeMode = mode;
   localStorage.setItem('kattybb-theme-mode', mode);
   applyTheme();
@@ -1969,7 +2009,7 @@ function applyTheme() {
   var theme = themeList[_currentThemeName];
   if (!theme) return;
   
-  var cssFile = _currentThemeMode === 'dark' ? theme.dark : theme.light;
+  var cssFile = getThemeCssFile(theme, _currentThemeMode === 'dark');
   themeLink.href = cssFile;
   
   // 主题兼容层（任务3）
@@ -2008,29 +2048,41 @@ function updateThemeUI() {
   });
   
   // 更新日间/夜间按钮状态
+  // 单模式主题（Typora 移植系列）强制日间渲染：日间按钮置为 active，夜间按钮禁用并给出说明
+  var darkActive = isDarkMode();
+  var singleMode = !themeHasDark(_currentThemeName);
   var lightBtn = document.getElementById('lightModeBtn');
   var darkBtn = document.getElementById('darkModeBtn');
-  if (_currentThemeMode === 'light') {
-    lightBtn.classList.add('active');
-    darkBtn.classList.remove('active');
-  } else {
+  if (darkActive) {
     darkBtn.classList.add('active');
     lightBtn.classList.remove('active');
+  } else {
+    lightBtn.classList.add('active');
+    darkBtn.classList.remove('active');
+  }
+  if (darkBtn) {
+    darkBtn.classList.toggle('disabled', singleMode);
+    darkBtn.setAttribute('aria-disabled', singleMode ? 'true' : 'false');
+    if (singleMode) {
+      darkBtn.setAttribute('title', t('themeDarkUnsupported'));
+    } else {
+      darkBtn.removeAttribute('title');
+    }
   }
 
   // 夜间模式下高亮颜色按钮反色处理（黑色线条→白色）
   var highlightPaths = document.querySelectorAll('#noteBgColorToggle svg path[fill="#262626"]');
-  var newFill = _currentThemeMode === 'dark' ? '#e0e0e0' : '#262626';
+  var newFill = darkActive ? '#e0e0e0' : '#262626';
   highlightPaths.forEach(function(p) { p.setAttribute('fill', newFill); });
 
   // 夜间模式下字体颜色按钮的A字母颜色调整
   var fgAPath = document.querySelector('#noteFgColorToggle svg path[fill="#727272"]');
-  if (fgAPath) fgAPath.setAttribute('fill', _currentThemeMode === 'dark' ? '#cccccc' : '#727272');
+  if (fgAPath) fgAPath.setAttribute('fill', darkActive ? '#cccccc' : '#727272');
 
   // 更新默认颜色和透明按钮的渐变背景
   var fgDefaultBtn = document.getElementById('noteFgDefaultBtn');
   if (fgDefaultBtn) {
-    if (_currentThemeMode === 'dark') {
+    if (darkActive) {
       fgDefaultBtn.style.background = 'linear-gradient(to bottom right, #666 49.5%, #fff 50.5%)';
     } else {
       fgDefaultBtn.style.background = 'linear-gradient(to bottom right, #000 49.5%, #fff 50.5%)';
@@ -2038,7 +2090,7 @@ function updateThemeUI() {
   }
   var bgTransparentBtn = document.getElementById('noteBgTransparentBtn');
   if (bgTransparentBtn) {
-    if (_currentThemeMode === 'dark') {
+    if (darkActive) {
       bgTransparentBtn.style.background = 'linear-gradient(to bottom right, #444 49.5%, #888 50.5%)';
     } else {
       bgTransparentBtn.style.background = 'linear-gradient(to bottom right, #fff 49.5%, #ccc 50.5%)';
@@ -2518,7 +2570,7 @@ function clearEditor() {
  */
 // ===== highlight.js 语法高亮配色（导出内嵌，随明暗主题切换）=====
 function getHljsCSS() {
-  if (_currentThemeMode === 'dark') {
+  if (isDarkMode()) {
     return [
       '.hljs { color: #c9d1d9; background: transparent; }',
       '.hljs-keyword, .hljs-selector-tag, .hljs-title.class_ { color: #ff7b72; }',
@@ -2744,7 +2796,7 @@ async function exportHTML() {
   // 无论从哪里打开导出文件都能加载与预览完全一致的主题（含字号）。
   // 若该绝对路径也失效（如应用被移动/删除），下方内联兜底样式仍生效，不会白屏。
   var _theme = themeList[_currentThemeName] || themeList['bloom-petal'];
-  var _themeCssRel = _currentThemeMode === 'dark' ? _theme.dark : _theme.light;
+  var _themeCssRel = getThemeCssFile(_theme, _currentThemeMode === 'dark');
   var _themeCssFile = new URL(_themeCssRel, location.href).href;
   // 标签页图标：解析为绝对路径，保证导出 HTML 保存到下载目录后图标仍有效
   var _faviconUrl = new URL('assets/Markdown.svg', location.href).href;
@@ -3020,7 +3072,7 @@ ${IMG_LIGHTBOX_SCRIPT}
     + '<span class="wicon wicon-restore"><svg class="wicon-svg" viewBox="0 0 1228 1024" xmlns="http://www.w3.org/2000/svg"><path d="M1164.151467 896.750933V1024H0v-127.249067h1164.151467zM1137.322667 0l-297.233067 292.386133 297.233067 292.386134L1228.8 494.7968l-205.824-202.410667L1228.8 89.975467 1137.322667 0zM582.0416 451.447467v127.249066H0V451.447467h582.0416z m0-445.371734v127.249067H0V6.144h582.0416z" fill="currentColor" p-id="7098"></path></svg></span>'
     + '</div>';
 
-  var htmlDoc = '<!DOCTYPE html>\n<html lang="zh-CN" color-scheme="' + (_currentThemeMode === 'dark' ? 'dark' : 'light') + '">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">\n<link rel="icon" type="image/svg+xml" href="' + _faviconUrl + '">\n<title>' + getExportBaseName() + '<\/title>\n<style>\n' + cssContent + '\n' + footnoteStyles + '\n' + exportUIStyles + '\n' + getExportExtraCSS() + '\n<\/style>\n' +
+  var htmlDoc = '<!DOCTYPE html>\n<html lang="zh-CN" color-scheme="' + (isDarkMode() ? 'dark' : 'light') + '">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">\n<link rel="icon" type="image/svg+xml" href="' + _faviconUrl + '">\n<title>' + getExportBaseName() + '<\/title>\n<style>\n' + cssContent + '\n' + footnoteStyles + '\n' + exportUIStyles + '\n' + getExportExtraCSS() + '\n<\/style>\n' +
     // 追加相对路径主题样式：从应用目录打开导出文件时，与预览区加载同一份主题（含字号），
     // 保证导出 HTML 的字体大小/配色与仅预览模式完全一致。
     '<link rel="stylesheet" href="' + _themeCssFile + '">\n<\/head>\n<body>\n<div id="write" class="markdown-body">\n' + htmlContent + '\n<\/div>\n' + tocUI + widthUI + footnoteScript + exportUIScript + '\n<\/body>\n<\/html>';
@@ -3044,9 +3096,9 @@ async function printPreview() {
   var printWin = window.open('', '_blank');
   var printTitle = getExportBaseName();
   var _ptheme = themeList[_currentThemeName] || themeList['bloom-petal'];
-  var _pthemeCssRel = _currentThemeMode === 'dark' ? _ptheme.dark : _ptheme.light;
+  var _pthemeCssRel = getThemeCssFile(_ptheme, _currentThemeMode === 'dark');
   var _pthemeCssFile = new URL(_pthemeCssRel, location.href).href;
-  printWin.document.write('<!DOCTYPE html><html color-scheme="' + (_currentThemeMode === 'dark' ? 'dark' : 'light') + '"><head><meta charset="UTF-8"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"><title>' + printTitle + '<\/title><style>' + cssContent + getHljsCSS() + getExportExtraCSS() + 'body{margin:0;padding:0;}@media print{*{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}a{color:var(--accent,#e8859b);text-decoration:underline;}.footnotes{page-break-before:always;}.footnote-item{margin:4px 0;padding:0;border:none;background:none;}.footnote-backref{display:none;}}</style><link rel="stylesheet" href="' + _pthemeCssFile + '"></head><body><div id="write" class="markdown-body">' + htmlContent + '<\/div><script>window.onafterprint=function(){window.close();};<\/script></body></html>');
+  printWin.document.write('<!DOCTYPE html><html color-scheme="' + (isDarkMode() ? 'dark' : 'light') + '"><head><meta charset="UTF-8"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"><title>' + printTitle + '<\/title><style>' + cssContent + getHljsCSS() + getExportExtraCSS() + 'body{margin:0;padding:0;}@media print{*{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}a{color:var(--accent,#e8859b);text-decoration:underline;}.footnotes{page-break-before:always;}.footnote-item{margin:4px 0;padding:0;border:none;background:none;}.footnote-backref{display:none;}}</style><link rel="stylesheet" href="' + _pthemeCssFile + '"></head><body><div id="write" class="markdown-body">' + htmlContent + '<\/div><script>window.onafterprint=function(){window.close();};<\/script></body></html>');
   printWin.document.close();
   printWin.focus();
   setTimeout(function() { printWin.print(); }, 500);
@@ -3467,7 +3519,7 @@ async function collectAllStyles() {
   // 兜底：在文档最前预置 RGB 辅助变量，确保任意主题/模式在导出 HTML 与打印 PDF
   // （均为独立文档，不继承 index.html 全局 :root）中 rgba(var(--xxx), a) 不失效。
   // 置于最前：主题自身 :root 在后，若已定义同名变量则覆盖此处，缺失时回退到此。
-  var darkScheme = (_currentThemeMode === 'dark') ? '  color-scheme: dark;\n' : '';
+  var darkScheme = isDarkMode() ? '  color-scheme: dark;\n' : '';
   var rgbSafeFallback = '\n/* export/print rgb-safe fallback */\n' +
     ':root {\n' +
     darkScheme +
@@ -3482,7 +3534,7 @@ async function collectAllStyles() {
 
   // 1. fetch 主题 CSS 文件（包含 :root 变量、#write 样式等）
   var theme = themeList[_currentThemeName];
-  var cssFile = _currentThemeMode === 'dark' ? theme.dark : theme.light;
+  var cssFile = getThemeCssFile(theme, _currentThemeMode === 'dark');
   var themeCSS = '';
   try {
     var resp = await fetch(cssFile);
